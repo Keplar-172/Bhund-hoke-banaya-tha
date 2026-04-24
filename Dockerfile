@@ -33,19 +33,19 @@ RUN useradd -m -u 1000 appuser && \
 USER appuser
 
 # Expose port (Railway uses dynamic PORT from environment)
+# Do NOT set ENV PORT here - Railway provides it dynamically
 EXPOSE 8000
-ENV PORT=8000
 
-# Health check (using curl for reliability)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+# Health check disabled for Railway (Railway has its own health check)
+# HEALTHCHECK is not supported by Railway's builder
 
 # Run application with gunicorn (production-ready ASGI server)
-# Use shell form to allow $PORT variable substitution
+# Use shell form to allow $PORT variable substitution from Railway
 CMD gunicorn app:app \
     --bind 0.0.0.0:${PORT:-8000} \
-    --workers 4 \
+    --workers 2 \
     --worker-class uvicorn.workers.UvicornWorker \
+    --timeout 120 \
     --access-logfile - \
     --error-logfile - \
     --log-level info
