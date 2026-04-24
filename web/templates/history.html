@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Match History - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Match History</h2>
+    <div class="actions">
+        <button id="filter-all" class="btn btn-small btn-primary">All Matches</button>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="filter-bar">
+    <input type="text" id="history-search" class="search-input" placeholder="🔍 Search matches or teams...">
+    <div class="filter-info">
+        <span id="match-count">{{ history|length }} matches</span>
+    </div>
+</div>
+
+{% if history %}
+<div class="timeline">
+    {% for match in history %}
+    <div class="timeline-item" data-match-id="{{ match.match_id }}" data-description="{{ match.description|lower }}">
+        <!-- Timeline Node -->
+        <div class="timeline-node">
+            <div class="node-circle"></div>
+        </div>
+        
+        <!-- Timeline Content -->
+        <div class="timeline-content">
+            <!-- Match Badge -->
+            <div class="match-badge">
+                <div class="badge-header">
+                    <span class="badge-id">Match {{ match.match_id }}</span>
+                    <span class="badge-date">{{ loop.revindex }}</span>
+                </div>
+                <h4 class="badge-title">{{ match.description }}</h4>
+            </div>
+            
+            <!-- Scores Grid -->
+            <div class="scores-grid">
+                {% set sorted_teams = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
+                {% for team, score in sorted_teams %}
+                <div class="score-item {% if loop.first %}winner{% endif %}">
+                    {% if loop.first %}
+                    <div class="winner-badge">👑 Winner</div>
+                    {% endif %}
+                    <div class="score-team">{{ team }}</div>
+                    <div class="score-points">{{ score }} pts</div>
+                    {% if loop.first %}
+                    <div class="winner-indicator">🏆</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="match-stats">
+                {% set sorted_teams = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
+                {% set winner = sorted_teams[0] %}
+                {% set runner_up = sorted_teams[1] if sorted_teams|length > 1 else None %}
+                <span class="stat">
+                    <span class="stat-icon">🎯</span>
+                    <span class="stat-text">Top Score: {{ winner[1] }} pts</span>
+                </span>
+                {% if runner_up %}
+                <span class="stat">
+                    <span class="stat-icon">📊</span>
+                    <span class="stat-text">Margin: {{ "%.1f"|format(winner[1] - runner_up[1]) }} pts</span>
+                </span>
+                {% endif %}
+                <span class="stat">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-text">{{ match.team_scores|length }} teams</span>
+                </span>
+            </div>
+            
+            <!-- Actions -->
+            <div class="match-actions">
+                <a href="/dashboard/match/{{ match.match_id }}" class="btn btn-small btn-primary">
+                    <span>📋</span> View Details
+                </a>
+                <a href="/downloads/match/{{ match.match_id }}/team-points" class="btn btn-small btn-secondary">
+                    <span>📥</span> Team Points
+                </a>
+                <a href="/downloads/match/{{ match.match_id }}/scorecard" class="btn btn-small btn-secondary">
+                    <span>📥</span> Scorecard
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🏏</div>
+    <h3>No Matches Yet</h3>
+    <p>Match history will appear here once matches are processed.</p>
+</div>
+{% endif %}
+
+<script>
+    // Search and filter functionality
+    const searchInput = document.getElementById('history-search');
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    const matchCount = document.getElementById('match-count');
+    
+    function filterMatches() {
+        const searchTerm = searchInput.value.toLowerCase();
+        let visibleCount = 0;
+        
+        timelineItems.forEach(item => {
+            const description = item.getAttribute('data-description');
+            const matchId = item.getAttribute('data-match-id');
+            const teamNames = Array.from(item.querySelectorAll('.score-team'))
+                .map(el => el.textContent.toLowerCase())
+                .join(' ');
+            
+            const searchText = `${description} ${matchId} ${teamNames}`;
+            
+            if (searchText.includes(searchTerm)) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        matchCount.textContent = `${visibleCount} match${visibleCount !== 1 ? 'es' : ''}`;
+    }
+    
+    searchInput.addEventListener('input', filterMatches);
+    
+    // Clear search button
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            filterMatches();
+        }
+    });
+</script>
+{% endblock %}

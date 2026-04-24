@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Error - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <h2>⚠️ Error</h2>
+    <p>{{ error }}</p>
+    <a href="/dashboard" class="btn btn-primary">Return to Dashboard</a>
+</div>
+{% endblock %}

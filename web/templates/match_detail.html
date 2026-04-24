@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Match {{ match_id }} - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ detail.description }}</h2>
+    <div class="actions">
+        <a href="/downloads/match/{{ match_id }}/team-points" class="btn btn-primary">📥 Team Points</a>
+        <a href="/downloads/match/{{ match_id }}/scorecard" class="btn btn-secondary">📥 Scorecard</a>
+    </div>
+</div>
+
+<div class="match-results">
+    {% for team in detail.teams %}
+    <div class="team-card">
+        <div class="team-header">
+            <div class="team-rank">
+                {% if team.rank == 1 %}🥇
+                {% elif team.rank == 2 %}🥈
+                {% elif team.rank == 3 %}🥉
+                {% else %}#{{ team.rank }}
+                {% endif %}
+            </div>
+            <h3>{{ team.owner }}</h3>
+            <div class="team-total">{{ team.total }} pts</div>
+        </div>
+        
+        <div class="players-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Role</th>
+                        <th>Batting</th>
+                        <th>Bowling</th>
+                        <th>Fielding</th>
+                        <th>Generic</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, player in team.players.items() %}
+                    <tr class="{% if not player.played %}not-played{% endif %}">
+                        <td>
+                            {{ name }}
+                            {% if player.multiplier == 1.5 %}<span class="badge captain">C</span>
+                            {% elif player.multiplier == 1.25 %}<span class="badge vc">VC</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ player.role }}</td>
+                        {% if player.played %}
+                        <td>{{ player.batting }}</td>
+                        <td>{{ player.bowling }}</td>
+                        <td>{{ player.fielding }}</td>
+                        <td>{{ player.generic }}</td>
+                        <td class="total">{{ player.total }}</td>
+                        {% else %}
+                        <td colspan="5" class="dnp">Did not play</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

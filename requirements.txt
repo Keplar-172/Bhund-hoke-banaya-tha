@@ -1,0 +1,20 @@
+requests>=2.31.0
+tabulate>=0.9.0
+rapidfuzz>=3.5.0
+openpyxl>=3.1.0
+
+# Web server dependencies
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+jinja2>=3.1.3
+python-multipart>=0.0.9
+
+# Authentication & security
+bcrypt>=4.0.1
+itsdangerous>=2.1.2
+
+# Production dependencies
+slowapi>=0.1.9
+python-dotenv>=1.0.0
+gunicorn>=21.2.0
+psutil>=5.9.0

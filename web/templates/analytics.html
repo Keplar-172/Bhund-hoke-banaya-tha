@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Analytics Dashboard</h2>
+    <p class="subtitle">Comprehensive league insights and statistics</p>
+</div>
+
+<!-- Analytics Tabs -->
+<div class="tabs-container">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="players">Player Analysis</button>
+        <button class="tab-btn" data-tab="teams">Team Trends</button>
+        <button class="tab-btn" data-tab="captains">Captain Stats</button>
+    </div>
+</div>
+
+<!-- Tab Content: Overview -->
+<div class="tab-content active" id="tab-overview">
+    <div class="charts-row">
+        <!-- Match Winners Distribution -->
+        <div class="chart-card">
+            <h3>🏆 Match Wins Distribution</h3>
+            <canvas id="winsChart"></canvas>
+        </div>
+        
+        <!-- Team Performance Comparison -->
+        <div class="chart-card">
+            <h3>📈 Total Points Comparison</h3>
+            <canvas id="teamPointsChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="charts-row">
+        <!-- Performance Trends -->
+        <div class="chart-card full-width">
+            <h3>🎯 Team Performance Trends</h3>
+            <div class="trends-table-container">
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Total Points</th>
+                            <th>Avg per Match</th>
+                            <th>Matches</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in analytics.team_trends %}
+                        <tr>
+                            <td><strong>{{ team.team }}</strong></td>
+                            <td class="highlight">{{ team.total_points }}</td>
+                            <td>{{ team.avg_per_match }}</td>
+                            <td>{{ team.matches }}</td>
+                            <td>
+                                <span class="trend-indicator">
+                                    {{ team.trending }} {{ team.trend_percent }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Players -->
+<div class="tab-content" id="tab-players">
+    <div class="charts-row">
+        <!-- Top Performers -->
+        <div class="chart-card">
+            <h3>⭐ Top Performers (Total Points)</h3>
+            <canvas id="topPlayersChart"></canvas>
+        </div>
+        
+        <!-- Value Picks -->
+        <div class="chart-card">
+            <h3>💎 Best Value Picks (Points per Game)</h3>
+            <canvas id="valuePicksChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Top Performers Table -->
+    <div class="chart-card full-width">
+        <h3>🌟 Top 20 Players</h3>
+        <div class="players-grid">
+            {% for player in analytics.top_performers[:12] %}
+            <div class="player-stat-card">
+                <div class="player-stat-header">
+                    <span class="rank-badge">#{{ loop.index }}</span>
+                    <strong>{{ player.name }}</strong>
+                </div>
+                <div class="player-stat-body">
+                    <div class="stat-row">
+                        <span class="stat-label">Team:</span>
+                        <span>{{ player.owner }}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total:</span>
+                        <span class="stat-value">{{ player.total_points }} pts</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Average:</span>
+                        <span>{{ player.avg_points }} pts/match</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Matches:</span>
+                        <span>{{ player.matches }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Teams -->
+<div class="tab-content" id="tab-teams">
+    <div class="charts-row">
+        <!-- Average Points per Match -->
+        <div class="chart-card">
+            <h3>📊 Average Points per Match</h3>
+            <canvas id="avgPointsChart"></canvas>
+        </div>
+        
+        <!-- Win Rate -->
+        <div class="chart-card">
+            <h3>🎯 Podium Finishes (Wins + Runner-ups)</h3>
+            <canvas id="podiumChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Captains -->
+<div class="tab-content" id="tab-captains">
+    <div class="charts-row">
+        <!-- Captain Effectiveness -->
+        <div class="chart-card full-width">
+            <h3>👑 Captain & Vice-Captain Effectiveness</h3>
+            <canvas id="captainChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Captain Stats Table -->
+    <div class="chart-card full-width">
+        <h3>📋 Captain Statistics</h3>
+        <table class="analytics-table">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th>Captain</th>
+                    <th>Captain Points</th>
+                    <th>Vice-Captain</th>
+                    <th>VC Points</th>
+                    <th>Combined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in analytics.captain_effectiveness %}
+                <tr>
+                    <td><strong>{{ stat.team }}</strong></td>
+                    <td>{{ stat.captain }}</td>
+                    <td class="highlight">{{ stat.captain_points }}</td>
+                    <td>{{ stat.vice_captain }}</td>
+                    <td class="highlight">{{ stat.vc_points }}</td>
+                    <td class="highlight-strong">{{ stat.combined_points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            
+            // Update buttons
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update content
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `tab-${targetTab}`) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    // Chart.js theme-aware colors
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const isDark = theme === 'dark';
+    
+    const colors = {
+        primary: 'rgba(26, 115, 232, 0.8)',
+        orange: 'rgba(245, 124, 0, 0.8)',
+        purple: 'rgba(156, 39, 176, 0.8)',
+        gold: 'rgba(255, 215, 0, 0.8)',
+        green: 'rgba(76, 175, 80, 0.8)',
+        red: 'rgba(244, 67, 54, 0.8)',
+        cyan: 'rgba(0, 188, 212, 0.8)',
+        deepOrange: 'rgba(255, 152, 0, 0.8)'
+    };
+    
+    const chartColors = Object.values(colors);
+    const textColor = isDark ? '#e5e7eb' : '#1f2937';
+    const gridColor = isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.5)';
+    
+    // Match Wins Distribution
+    const winsData = {{ analytics.match_winners | tojson }};
+    new Chart(document.getElementById('winsChart'), {
+        type: 'bar',
+        data: {
+            labels: winsData.distribution.map(d => d.team),
+            datasets: [{
+                label: 'Match Wins',
+                data: winsData.distribution.map(d => d.wins),
+                backgroundColor: colors.gold,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor, font: { size: 12 } } }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor, stepSize: 1 },
+                    grid: { color: gridColor }
+                },
+                x: { ticks: { color: textColor }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Team Points Comparison
+    const teamTrends = {{ analytics.team_trends | tojson }};
+    new Chart(document.getElementById('teamPointsChart'), {
+        type: 'bar',
+        data: {
+            labels: teamTrends.map(t => t.team),
+            datasets: [{
+                label: 'Total Points',
+                data: teamTrends.map(t => t.total_points),
+                backgroundColor: chartColors,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: { ticks: { color: textColor }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Top Players
+    const topPlayers = {{ analytics.top_performers | tojson }};
+    new Chart(document.getElementById('topPlayersChart'), {
+        type: 'bar',
+        data: {
+            labels: topPlayers.slice(0, 10).map(p => p.name),
+            datasets: [{
+                label: 'Total Points',
+                data: topPlayers.slice(0, 10).map(p => p.total_points),
+                backgroundColor: colors.primary,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Value Picks
+    const valuePicks = {{ analytics.value_picks | tojson }};
+    new Chart(document.getElementById('valuePicksChart'), {
+        type: 'bar',
+        data: {
+            labels: valuePicks.slice(0, 10).map(p => p.name),
+            datasets: [{
+                label: 'Points per Game',
+                data: valuePicks.slice(0, 10).map(p => p.points_per_game),
+                backgroundColor: colors.green,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Average Points per Match
+    new Chart(document.getElementById('avgPointsChart'), {
+        type: 'line',
+        data: {
+            labels: teamTrends.map(t => t.team),
+            datasets: [{
+                label: 'Avg Points per Match',
+                data: teamTrends.map(t => t.avg_per_match),
+                borderColor: colors.purple,
+                backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                y: { 
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: { ticks: { color: textColor }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Podium Finishes
+    new Chart(document.getElementById('podiumChart'), {
+        type: 'bar',
+        data: {
+            labels: winsData.distribution.map(d => d.team),
+            datasets: [
+                {
+                    label: 'Wins',
+                    data: winsData.distribution.map(d => d.wins),
+                    backgroundColor: colors.gold
+                },
+                {
+                    label: 'Runner-ups',
+                    data: winsData.distribution.map(d => d.runner_ups),
+                    backgroundColor: 'rgba(192, 192, 192, 0.8)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                y: { 
+                    stacked: true,
+                    ticks: { color: textColor, stepSize: 1 },
+                    grid: { color: gridColor }
+                },
+                x: { stacked: true, ticks: { color: textColor }, grid: { display: false } }
+            }
+        }
+    });
+    
+    // Captain Effectiveness
+    const captainStats = {{ analytics.captain_effectiveness | tojson }};
+    new Chart(document.getElementById('captainChart'), {
+        type: 'bar',
+        data: {
+            labels: captainStats.map(c => c.team),
+            datasets: [
+                {
+                    label: 'Captain Points',
+                    data: captainStats.map(c => c.captain_points),
+                    backgroundColor: colors.gold
+                },
+                {
+                    label: 'VC Points',
+                    data: captainStats.map(c => c.vc_points),
+                    backgroundColor: 'rgba(192, 192, 192, 0.8)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                y: { 
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: { ticks: { color: textColor }, grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}

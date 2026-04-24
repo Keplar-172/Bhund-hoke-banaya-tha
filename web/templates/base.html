@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IPL Fantasy League 2026{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="/static/theme-toggle.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🏏 IPL Fantasy League 2026</h1>
+            </div>
+            {% if user %}
+            <div class="nav-menu">
+                <a href="/dashboard" class="{% if page == 'home' %}active{% endif %}">Leaderboard</a>
+                <a href="/dashboard/history" class="{% if page == 'history' %}active{% endif %}">History</a>
+                <a href="/dashboard/master" class="{% if page == 'master' %}active{% endif %}">Master Sheet</a>
+                <a href="/dashboard/analytics" class="{% if page == 'analytics' %}active{% endif %}">Analytics</a>
+                <div class="nav-user">
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <span>{{ user.username }}</span>
+                    <a href="/auth/logout" class="btn-logout">Logout</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>IPL Fantasy Premier League 2026 &copy; {{ now.year if now else 2026 }}</p>
+    </footer>
+</body>
+</html>

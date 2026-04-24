@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<!-- Stats Summary Banner -->
+<div class="stats-banner">
+    <div class="stat-card">
+        <div class="stat-icon">🏏</div>
+        <div class="stat-content">
+            <div class="stat-value">{{ stats.total_matches }}</div>
+            <div class="stat-label">Matches Played</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-highlight">
+        <div class="stat-icon">👑</div>
+        <div class="stat-content">
+            <div class="stat-value">{{ stats.top_scorer.team }}</div>
+            <div class="stat-label">{{ stats.top_scorer.points }} pts</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+            <div class="stat-value">{{ stats.avg_points }}</div>
+            <div class="stat-label">Average Points</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+            <div class="stat-value">{{ stats.total_teams }}</div>
+            <div class="stat-label">Total Teams</div>
+        </div>
+    </div>
+</div>
+
+<div class="page-header">
+    <h2>Current Leaderboard</h2>
+    <div class="actions">
+        <a href="/downloads/master" class="btn btn-primary">📥 Master Sheet</a>
+        <a href="/downloads/teams" class="btn btn-secondary">📥 Teams</a>
+        <a href="/downloads/analytics" class="btn btn-secondary">📊 Analytics</a>
+    </div>
+</div>
+
+<!-- Podium Cards for Top 3 -->
+{% if leaderboard|length >= 3 %}
+<div class="podium-container">
+    <!-- 2nd Place -->
+    <div class="podium-card podium-card-2">
+        <div class="podium-medal">🥈</div>
+        <div class="podium-rank">2nd Place</div>
+        <div class="podium-team">{{ leaderboard[1].team }}</div>
+        <div class="podium-points">{{ leaderboard[1].points }} pts</div>
+    </div>
+    
+    <!-- 1st Place (Champion) -->
+    <div class="podium-card podium-card-1">
+        <div class="podium-crown">👑</div>
+        <div class="podium-medal">🥇</div>
+        <div class="podium-rank">Champion</div>
+        <div class="podium-team">{{ leaderboard[0].team }}</div>
+        <div class="podium-points">{{ leaderboard[0].points }} pts</div>
+    </div>
+    
+    <!-- 3rd Place -->
+    <div class="podium-card podium-card-3">
+        <div class="podium-medal">🥉</div>
+        <div class="podium-rank">3rd Place</div>
+        <div class="podium-team">{{ leaderboard[2].team }}</div>
+        <div class="podium-points">{{ leaderboard[2].points }} pts</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Full Leaderboard Table -->
+<div class="leaderboard-section">
+    <h3>Complete Standings</h3>
+    <div class="leaderboard-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>Total Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in leaderboard %}
+                <tr class="{% if entry.rank <= 3 %}podium-{{ entry.rank }}{% endif %}">
+                    <td class="rank">
+                        {% if entry.rank == 1 %}🥇
+                        {% elif entry.rank == 2 %}🥈
+                        {% elif entry.rank == 3 %}🥉
+                        {% else %}{{ entry.rank }}
+                        {% endif %}
+                    </td>
+                    <td class="team-name">{{ entry.team }}</td>
+                    <td class="points">{{ entry.points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Points Distribution Chart -->
+<div class="chart-section">
+    <h3>Points Distribution</h3>
+    <div class="chart-container">
+        <canvas id="pointsChart"></canvas>
+    </div>
+</div>
+
+<script>
+    // Points Distribution Doughnut Chart
+    const ctx = document.getElementById('pointsChart').getContext('2d');
+    const pointsData = {{ stats.points_distribution | tojson }};
+    
+    // Get theme for colors
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const isDark = theme === 'dark';
+    
+    const chartColors = [
+        'rgba(26, 115, 232, 0.8)',   // Primary blue
+        'rgba(245, 124, 0, 0.8)',    // Orange
+        'rgba(156, 39, 176, 0.8)',   // Purple
+        'rgba(255, 215, 0, 0.8)',    // Gold
+        'rgba(76, 175, 80, 0.8)',    // Green
+        'rgba(244, 67, 54, 0.8)',    // Red
+        'rgba(0, 188, 212, 0.8)',    // Cyan
+        'rgba(255, 152, 0, 0.8)',    // Deep Orange
+    ];
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: pointsData.map(d => d.team),
+            datasets: [{
+                data: pointsData.map(d => d.points),
+                backgroundColor: chartColors,
+                borderColor: isDark ? '#1f2937' : '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: isDark ? '#e5e7eb' : '#1f2937',
+                        font: {
+                            size: 12,
+                            family: "'Segoe UI', system-ui, sans-serif"
+                        },
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDark ? '#374151' : '#ffffff',
+                    titleColor: isDark ? '#e5e7eb' : '#1f2937',
+                    bodyColor: isDark ? '#e5e7eb' : '#1f2937',
+                    borderColor: isDark ? '#4b5563' : '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} pts (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

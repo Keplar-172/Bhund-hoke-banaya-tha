@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Master Scoresheet - IPL Fantasy League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Master Scoresheet</h2>
+    <p class="subtitle">Cumulative standings across {{ master.num_matches }} matches</p>
+    <div class="actions">
+        <a href="/downloads/master" class="btn btn-primary">📥 Download Master Sheet</a>
+    </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="filter-bar">
+    <input type="text" id="master-search" class="search-input" placeholder="🔍 Search teams or players...">
+    <div class="filter-controls">
+        <label class="filter-label">
+            <input type="checkbox" id="show-top3" checked>
+            <span>Highlight Top 3</span>
+        </label>
+    </div>
+</div>
+
+<div class="master-table-container">
+    <table class="sortable-table" id="master-table">
+        <thead>
+            <tr>
+                <th class="sortable" data-sort="rank" data-order="asc">
+                    Rank <span class="sort-icon">↕️</span>
+                </th>
+                <th class="sortable active" data-sort="team" data-order="asc">
+                    Team <span class="sort-icon">↕️</span>
+                </th>
+                <th class="sortable" data-sort="points" data-order="desc">
+                    Total Points <span class="sort-icon">↕️</span>
+                </th>
+                <th>Players</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in master.teams %}
+            <tr class="team-row {% if team.rank <= 3 %}podium-{{ team.rank }}{% endif %}" 
+                data-rank="{{ team.rank }}" 
+                data-team="{{ team.owner|lower }}" 
+                data-points="{{ team.total }}">
+                <td class="rank">
+                    {% if team.rank == 1 %}🥇
+                    {% elif team.rank == 2 %}🥈
+                    {% elif team.rank == 3 %}🥉
+                    {% else %}{{ team.rank }}
+                    {% endif %}
+                </td>
+                <td class="team-name">
+                    <strong>{{ team.owner }}</strong>
+                </td>
+                <td class="points">{{ team.total }}</td>
+                <td class="player-count">{{ team.players|length }} players</td>
+                <td>
+                    <button class="btn btn-small expand-btn" data-team="{{ team.owner }}">
+                        <span class="expand-icon">▼</span> Players
+                    </button>
+                </td>
+            </tr>
+            <!-- Expandable Player Details Row -->
+            <tr class="player-details-row" id="players-{{ team.owner|replace(' ', '-') }}" style="display: none;">
+                <td colspan="5">
+                    <div class="player-details-container">
+                        <h4>{{ team.owner }}'s Squad</h4>
+                        <div class="player-grid">
+                            {% for player_name, player_data in team.players.items() %}
+                            <div class="player-card-mini">
+                                <div class="player-header-mini">
+                                    <span class="player-name-mini">{{ player_name }}</span>
+                                    {% if player_data.is_captain %}
+                                    <span class="badge-captain">C</span>
+                                    {% elif player_data.is_vice_captain %}
+                                    <span class="badge-vc">VC</span>
+                                    {% endif %}
+                                </div>
+                                <div class="player-stats-mini">
+                                    <span class="stat-mini">
+                                        <strong>{{ player_data.cumulative_total }}</strong> pts
+                                    </span>
+                                    <span class="stat-mini-label">{{ player_data.matches_played }} matches</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if master.matches %}
+<div class="matches-summary">
+    <h3>📊 Matches Processed ({{ master.matches|length }})</h3>
+    <div class="matches-grid">
+        {% for match in master.matches %}
+        <a href="/dashboard/match/{{ match.match_id }}" class="match-chip">
+            <span class="match-chip-id">Match {{ match.match_id }}</span>
+            <span class="match-chip-desc">{{ match.description }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Table sorting functionality
+    const table = document.getElementById('master-table');
+    const sortableHeaders = table.querySelectorAll('th.sortable');
+    const tbody = table.querySelector('tbody');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const sortBy = header.getAttribute('data-sort');
+            let order = header.getAttribute('data-order');
+            
+            // Toggle order
+            order = order === 'asc' ? 'desc' : 'asc';
+            header.setAttribute('data-order', order);
+            
+            // Remove active class from all headers
+            sortableHeaders.forEach(h => h.classList.remove('active'));
+            header.classList.add('active');
+            
+            // Update sort icon
+            header.querySelector('.sort-icon').textContent = order === 'asc' ? '↑' : '↓';
+            
+            // Get all team rows (excluding player detail rows)
+            const rows = Array.from(tbody.querySelectorAll('.team-row'));
+            
+            rows.sort((a, b) => {
+                let aVal, bVal;
+                
+                if (sortBy === 'rank' || sortBy === 'points') {
+                    aVal = parseFloat(a.getAttribute(`data-${sortBy}`));
+                    bVal = parseFloat(b.getAttribute(`data-${sortBy}`));
+                } else {
+                    aVal = a.getAttribute(`data-${sortBy}`).toLowerCase();
+                    bVal = b.getAttribute(`data-${sortBy}`).toLowerCase();
+                }
+                
+                if (order === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            // Reinsert rows with their corresponding detail rows
+            rows.forEach(row => {
+                const team = row.getAttribute('data-team');
+                const detailRow = document.getElementById(`players-${team.replace(/ /g, '-')}`);
+                tbody.appendChild(row);
+                if (detailRow) {
+                    tbody.appendChild(detailRow);
+                }
+            });
+        });
+    });
+    
+    // Expand/Collapse player details
+    const expandButtons = document.querySelectorAll('.expand-btn');
+    expandButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const team = btn.getAttribute('data-team');
+            const detailRow = document.getElementById(`players-${team.replace(/ /g, '-')}`);
+            const icon = btn.querySelector('.expand-icon');
+            
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                icon.textContent = '▲';
+                btn.classList.add('expanded');
+            } else {
+                detailRow.style.display = 'none';
+                icon.textContent = '▼';
+                btn.classList.remove('expanded');
+            }
+        });
+    });
+    
+    // Search functionality
+    const searchInput = document.getElementById('master-search');
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const rows = tbody.querySelectorAll('.team-row');
+        
+        rows.forEach(row => {
+            const team = row.getAttribute('data-team');
+            const detailRow = document.getElementById(`players-${team.replace(/ /g, '-')}`);
+            
+            if (team.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+                if (detailRow) {
+                    detailRow.style.display = 'none';
+                }
+            }
+        });
+    });
+    
+    // Top 3 highlight toggle
+    const top3Checkbox = document.getElementById('show-top3');
+    top3Checkbox.addEventListener('change', () => {
+        const podiumRows = tbody.querySelectorAll('[class*="podium-"]');
+        podiumRows.forEach(row => {
+            if (top3Checkbox.checked) {
+                // Re-add podium classes
+                const rank = parseInt(row.getAttribute('data-rank'));
+                if (rank <= 3) {
+                    row.classList.add(`podium-${rank}`);
+                }
+            } else {
+                row.classList.remove('podium-1', 'podium-2', 'podium-3');
+            }
+        });
+    });
+</script>
+{% endblock %}
