@@ -105,10 +105,15 @@ logger.info("Routers registered successfully")
 # ROUTES
 # ══════════════════════════════════════════════════════════════
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Redirect to dashboard if authenticated, otherwise to login."""
-    # Simple session check without Depends to avoid timeout issues
+@app.get("/")
+async def root():
+    """Root endpoint - simple response for Railway health."""
+    return {"status": "ok", "message": "IPL Fantasy League 2026 API running", "service": "ipl-fantasy"}
+
+
+@app.get("/login-redirect")
+async def login_redirect(request: Request):
+    """Redirect helper for authenticated access."""
     username = request.session.get("username")
     if username:
         logger.debug(f"User {username} accessing root, redirecting to dashboard")
