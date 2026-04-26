@@ -2,7 +2,7 @@
 import threading
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from web.auth import require_auth, User
@@ -12,6 +12,39 @@ router = APIRouter()
 # ── Shared state for tracking the running auto-score job ─────────────────────
 _job_lock = threading.Lock()
 _job_state: dict = {"running": False, "last_run": None, "last_result": None}
+
+
+def _get_api_key() -> str | None:
+    from config import AUTOSCORE_API_KEY
+    return AUTOSCORE_API_KEY
+
+
+def _verify_auto_score_caller(request: Request, x_api_key: str | None = Header(default=None)) -> None:
+    """
+    Allow the request if EITHER:
+      1. A valid browser session exists (admin user), OR
+      2. The X-Api-Key header matches AUTOSCORE_API_KEY env var.
+    Raises 403 if neither is satisfied.
+    """
+    # Check API key header first (used by GitHub Actions / cron)
+    api_key = _get_api_key()
+    if api_key and x_api_key and x_api_key == api_key:
+        return
+
+    # Fall back to session-based admin check
+    username = request.session.get("username") if hasattr(request, "session") else None
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required: provide X-Api-Key header or log in as admin",
+        )
+    from config import USERS_DB
+    user_data = USERS_DB.get(username, {})
+    if user_data.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
 
 
 def _run_auto_score_job() -> dict:
@@ -79,19 +112,16 @@ def _background_auto_score():
 
 @router.post("/auto-score")
 async def trigger_auto_score(
+    request: Request,
     background_tasks: BackgroundTasks,
-    user: User = Depends(require_auth),
+    x_api_key: str | None = Header(default=None),
 ):
     """
     Trigger an auto-score run in the background.
-    Fetches all IPL matches, finds unprocessed completed ones, and scores them.
-    Only one run at a time is allowed. Admin login required.
+    Auth: X-Api-Key header (for GitHub Actions) OR admin browser session.
+    Only one run at a time is allowed.
     """
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
+    _verify_auto_score_caller(request, x_api_key)
 
     with _job_lock:
         if _job_state["running"]:
@@ -112,8 +142,12 @@ async def trigger_auto_score(
 
 
 @router.get("/auto-score/status")
-async def auto_score_status(user: User = Depends(require_auth)):
+async def auto_score_status(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
     """Return the status and result of the last auto-score run."""
+    _verify_auto_score_caller(request, x_api_key)
     with _job_lock:
         return JSONResponse({
             "running": _job_state["running"],

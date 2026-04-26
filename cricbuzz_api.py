@@ -3,6 +3,14 @@ import re
 import requests
 from config import RAPIDAPI_KEY, RAPIDAPI_HOST, BASE_URL
 
+# Change this each season to avoid matching Women's IPL or previous seasons
+IPL_SEASON_YEAR = "2026"
+
+
+def _is_ipl_series(series_name: str) -> bool:
+    """Return True only for the target IPL season (e.g. IPL 2026)."""
+    return "IPL" in series_name and IPL_SEASON_YEAR in series_name
+
 
 HEADERS = {
     "x-rapidapi-key": RAPIDAPI_KEY,
@@ -33,7 +41,7 @@ def _parse_match_info(info: dict, series_name: str = "") -> dict:
 
 
 def get_recent_matches() -> list:
-    """Return list of recent/current IPL matches (last ~10 from the API)."""
+    """Return list of recent/current IPL 2026 matches (last ~10 from the API)."""
     data = _get("/matches/v1/recent")
     matches = []
     for type_match in data.get("typeMatches", []):
@@ -42,7 +50,7 @@ def get_recent_matches() -> list:
             if not series_info:
                 continue
             series_name = series_info.get("seriesName", "")
-            if "IPL" not in series_name:
+            if not _is_ipl_series(series_name):
                 continue
             for match in series_info.get("matches", []):
                 info = match.get("matchInfo", {})
@@ -52,14 +60,15 @@ def get_recent_matches() -> list:
 
 def get_ipl_series_id() -> int | None:
     """
-    Find the active IPL series ID by scanning the recent-matches endpoint.
-    Returns the first series ID whose name contains 'IPL', or None.
+    Find the IPL 2026 series ID by scanning the recent-matches endpoint.
+    Filters by both 'IPL' and the season year to avoid Women's IPL or old seasons.
+    Returns the series ID, or None if not found.
     """
     data = _get("/matches/v1/recent")
     for type_match in data.get("typeMatches", []):
         for series in type_match.get("seriesMatches", []):
             series_info = series.get("seriesAdWrapper", {})
-            if series_info and "IPL" in series_info.get("seriesName", ""):
+            if series_info and _is_ipl_series(series_info.get("seriesName", "")):
                 return series_info.get("seriesId")
     return None
 

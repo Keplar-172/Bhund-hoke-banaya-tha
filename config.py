@@ -24,6 +24,12 @@ PLAYERS_FILE = "players_data.json"
 # Generate a secure key with: python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
+# ── Automation API Key ──
+# Used by GitHub Actions / cron to call POST /api/auto-score without a browser session.
+# Set AUTOSCORE_API_KEY env var in Railway and as a GitHub Actions secret.
+# Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+AUTOSCORE_API_KEY = os.environ.get("AUTOSCORE_API_KEY")
+
 # ── Web Server Configuration ──
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8000"))

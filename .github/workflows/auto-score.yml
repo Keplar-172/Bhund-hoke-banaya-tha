@@ -1,0 +1,47 @@
+name: Auto Score IPL Matches
+
+# Runs every day at 9 PM, 11 PM, and 1 AM IST
+# (IST = UTC+5:30, so 3:30 PM, 5:30 PM, 7:30 PM UTC)
+# IPL matches typically start at 3:30 PM and 7:30 PM IST, so results are
+# available ~4 hours later.
+on:
+  schedule:
+    - cron: "0 14 * * *"   # 7:30 PM IST  (after afternoon match)
+    - cron: "0 18 * * *"   # 11:30 PM IST (after evening match)
+    - cron: "0 22 * * *"   # 3:30 AM IST  (catch-up / retry)
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+jobs:
+  auto-score:
+    name: Trigger auto-score on Railway
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Trigger auto-score
+        run: |
+          echo "Triggering auto-score on Railway..."
+          RESPONSE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.RAILWAY_APP_URL }}/api/auto-score" \
+            -H "X-Api-Key: ${{ secrets.AUTOSCORE_API_KEY }}" \
+            -H "Content-Type: application/json")
+
+          echo "HTTP status: $RESPONSE"
+          echo "Response body:"
+          cat /tmp/response.json
+
+          # 202 = started, 409 = already running (both are fine)
+          if [ "$RESPONSE" -ne 202 ] && [ "$RESPONSE" -ne 409 ]; then
+            echo "ERROR: Unexpected HTTP status $RESPONSE"
+            exit 1
+          fi
+
+      - name: Wait and check status
+        run: |
+          echo "Waiting 60 seconds for job to complete..."
+          sleep 60
+
+          echo "Checking auto-score status..."
+          curl -s \
+            "${{ secrets.RAILWAY_APP_URL }}/api/auto-score/status" \
+            -H "X-Api-Key: ${{ secrets.AUTOSCORE_API_KEY }}" | python3 -m json.tool
