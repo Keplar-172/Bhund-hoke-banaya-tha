@@ -25,10 +25,10 @@ except ImportError:
     from config import *
     ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
+from starlette.middleware.cors import CORSMiddleware
 from web.auth import get_current_user, User
 from web.routers import dashboard, downloads, auth as auth_router
 from web.logger import setup_logging, get_logger
-from web.middleware import setup_all_middleware
 
 # ══════════════════════════════════════════════════════════════
 # LOGGING SETUP
@@ -74,8 +74,15 @@ app.add_middleware(
     https_only=SESSION_COOKIE_SECURE if 'SESSION_COOKIE_SECURE' in dir() else False,
 )
 
-# Setup production middleware (security, logging, CORS, rate limiting)
-limiter = setup_all_middleware(app, sys.modules[__name__])
+# Simple CORS - allow all origins (Railway handles HTTPS/security at proxy level)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+limiter = None
 
 # ══════════════════════════════════════════════════════════════
 # STATIC FILES
