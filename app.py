@@ -121,18 +121,10 @@ logger.info("Routers registered successfully")
 
 @app.get("/")
 async def root(request: Request):
-    """Root endpoint."""
-    return {"status": "ok", "message": "IPL Fantasy League 2026 API running", "service": "ipl-fantasy"}
-
-
-@app.get("/login-redirect")
-async def login_redirect(request: Request):
-    """Redirect helper for authenticated access."""
+    """Root endpoint - redirect to dashboard if logged in, else login page."""
     username = request.session.get("username")
     if username:
-        logger.debug(f"User {username} accessing root, redirecting to dashboard")
         return RedirectResponse(url="/dashboard", status_code=302)
-    logger.debug("Anonymous user accessing root, redirecting to login")
     return RedirectResponse(url="/auth/login", status_code=302)
 
 
