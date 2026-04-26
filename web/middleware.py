@@ -129,14 +129,26 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
         if request.url.path == "/health":
             return await call_next(request)
         
+        # Check X-Forwarded-Proto header (set by Railway's load balancer)
+        forwarded_proto = request.headers.get("x-forwarded-proto", "")
+        
+        # If already HTTPS via load balancer, proceed
+        if forwarded_proto == "https":
+            return await call_next(request)
+        
         # Check if request is already HTTPS or from localhost
         if request.url.scheme == "https" or request.client.host in ["127.0.0.1", "localhost"]:
             return await call_next(request)
         
-        # Redirect to HTTPS
-        https_url = request.url.replace(scheme="https")
-        logger.info(f"Redirecting to HTTPS: {https_url}")
-        return RedirectResponse(url=str(https_url), status_code=301)
+        # Only redirect if we're sure the original request was HTTP
+        # (not just Railway's internal routing)
+        if forwarded_proto == "http":
+            https_url = request.url.replace(scheme="https")
+            logger.info(f"Redirecting to HTTPS: {https_url}")
+            return RedirectResponse(url=str(https_url), status_code=301)
+        
+        # If no forwarded proto header, allow the request (likely internal routing)
+        return await call_next(request)
 
 
 # ══════════════════════════════════════════════════════════════
