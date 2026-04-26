@@ -102,14 +102,40 @@
 
 {% if master.matches %}
 <div class="matches-summary">
-    <h3>📊 Matches Processed ({{ master.matches|length }})</h3>
-    <div class="matches-grid">
-        {% for match in master.matches %}
-        <a href="/dashboard/match/{{ match.match_id }}" class="match-chip">
-            <span class="match-chip-id">{{ match.description }}</span>
-        </a>
-        {% endfor %}
+    <div class="matches-summary-header">
+        <h3>📊 Matches Processed ({{ master.matches|length }})</h3>
+        <div class="matches-sort-controls">
+            <span class="sort-label">Sort by:</span>
+            <button class="btn btn-small ms-sort-btn active" data-sort="number">Match #</button>
+            <button class="btn btn-small ms-sort-btn" data-sort="date">Date</button>
+        </div>
     </div>
+    <table class="matches-table" id="matches-table">
+        <thead>
+            <tr>
+                <th class="ms-th-num">Match #</th>
+                <th class="ms-th-teams">Teams</th>
+                <th class="ms-th-date">Date</th>
+                <th class="ms-th-link"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in master.matches %}
+            <tr class="match-row" 
+                data-match-number="{{ match.match_number }}"
+                data-date="{{ match.date_str }}">
+                <td class="ms-td-num">
+                    <span class="match-num-badge">{{ match.match_number_label or match.match_id }}</span>
+                </td>
+                <td class="ms-td-teams">{{ match.description }}</td>
+                <td class="ms-td-date">{{ match.date_str or "—" }}</td>
+                <td class="ms-td-link">
+                    <a href="/dashboard/match/{{ match.match_id }}" class="btn btn-small">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endif %}
 
@@ -231,6 +257,32 @@
             } else {
                 row.classList.remove('podium-1', 'podium-2', 'podium-3');
             }
+        });
+    });
+
+    // Matches table sort
+    const matchesTbody = document.querySelector('#matches-table tbody');
+    document.querySelectorAll('.ms-sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ms-sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const sortBy = btn.getAttribute('data-sort');
+            const rows = Array.from(matchesTbody.querySelectorAll('.match-row'));
+
+            rows.sort((a, b) => {
+                if (sortBy === 'number') {
+                    return parseInt(a.getAttribute('data-match-number') || 0)
+                         - parseInt(b.getAttribute('data-match-number') || 0);
+                } else {
+                    // date sort: parse "26 Apr 2026" → Date
+                    const da = new Date(a.getAttribute('data-date') || 0);
+                    const db = new Date(b.getAttribute('data-date') || 0);
+                    return da - db;
+                }
+            });
+
+            rows.forEach(r => matchesTbody.appendChild(r));
         });
     });
 </script>

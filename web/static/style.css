@@ -1279,9 +1279,89 @@ tbody tr:hover {
 
 .matches-summary h3 {
     color: var(--text-primary);
-    margin-bottom: var(--space-lg);
-    font-size: 1.25rem;
+    margin-bottom: 0;
+    font-size: 1.1rem;
 }
+
+.matches-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.matches-sort-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.sort-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ms-sort-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.ms-sort-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.matches-table thead th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+    text-align: left;
+}
+
+.matches-table tbody .match-row td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.matches-table tbody .match-row:last-child td {
+    border-bottom: none;
+}
+
+.matches-table tbody .match-row:hover td {
+    background: var(--bg-secondary);
+}
+
+.match-num-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: var(--primary-light, rgba(59,130,246,0.1));
+    color: var(--primary-color);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.ms-td-num  { width: 4.5rem; }
+.ms-td-teams { font-weight: 600; color: var(--text-primary); }
+.ms-td-date { color: var(--text-secondary); white-space: nowrap; }
+.ms-td-link { width: 4rem; text-align: right; }
 
 .matches-grid {
     display: grid;

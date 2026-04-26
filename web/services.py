@@ -1,4 +1,6 @@
 """Service layer - convert storage data to web-friendly view models."""
+import re
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 
 from storage import (
@@ -86,10 +88,59 @@ def _build_match_description(match_id: int) -> str:
     return f"Match {match_id}"
 
 
+def _build_match_meta(match_id: int) -> Dict[str, Any]:
+    """
+    Extract match number, date and description from a cached scorecard.
+    Returns:
+        match_id, description, match_number (int), match_number_label (str), date_str
+    """
+    description = f"Match {match_id}"
+    match_number = 0          # used for sorting; 0 = unknown
+    match_number_label = ""   # e.g. "M38"
+    date_str = ""             # e.g. "26 Apr 2026"
+
+    data = get_cached_scorecard(match_id)
+    if data:
+        # Description from innings teams
+        innings = data.get("scorecard", [])
+        if len(innings) >= 2:
+            t1 = innings[0].get("batteamsname", "")
+            t2 = innings[1].get("batteamsname", "")
+            if t1 and t2:
+                description = f"{t1} vs {t2}"
+
+        # Match number from SEO title e.g. "38th Match,Indian Premier League 2026"
+        title = data.get("appindex", {}).get("seotitle", "")
+        m = re.search(r"(\d+)(?:st|nd|rd|th)\s+Match", title, re.I)
+        if m:
+            match_number = int(m.group(1))
+            match_number_label = f"M{match_number}"
+
+        # Approximate date from the last-updated Unix timestamp
+        ts = data.get("responselastupdated", 0)
+        if ts:
+            date_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%-d %b %Y")
+
+    return {
+        "match_id": match_id,
+        "description": description,
+        "match_number": match_number,
+        "match_number_label": match_number_label,
+        "date_str": date_str,
+    }
+
+
 def get_master_scoresheet_data() -> Dict[str, Any]:
     """Get master scoresheet with all matches and cumulative data."""
     master = load_master_scoresheet()
-    
+
+    # Build match list with meta, sorted by match number
+    raw_matches = [
+        _build_match_meta(m.get("match_id"))
+        for m in master.get("match_list", [])
+    ]
+    raw_matches.sort(key=lambda x: x["match_number"] if x["match_number"] else float("inf"))
+
     # Sort teams by cumulative total
     teams_list = []
     for owner, tdata in master.get("teams", {}).items():
@@ -98,23 +149,16 @@ def get_master_scoresheet_data() -> Dict[str, Any]:
             "total": tdata.get("cumulative_total", 0),
             "players": tdata.get("players", {})
         })
-    
+
     teams_list.sort(key=lambda x: x["total"], reverse=True)
-    
-    # Add ranks
+
     for rank, team in enumerate(teams_list, 1):
         team["rank"] = rank
-    
+
     return {
-        "matches": [
-            {
-                "match_id": m.get("match_id"),
-                "description": _build_match_description(m.get("match_id"))
-            }
-            for m in master.get("match_list", [])
-        ],
+        "matches": raw_matches,
         "teams": teams_list,
-        "num_matches": len(master.get("match_list", []))
+        "num_matches": len(raw_matches),
     }
 
 
