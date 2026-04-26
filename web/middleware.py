@@ -125,29 +125,29 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     """Redirect HTTP requests to HTTPS in production."""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Allow health check endpoint on HTTP (for Railway/platform health checks)
-        if request.url.path == "/health":
+        # Allow health check and root endpoints without HTTPS check
+        if request.url.path in ["/health", "/", "/ping"]:
+            logger.debug(f"Allowing {request.url.path} without HTTPS check")
             return await call_next(request)
         
         # Check X-Forwarded-Proto header (set by Railway's load balancer)
-        forwarded_proto = request.headers.get("x-forwarded-proto", "")
+        forwarded_proto = request.headers.get("x-forwarded-proto", "").lower()
         
-        # If already HTTPS via load balancer, proceed
-        if forwarded_proto == "https":
+        # If already HTTPS via load balancer OR no proto header (Railway internal), proceed
+        if forwarded_proto in ["", "https"]:
             return await call_next(request)
         
         # Check if request is already HTTPS or from localhost
-        if request.url.scheme == "https" or request.client.host in ["127.0.0.1", "localhost"]:
+        if request.url.scheme == "https" or (request.client and request.client.host in ["127.0.0.1", "localhost"]):
             return await call_next(request)
         
-        # Only redirect if we're sure the original request was HTTP
-        # (not just Railway's internal routing)
+        # Only redirect if explicitly HTTP from client
         if forwarded_proto == "http":
             https_url = request.url.replace(scheme="https")
             logger.info(f"Redirecting to HTTPS: {https_url}")
             return RedirectResponse(url=str(https_url), status_code=301)
         
-        # If no forwarded proto header, allow the request (likely internal routing)
+        # Default: allow the request
         return await call_next(request)
 
 

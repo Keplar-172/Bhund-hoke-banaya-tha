@@ -106,8 +106,11 @@ logger.info("Routers registered successfully")
 # ══════════════════════════════════════════════════════════════
 
 @app.get("/")
-async def root():
+async def root(request: Request):
     """Root endpoint - simple response for Railway health."""
+    logger.info("🎯 ROOT ROUTE HIT!")
+    logger.info(f"   Scheme: {request.url.scheme}")
+    logger.info(f"   Headers: {dict(request.headers)}")
     return {"status": "ok", "message": "IPL Fantasy League 2026 API running", "service": "ipl-fantasy"}
 
 
