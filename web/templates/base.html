@@ -15,7 +15,10 @@
                 <h1>🏏 IPL Fantasy League 2026</h1>
             </div>
             {% if user %}
-            <div class="nav-menu">
+            <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="nav-menu" id="nav-menu">
                 <a href="/dashboard" class="{% if page == 'home' %}active{% endif %}">Leaderboard</a>
                 <a href="/dashboard/history" class="{% if page == 'history' %}active{% endif %}">History</a>
                 <a href="/dashboard/master" class="{% if page == 'master' %}active{% endif %}">Master Sheet</a>
@@ -39,5 +42,23 @@
     <footer>
         <p>IPL Fantasy Premier League 2026 &copy; {{ now.year if now else 2026 }}</p>
     </footer>
+    <script>
+        // Mobile hamburger toggle
+        const hamburger = document.getElementById('nav-hamburger');
+        const navMenu = document.getElementById('nav-menu');
+        if (hamburger && navMenu) {
+            hamburger.addEventListener('click', () => {
+                const open = navMenu.classList.toggle('nav-menu-open');
+                hamburger.classList.toggle('nav-hamburger-open', open);
+            });
+            // Close menu on nav link click
+            navMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navMenu.classList.remove('nav-menu-open');
+                    hamburger.classList.remove('nav-hamburger-open');
+                });
+            });
+        }
+    </script>
 </body>
 </html>
