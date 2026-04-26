@@ -102,8 +102,7 @@
     <div class="matches-grid">
         {% for match in master.matches %}
         <a href="/dashboard/match/{{ match.match_id }}" class="match-chip">
-            <span class="match-chip-id">Match {{ match.match_id }}</span>
-            <span class="match-chip-desc">{{ match.description }}</span>
+            <span class="match-chip-id">{{ match.description }}</span>
         </a>
         {% endfor %}
     </div>

@@ -11,8 +11,9 @@ def calculate_player_consistency(master_data: Dict) -> List[Dict[str, Any]]:
     
     for owner, team_data in master_data.get("teams", {}).items():
         for player_name, player_data in team_data.get("players", {}).items():
-            matches_played = player_data.get("matches_played", 0)
-            cumulative_total = player_data.get("cumulative_total", 0)
+            cumulative = player_data.get("cumulative", {})
+            matches_played = cumulative.get("matches_played", 0)
+            cumulative_total = cumulative.get("total", 0)
             
             if matches_played > 0:
                 avg_score = cumulative_total / matches_played
@@ -82,10 +83,10 @@ def calculate_captain_effectiveness(master_data: Dict, teams_data: Dict) -> List
         players = team_data.get("players", {})
         
         if captain and captain in players:
-            captain_points = players[captain].get("cumulative_total", 0)
+            captain_points = players[captain].get("cumulative", {}).get("total", 0)
         
         if vice_captain and vice_captain in players:
-            vc_points = players[vice_captain].get("cumulative_total", 0)
+            vc_points = players[vice_captain].get("cumulative", {}).get("total", 0)
         
         captain_stats.append({
             "team": owner,
@@ -106,8 +107,9 @@ def calculate_value_picks(master_data: Dict) -> List[Dict[str, Any]]:
     
     for owner, team_data in master_data.get("teams", {}).items():
         for player_name, player_data in team_data.get("players", {}).items():
-            matches = player_data.get("matches_played", 0)
-            total = player_data.get("cumulative_total", 0)
+            cumulative = player_data.get("cumulative", {})
+            matches = cumulative.get("matches_played", 0)
+            total = cumulative.get("total", 0)
             
             if matches >= 3:  # Min 3 matches
                 ppg = total / matches

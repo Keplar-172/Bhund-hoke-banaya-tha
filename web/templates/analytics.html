@@ -200,6 +200,10 @@
         });
     });
     
+    // Register datalabels plugin; disable globally, enable per-chart as needed
+    Chart.register(ChartDataLabels);
+    Chart.defaults.plugins.datalabels = { display: false };
+
     // Chart.js theme-aware colors
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
     const isDark = theme === 'dark';
@@ -297,7 +301,15 @@
             maintainAspectRatio: false,
             indexAxis: 'y',
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    color: textColor,
+                    font: { size: 10, weight: '600' },
+                    formatter: v => Math.round(v)
+                }
             },
             scales: {
                 x: { 
@@ -327,7 +339,15 @@
             maintainAspectRatio: false,
             indexAxis: 'y',
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    color: textColor,
+                    font: { size: 10, weight: '600' },
+                    formatter: v => v.toFixed(1)
+                }
             },
             scales: {
                 x: { 
@@ -429,7 +449,15 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { labels: { color: textColor } }
+                legend: { labels: { color: textColor } },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    color: textColor,
+                    font: { size: 10, weight: '600' },
+                    formatter: v => v > 0 ? Math.round(v) : ''
+                }
             },
             scales: {
                 y: { 

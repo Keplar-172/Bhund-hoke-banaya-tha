@@ -108,7 +108,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-primary);
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.5;
     transition: background-color var(--transition-base), color var(--transition-base);
 }
 
@@ -386,13 +387,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-md);
     flex-wrap: wrap;
-    gap: var(--space-lg);
+    gap: var(--space-sm);
 }
 
 .page-header h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: var(--text-primary);
     font-weight: 700;
 }
@@ -1356,15 +1357,15 @@ tbody tr:hover {
 
 .chart-card h3 {
     color: var(--text-primary);
-    margin-bottom: var(--space-lg);
-    font-size: 1.25rem;
+    margin-bottom: var(--space-sm);
+    font-size: 1rem;
     font-weight: 600;
 }
 
 /* Fixed-height wrapper prevents Chart.js infinite-grow bug */
 .chart-wrapper {
     position: relative;
-    height: 300px;
+    height: 260px;
     width: 100%;
 }
 

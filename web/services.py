@@ -73,6 +73,19 @@ def get_match_history_data() -> List[Dict[str, Any]]:
     return list(reversed(history))
 
 
+def _build_match_description(match_id: int) -> str:
+    """Build human-readable description like 'SRH vs RCB' from scorecard data."""
+    data = get_cached_scorecard(match_id)
+    if data:
+        innings = data.get("scorecard", [])
+        if len(innings) >= 2:
+            t1 = innings[0].get("batteamsname", "")
+            t2 = innings[1].get("batteamsname", "")
+            if t1 and t2:
+                return f"{t1} vs {t2}"
+    return f"Match {match_id}"
+
+
 def get_master_scoresheet_data() -> Dict[str, Any]:
     """Get master scoresheet with all matches and cumulative data."""
     master = load_master_scoresheet()
@@ -93,7 +106,13 @@ def get_master_scoresheet_data() -> Dict[str, Any]:
         team["rank"] = rank
     
     return {
-        "matches": master.get("match_list", []),
+        "matches": [
+            {
+                "match_id": m.get("match_id"),
+                "description": _build_match_description(m.get("match_id"))
+            }
+            for m in master.get("match_list", [])
+        ],
         "teams": teams_list,
         "num_matches": len(master.get("match_list", []))
     }

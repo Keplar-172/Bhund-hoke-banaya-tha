@@ -115,6 +115,10 @@
 
 <script>
     // Points Distribution Doughnut Chart
+    Chart.register(ChartDataLabels);
+    // Disable datalabels globally on this page, then enable only for this chart
+    Chart.defaults.plugins.datalabels = { display: false };
+
     const ctx = document.getElementById('pointsChart').getContext('2d');
     const pointsData = {{ stats.points_distribution | tojson }};
     
@@ -123,14 +127,17 @@
     const isDark = theme === 'dark';
     
     const chartColors = [
-        'rgba(26, 115, 232, 0.8)',   // Primary blue
-        'rgba(245, 124, 0, 0.8)',    // Orange
-        'rgba(156, 39, 176, 0.8)',   // Purple
-        'rgba(255, 215, 0, 0.8)',    // Gold
-        'rgba(76, 175, 80, 0.8)',    // Green
-        'rgba(244, 67, 54, 0.8)',    // Red
-        'rgba(0, 188, 212, 0.8)',    // Cyan
-        'rgba(255, 152, 0, 0.8)',    // Deep Orange
+        'rgba(26, 115, 232, 0.85)',
+        'rgba(245, 124, 0, 0.85)',
+        'rgba(156, 39, 176, 0.85)',
+        'rgba(255, 215, 0, 0.85)',
+        'rgba(76, 175, 80, 0.85)',
+        'rgba(244, 67, 54, 0.85)',
+        'rgba(0, 188, 212, 0.85)',
+        'rgba(255, 152, 0, 0.85)',
+        'rgba(63, 81, 181, 0.85)',
+        'rgba(0, 150, 136, 0.85)',
+        'rgba(233, 30, 99, 0.85)',
     ];
     
     new Chart(ctx, {
@@ -149,17 +156,17 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: isDark ? '#e5e7eb' : '#1f2937',
-                        font: {
-                            size: 12,
-                            family: "'Segoe UI', system-ui, sans-serif"
-                        },
-                        padding: 15,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    color: '#fff',
+                    textAlign: 'center',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value, ctx) => {
+                        const label = ctx.chart.data.labels[ctx.dataIndex];
+                        const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const pct = ((value / total) * 100).toFixed(1);
+                        return label + '\n' + value + ' pts\n(' + pct + '%)';
                     }
                 },
                 tooltip: {
