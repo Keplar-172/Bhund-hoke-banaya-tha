@@ -106,13 +106,15 @@ logger.info("Routers registered successfully")
 # ══════════════════════════════════════════════════════════════
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request, user: User = Depends(get_current_user)):
+async def root(request: Request):
     """Redirect to dashboard if authenticated, otherwise to login."""
-    if user:
-        logger.debug(f"User {user.username} accessing root, redirecting to dashboard")
-        return RedirectResponse(url="/dashboard")
+    # Simple session check without Depends to avoid timeout issues
+    username = request.session.get("username")
+    if username:
+        logger.debug(f"User {username} accessing root, redirecting to dashboard")
+        return RedirectResponse(url="/dashboard", status_code=302)
     logger.debug("Anonymous user accessing root, redirecting to login")
-    return RedirectResponse(url="/auth/login")
+    return RedirectResponse(url="/auth/login", status_code=302)
 
 
 @app.get("/health")
