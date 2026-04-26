@@ -28,6 +28,16 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Deployment artifacts (not needed in container)
+nixpacks.toml
+Procfile
+.railwayignore
+deploy.sh
+deployment/
+
+# Markdown docs
+*.md
+
 # Logs (we'll create fresh in container)
 *.log
 logs/
