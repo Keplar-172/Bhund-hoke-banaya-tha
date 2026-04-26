@@ -32,10 +32,9 @@
             <!-- Match Badge -->
             <div class="match-badge">
                 <div class="badge-header">
-                    <span class="badge-id">Match {{ match.match_id }}</span>
-                    <span class="badge-date">{{ loop.revindex }}</span>
+                    <h4 class="badge-title">{{ match.description }}</h4>
+                    <span class="badge-date">Game {{ loop.revindex }}</span>
                 </div>
-                <h4 class="badge-title">{{ match.description }}</h4>
             </div>
             
             <!-- Scores Grid -->
@@ -44,13 +43,10 @@
                 {% for team, score in sorted_teams %}
                 <div class="score-item {% if loop.first %}winner{% endif %}">
                     {% if loop.first %}
-                    <div class="winner-badge">👑 Winner</div>
+                    <span class="winner-badge">👑</span>
                     {% endif %}
                     <div class="score-team">{{ team }}</div>
                     <div class="score-points">{{ score }} pts</div>
-                    {% if loop.first %}
-                    <div class="winner-indicator">🏆</div>
-                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

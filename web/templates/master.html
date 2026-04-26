@@ -43,7 +43,7 @@
             {% for team in master.teams %}
             <tr class="team-row {% if team.rank <= 3 %}podium-{{ team.rank }}{% endif %}" 
                 data-rank="{{ team.rank }}" 
-                data-team="{{ team.owner|lower }}" 
+                data-team="{{ team.owner }}" 
                 data-points="{{ team.total }}">
                 <td class="rank">
                     {% if team.rank == 1 %}🥇
@@ -67,23 +67,27 @@
             <tr class="player-details-row" id="players-{{ team.owner|replace(' ', '-') }}" style="display: none;">
                 <td colspan="5">
                     <div class="player-details-container">
-                        <h4>{{ team.owner }}'s Squad</h4>
+                        <h4>{{ team.owner }}'s Squad <span class="squad-total">{{ team.total }} pts total</span></h4>
                         <div class="player-grid">
-                            {% for player_name, player_data in team.players.items() %}
-                            <div class="player-card-mini">
+                            {% set sorted_players = team.players.items()|list|sort(attribute='1.cumulative.total', reverse=True) %}
+                            {% for player_name, player_data in sorted_players %}
+                            <div class="player-card-mini role-{{ player_data.role|lower|replace('-','') }}">
                                 <div class="player-header-mini">
                                     <span class="player-name-mini">{{ player_name }}</span>
-                                    {% if player_data.is_captain %}
-                                    <span class="badge-captain">C</span>
-                                    {% elif player_data.is_vice_captain %}
-                                    <span class="badge-vc">VC</span>
-                                    {% endif %}
+                                    <div class="player-badges">
+                                        {% if player_data.is_captain %}
+                                        <span class="badge-captain">C</span>
+                                        {% elif player_data.is_vice_captain %}
+                                        <span class="badge-vc">VC</span>
+                                        {% endif %}
+                                        <span class="role-pill role-{{ player_data.role|lower|replace('-','') }}">{{ player_data.role[:3]|upper }}</span>
+                                    </div>
                                 </div>
                                 <div class="player-stats-mini">
                                     <span class="stat-mini">
-                                        <strong>{{ player_data.cumulative_total }}</strong> pts
+                                        <strong>{{ player_data.cumulative.total }}</strong> pts
                                     </span>
-                                    <span class="stat-mini-label">{{ player_data.matches_played }} matches</span>
+                                    <span class="stat-mini-label">{{ player_data.cumulative.matches_played }} matches · avg {{ (player_data.cumulative.total / player_data.cumulative.matches_played)|round(1) if player_data.cumulative.matches_played > 0 else 0 }}</span>
                                 </div>
                             </div>
                             {% endfor %}
@@ -152,6 +156,13 @@
                 }
             });
             
+            // Collapse all expanded rows before reordering
+            tbody.querySelectorAll('.player-details-row').forEach(dr => { dr.style.display = 'none'; });
+            tbody.querySelectorAll('.expand-btn').forEach(btn => {
+                btn.querySelector('.expand-icon').textContent = '▼';
+                btn.classList.remove('expanded');
+            });
+            
             // Reinsert rows with their corresponding detail rows
             rows.forEach(row => {
                 const team = row.getAttribute('data-team');
@@ -195,7 +206,7 @@
             const team = row.getAttribute('data-team');
             const detailRow = document.getElementById(`players-${team.replace(/ /g, '-')}`);
             
-            if (team.includes(searchTerm)) {
+            if (team.toLowerCase().includes(searchTerm)) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';

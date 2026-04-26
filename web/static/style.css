@@ -540,16 +540,16 @@ thead {
 }
 
 thead th {
-    padding: var(--space-lg);
+    padding: 0.65rem var(--space-md);
     text-align: left;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 tbody td {
-    padding: var(--space-lg);
+    padding: 0.55rem var(--space-md);
     border-bottom: 1px solid var(--border-color);
     transition: background-color var(--transition-fast);
 }
@@ -563,10 +563,10 @@ tbody tr:hover {
 }
 
 .rank {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: bold;
     text-align: center;
-    min-width: 60px;
+    min-width: 50px;
 }
 
 .team-name {
@@ -575,10 +575,10 @@ tbody tr:hover {
 }
 
 .points {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--primary-color);
     text-align: right;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
 }
 
 .total {
@@ -815,7 +815,7 @@ tbody tr:hover {
     display: flex;
     gap: var(--space-md);
     align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     flex-wrap: wrap;
 }
 
@@ -863,7 +863,7 @@ tbody tr:hover {
 .timeline-item {
     position: relative;
     padding-left: 80px;
-    padding-bottom: var(--space-xxl);
+    padding-bottom: var(--space-xl);
     transition: opacity var(--transition-base);
 }
 
@@ -942,7 +942,7 @@ tbody tr:hover {
 
 .badge-title {
     color: var(--text-primary);
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
 }
@@ -950,54 +950,53 @@ tbody tr:hover {
 /* Scores Grid */
 .scores-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
 .score-item {
     background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
     position: relative;
     transition: all var(--transition-fast);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .score-item:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
 
 .score-item.winner {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, var(--bg-secondary) 100%);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, var(--bg-secondary) 100%);
     border-color: var(--gold);
-    border-width: 3px;
+    border-width: 2px;
 }
 
 .winner-badge {
-    position: absolute;
-    top: -10px;
-    right: 10px;
-    background: var(--gold);
-    color: var(--text-primary);
-    padding: 0.25rem 0.6rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-sm);
+    color: #7a5c00;
+    background: rgba(255,215,0,0.3);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    margin-right: 0.3rem;
+    flex-shrink: 0;
 }
 
 .score-team {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .score-points {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--primary-color);
 }
@@ -1007,12 +1006,7 @@ tbody tr:hover {
 }
 
 .winner-indicator {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    opacity: 0.3;
+    display: none;
 }
 
 /* Match Stats */
@@ -1149,26 +1143,39 @@ tbody tr:hover {
 }
 
 .player-details-container {
-    padding: var(--space-lg);
+    padding: var(--space-md);
 }
 
 .player-details-container h4 {
     color: var(--text-primary);
     margin-bottom: var(--space-md);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.squad-total {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    background: var(--info-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
 }
 
 .player-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-sm);
 }
 
 .player-card-mini {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    padding: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-top: 3px solid var(--border-color);
     transition: all var(--transition-fast);
 }
 
@@ -1177,19 +1184,51 @@ tbody tr:hover {
     box-shadow: var(--shadow-sm);
 }
 
+/* Role-based top border colors */
+.role-batsman { border-top-color: var(--primary-color); }
+.role-bowler { border-top-color: var(--danger-color); }
+.role-allrounder { border-top-color: var(--success-color); }
+.role-wicketkeeper { border-top-color: var(--accent-orange); }
+
 .player-header-mini {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-sm);
-    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.3rem;
+    gap: 0.25rem;
 }
 
 .player-name-mini {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    flex: 1;
 }
+
+.player-badges {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Role pill */
+.role-pill {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.role-pill.role-batsman { background: rgba(26,115,232,0.1); color: var(--primary-color); border-color: var(--primary-color); }
+.role-pill.role-bowler { background: rgba(217,48,37,0.1); color: var(--danger-color); border-color: var(--danger-color); }
+.role-pill.role-allrounder { background: rgba(30,142,62,0.1); color: var(--success-color); border-color: var(--success-color); }
+.role-pill.role-wicketkeeper { background: rgba(245,124,0,0.1); color: var(--accent-orange); border-color: var(--accent-orange); }
 
 .badge-captain,
 .badge-vc {
@@ -1215,18 +1254,18 @@ tbody tr:hover {
 .player-stats-mini {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.15rem;
 }
 
 .stat-mini {
     color: var(--primary-color);
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 
 .stat-mini-label {
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
 }
 
 /* Matches Summary */
@@ -1246,15 +1285,15 @@ tbody tr:hover {
 
 .matches-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-sm);
 }
 
 .match-chip {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 0.4rem;
-    padding: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -1266,12 +1305,13 @@ tbody tr:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
     border-color: var(--primary-color);
+    background: var(--info-light);
 }
 
 .match-chip-id {
     font-weight: 600;
     color: var(--primary-color);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .match-chip-desc {
@@ -1545,8 +1585,12 @@ footer {
     color: white !important;
 }
 
+.stat-card-border-blue { border-left: 4px solid var(--primary-color); }
+.stat-card-border-green { border-left: 4px solid var(--success-color); }
+.stat-card-border-purple { border-left: 4px solid var(--accent-purple); }
+
 .stat-icon {
-    font-size: 2.5rem;
+    font-size: 2rem;
     opacity: 0.9;
 }
 
@@ -1555,7 +1599,7 @@ footer {
 }
 
 .stat-value {
-    font-size: 1.75rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.2;
@@ -1597,25 +1641,25 @@ footer {
     order: 2;
     border-color: var(--gold);
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--card-bg) 100%);
-    min-height: 280px;
+    min-height: 220px;
 }
 
 .podium-card-2 {
     order: 1;
     border-color: var(--silver);
     background: linear-gradient(135deg, rgba(192, 192, 192, 0.1) 0%, var(--card-bg) 100%);
-    min-height: 240px;
+    min-height: 190px;
 }
 
 .podium-card-3 {
     order: 3;
     border-color: var(--bronze);
     background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, var(--card-bg) 100%);
-    min-height: 240px;
+    min-height: 190px;
 }
 
 .podium-crown {
-    font-size: 3rem;
+    font-size: 2rem;
     margin-bottom: var(--space-xs);
     animation: float 3s ease-in-out infinite;
 }
@@ -1630,8 +1674,8 @@ footer {
 }
 
 .podium-medal {
-    font-size: 4rem;
-    margin-bottom: var(--space-md);
+    font-size: 2.5rem;
+    margin-bottom: var(--space-sm);
 }
 
 .podium-rank {
@@ -1644,14 +1688,14 @@ footer {
 }
 
 .podium-team {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .podium-points {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--primary-color);
 }

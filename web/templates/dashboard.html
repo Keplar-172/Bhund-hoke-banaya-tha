@@ -5,7 +5,7 @@
 {% block content %}
 <!-- Stats Summary Banner -->
 <div class="stats-banner">
-    <div class="stat-card">
+    <div class="stat-card stat-card-border-blue">
         <div class="stat-icon">🏏</div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.total_matches }}</div>
@@ -16,21 +16,21 @@
         <div class="stat-icon">👑</div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.top_scorer.team }}</div>
-            <div class="stat-label">{{ stats.top_scorer.points }} pts</div>
+            <div class="stat-label">Leader · {{ stats.top_scorer.points }} pts</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-border-green">
         <div class="stat-icon">📊</div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.avg_points }}</div>
-            <div class="stat-label">Average Points</div>
+            <div class="stat-label">League Avg pts</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-border-purple">
         <div class="stat-icon">👥</div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.total_teams }}</div>
-            <div class="stat-label">Total Teams</div>
+            <div class="stat-label">Teams</div>
         </div>
     </div>
 </div>
