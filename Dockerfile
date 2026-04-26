@@ -1,5 +1,5 @@
-# Use Python 3.14 slim image (matches your local environment)
-FROM python:3.14-slim
+# Use Python 3.12 slim image (LTS, smaller footprint than 3.14)
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
@@ -43,7 +43,7 @@ EXPOSE 8000
 # Use shell form to allow $PORT variable substitution from Railway
 CMD gunicorn app:app \
     --bind 0.0.0.0:${PORT:-8000} \
-    --workers 2 \
+    --workers 1 \
     --worker-class uvicorn.workers.UvicornWorker \
     --timeout 120 \
     --access-logfile - \
