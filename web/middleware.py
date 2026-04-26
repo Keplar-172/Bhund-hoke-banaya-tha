@@ -125,6 +125,10 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     """Redirect HTTP requests to HTTPS in production."""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Allow health check endpoint on HTTP (for Railway/platform health checks)
+        if request.url.path == "/health":
+            return await call_next(request)
+        
         # Check if request is already HTTPS or from localhost
         if request.url.scheme == "https" or request.client.host in ["127.0.0.1", "localhost"]:
             return await call_next(request)
