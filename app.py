@@ -149,8 +149,8 @@ async def health_check():
     import psutil
     from datetime import datetime
     
-    # Get system metrics
-    cpu_percent = psutil.cpu_percent(interval=0.1)
+    # Get system metrics (non-blocking - uses cached value from last interval)
+    cpu_percent = psutil.cpu_percent()
     memory = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
     
