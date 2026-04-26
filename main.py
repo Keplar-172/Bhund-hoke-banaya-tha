@@ -24,6 +24,7 @@ Usage:
     python main.py players [team]           Show players database (optional: filter by IPL team)
     python main.py rescore <match_id>    Remove & recalculate scores for a match
     python main.py runserver                Start web server (default: http://localhost:8000)
+    python main.py auto-score               Auto-detect and score all new completed IPL matches
 """
 import os
 import sys
@@ -32,7 +33,7 @@ from datetime import date
 MATCH_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Match data")
 os.makedirs(MATCH_DATA_DIR, exist_ok=True)
 
-from cricbuzz_api import get_recent_matches, get_scorecard, get_match_mom
+from cricbuzz_api import get_recent_matches, get_all_ipl_matches, get_scorecard, get_match_mom
 from calculator import calculate_match_scores
 from leaderboard import (
     show_leaderboard, show_match_history, show_match_detail,
@@ -348,6 +349,56 @@ def cmd_players(ipl_team_filter: str = None):
     print()
 
 
+def cmd_auto_score():
+    """
+    Automatically detect and process all completed IPL matches that have
+    not been scored yet. Fetches the full season match list from the API,
+    skips already-processed matches, and runs cmd_score() for each new one.
+    """
+    print("\nFetching full IPL match list from API...")
+    try:
+        matches = get_all_ipl_matches()
+    except Exception as e:
+        print(f"  ERROR fetching matches: {e}\n")
+        return
+
+    if not matches:
+        print("  No IPL matches returned. Check API key or season dates.\n")
+        return
+
+    completed = [
+        m for m in matches
+        if m.get("state", "").lower() == "complete"
+        and m.get("match_id")
+    ]
+    new_matches = [m for m in completed if not is_match_processed(m["match_id"])]
+
+    total = len(matches)
+    done = len(completed) - len(new_matches)
+    print(f"  Season total: {total} matches | Completed: {len(completed)} | "
+          f"Already scored: {done} | New to process: {len(new_matches)}")
+
+    if not new_matches:
+        print("  All completed matches already processed. Nothing to do.\n")
+        return
+
+    print(f"\n  Processing {len(new_matches)} new match(es):\n")
+    for m in new_matches:
+        print(f"  → {m['team1']} vs {m['team2']}  (ID: {m['match_id']})")
+
+    print()
+    for m in new_matches:
+        print(f"\n{'='*60}")
+        print(f"  {m['team1']} vs {m['team2']}  (Match ID: {m['match_id']})")
+        print('='*60)
+        try:
+            cmd_score(m["match_id"])
+        except Exception as e:
+            print(f"  ERROR processing match {m['match_id']}: {e}")
+
+    print("\n✓ Auto-score complete.\n")
+
+
 def cmd_runserver():
     """Start the web server."""
     import uvicorn
@@ -419,6 +470,8 @@ def main():
         cmd_rescore(int(args[1]))
     elif args[0] == "players":
         cmd_players(args[1] if len(args) >= 2 else None)
+    elif args[0] == "auto-score":
+        cmd_auto_score()
     elif args[0] == "runserver":
         cmd_runserver()
     else:

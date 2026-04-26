@@ -29,7 +29,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 try:
     from web.auth import get_current_user, User
-    from web.routers import dashboard, downloads, auth as auth_router
+    from web.routers import dashboard, downloads, auth as auth_router, api as api_router
     from web.logger import setup_logging, get_logger
 except Exception as _import_err:
     import traceback
@@ -112,6 +112,7 @@ templates = Jinja2Templates(directory=templates_dir)
 app.include_router(auth_router.router, prefix="/auth", tags=["authentication"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(downloads.router, prefix="/downloads", tags=["downloads"])
+app.include_router(api_router.router, prefix="/api", tags=["api"])
 
 logger.info("Routers registered successfully")
 

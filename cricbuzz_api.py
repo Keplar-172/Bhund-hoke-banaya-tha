@@ -19,8 +19,21 @@ def _get(endpoint: str) -> dict:
 
 # ── Match Listing ────────────────────────────────────────────────────────────
 
+def _parse_match_info(info: dict, series_name: str = "") -> dict:
+    """Convert raw matchInfo dict into a normalised match record."""
+    return {
+        "match_id": info.get("matchId"),
+        "description": info.get("matchDesc", ""),
+        "status": info.get("status", ""),
+        "team1": info.get("team1", {}).get("teamSName", ""),
+        "team2": info.get("team2", {}).get("teamSName", ""),
+        "state": info.get("state", ""),
+        "series_name": series_name,
+    }
+
+
 def get_recent_matches() -> list:
-    """Return list of recent/current IPL matches."""
+    """Return list of recent/current IPL matches (last ~10 from the API)."""
     data = _get("/matches/v1/recent")
     matches = []
     for type_match in data.get("typeMatches", []):
@@ -28,19 +41,56 @@ def get_recent_matches() -> list:
             series_info = series.get("seriesAdWrapper", {})
             if not series_info:
                 continue
+            series_name = series_info.get("seriesName", "")
+            if "IPL" not in series_name:
+                continue
             for match in series_info.get("matches", []):
                 info = match.get("matchInfo", {})
-                if "IPL" in series_info.get("seriesName", ""):
-                    matches.append({
-                        "match_id": info.get("matchId"),
-                        "description": info.get("matchDesc", ""),
-                        "status": info.get("status", ""),
-                        "team1": info.get("team1", {}).get("teamSName", ""),
-                        "team2": info.get("team2", {}).get("teamSName", ""),
-                        "state": info.get("state", ""),
-                        "series_name": series_info.get("seriesName", ""),
-                    })
+                matches.append(_parse_match_info(info, series_name))
     return matches
+
+
+def get_ipl_series_id() -> int | None:
+    """
+    Find the active IPL series ID by scanning the recent-matches endpoint.
+    Returns the first series ID whose name contains 'IPL', or None.
+    """
+    data = _get("/matches/v1/recent")
+    for type_match in data.get("typeMatches", []):
+        for series in type_match.get("seriesMatches", []):
+            series_info = series.get("seriesAdWrapper", {})
+            if series_info and "IPL" in series_info.get("seriesName", ""):
+                return series_info.get("seriesId")
+    return None
+
+
+def get_series_matches(series_id: int) -> list:
+    """
+    Fetch ALL matches for a given series (full season).
+    Uses the /series/v1/{seriesId}/matches endpoint.
+    """
+    data = _get(f"/series/v1/{series_id}/matches")
+    matches = []
+    for group in data.get("matchDetails", []):
+        for match in group.get("matchDetailsMap", {}).get("match", []):
+            info = match.get("matchInfo", {})
+            matches.append(_parse_match_info(info))
+    return matches
+
+
+def get_all_ipl_matches() -> list:
+    """
+    Return ALL IPL matches for the current season.
+    Fetches the series ID first, then all matches for that series.
+    Falls back to get_recent_matches() if series ID cannot be found.
+    """
+    series_id = get_ipl_series_id()
+    if series_id:
+        matches = get_series_matches(series_id)
+        if matches:
+            return matches
+    # Fallback: only returns recent matches window (~10 matches)
+    return get_recent_matches()
 
 
 def get_scorecard(match_id: int) -> dict:
