@@ -26,9 +26,16 @@ except ImportError:
     ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 from starlette.middleware.cors import CORSMiddleware
-from web.auth import get_current_user, User
-from web.routers import dashboard, downloads, auth as auth_router
-from web.logger import setup_logging, get_logger
+
+try:
+    from web.auth import get_current_user, User
+    from web.routers import dashboard, downloads, auth as auth_router
+    from web.logger import setup_logging, get_logger
+except Exception as _import_err:
+    import traceback
+    print(f"FATAL: Failed to import web modules: {_import_err}")
+    traceback.print_exc()
+    raise
 
 # ══════════════════════════════════════════════════════════════
 # LOGGING SETUP
