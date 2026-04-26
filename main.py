@@ -30,6 +30,13 @@ import os
 import sys
 from datetime import date
 
+# Load .env file so RAPIDAPI_KEY etc. are available when running via CLI
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed; rely on shell environment
+
 MATCH_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Match data")
 os.makedirs(MATCH_DATA_DIR, exist_ok=True)
 

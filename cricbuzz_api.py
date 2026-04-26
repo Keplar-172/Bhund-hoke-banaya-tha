@@ -8,8 +8,9 @@ IPL_SEASON_YEAR = "2026"
 
 
 def _is_ipl_series(series_name: str) -> bool:
-    """Return True only for the target IPL season (e.g. IPL 2026)."""
-    return "IPL" in series_name and IPL_SEASON_YEAR in series_name
+    """Return True only for the target IPL season (e.g. Indian Premier League 2026)."""
+    name = series_name.upper()
+    return ("IPL" in name or "INDIAN PREMIER LEAGUE" in name) and IPL_SEASON_YEAR in name
 
 
 HEADERS = {
@@ -89,16 +90,20 @@ def get_series_matches(series_id: int) -> list:
 
 def get_all_ipl_matches() -> list:
     """
-    Return ALL IPL matches for the current season.
-    Fetches the series ID first, then all matches for that series.
-    Falls back to get_recent_matches() if series ID cannot be found.
+    Return all available IPL matches for the current season.
+    Tries the series/matches endpoint first (full season list); if that endpoint
+    isn't available on the current RapidAPI plan, falls back to the recent-matches
+    window (~10 most recent matches), which is enough for day-to-day automation.
     """
     series_id = get_ipl_series_id()
     if series_id:
-        matches = get_series_matches(series_id)
-        if matches:
-            return matches
-    # Fallback: only returns recent matches window (~10 matches)
+        try:
+            matches = get_series_matches(series_id)
+            if matches:
+                return matches
+        except Exception:
+            pass  # endpoint not available on this plan – use fallback below
+    # Fallback: recent-matches window (covers last ~10 matches)
     return get_recent_matches()
 
 
