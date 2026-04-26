@@ -41,11 +41,4 @@ EXPOSE 8000
 
 # Run application with gunicorn (production-ready ASGI server)
 # Use shell form to allow $PORT variable substitution from Railway
-CMD gunicorn app:app \
-    --bind 0.0.0.0:${PORT:-8000} \
-    --workers 1 \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --timeout 120 \
-    --access-logfile - \
-    --error-logfile - \
-    --log-level info
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
