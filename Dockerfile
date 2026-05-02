@@ -24,16 +24,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p data/scorecards logs "Match data"
+# Create necessary directories and a read-only seed copy of data.
+# data-seed is never mounted as a volume, so it always holds the
+# latest committed data and acts as the initial state for the volume.
+RUN mkdir -p data/scorecards logs "Match data" && \
+    cp -r data data-seed
 
-# Keep a bundled copy of the seed data (used by start.sh when volume is empty)
-RUN cp -r data /app/data_seed
+# Make entrypoint executable
+RUN chmod +x docker-entrypoint.sh
 
 # Non-root user for security
 RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app && \
-    chmod +x /app/start.sh
+    chown -R appuser:appuser /app
 USER appuser
 
 # Expose port (Railway uses dynamic PORT from environment)
@@ -43,6 +45,6 @@ EXPOSE 8000
 # Health check disabled for Railway (Railway has its own health check)
 # HEALTHCHECK is not supported by Railway's builder
 
-# Run application with gunicorn (production-ready ASGI server)
-# Use shell form to allow $PORT variable substitution from Railway
-CMD ["/app/start.sh"]
+# Entrypoint seeds missing data files from data-seed into the volume,
+# then starts the app.
+ENTRYPOINT ["./docker-entrypoint.sh"]
