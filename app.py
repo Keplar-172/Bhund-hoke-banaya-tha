@@ -29,7 +29,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 try:
     from web.auth import get_current_user, User
-    from web.routers import dashboard, downloads, auth as auth_router, api as api_router
+    from web.routers import dashboard, downloads, auth as auth_router, api as api_router, public as public_router
     from web.logger import setup_logging, get_logger
 except Exception as _import_err:
     import traceback
@@ -113,6 +113,7 @@ app.include_router(auth_router.router, prefix="/auth", tags=["authentication"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(downloads.router, prefix="/downloads", tags=["downloads"])
 app.include_router(api_router.router, prefix="/api", tags=["api"])
+app.include_router(public_router.router, prefix="/api/public", tags=["public"])
 
 logger.info("Routers registered successfully")
 
