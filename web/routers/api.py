@@ -160,8 +160,12 @@ async def auto_score_status(
 
 
 @router.get("/export-data")
-async def export_data(user: User = Depends(require_auth)):
-    """Download all data files as a zip archive (admin use only)."""
+async def export_data(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    """Download all data files as a zip archive. Auth: X-Api-Key header or admin session."""
+    _verify_auto_score_caller(request, x_api_key)
     from config import DATA_DIR, SCORECARD_CACHE_DIR
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
