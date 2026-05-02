@@ -33,10 +33,8 @@ RUN mkdir -p data/scorecards logs "Match data" && \
 # Make entrypoint executable
 RUN chmod +x docker-entrypoint.sh
 
-# Non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+# Run as root so the entrypoint can write to the Railway volume mount.
+# Railway containers are isolated — root inside the container is safe.
 
 # Expose port (Railway uses dynamic PORT from environment)
 # Do NOT set ENV PORT here - Railway provides it dynamically
