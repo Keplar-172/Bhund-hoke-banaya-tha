@@ -25,6 +25,7 @@ Usage:
     python main.py rescore <match_id>    Remove & recalculate scores for a match
     python main.py runserver                Start web server (default: http://localhost:8000)
     python main.py auto-score               Auto-detect and score all new completed IPL matches
+    python main.py sync-data                Pull latest data from Railway into local data/ folder
 """
 import os
 import sys
@@ -406,6 +407,51 @@ def cmd_auto_score():
     print("\n✓ Auto-score complete.\n")
 
 
+def cmd_sync_data():
+    """
+    Pull the latest data from Railway into the local data/ folder.
+    Requires RAILWAY_URL and AUTOSCORE_API_KEY in environment or .env file.
+    """
+    import io
+    import shutil
+    import zipfile
+    import urllib.request
+
+    url = os.environ.get("RAILWAY_URL", "").rstrip("/")
+    api_key = os.environ.get("AUTOSCORE_API_KEY", "")
+
+    if not url:
+        print("\nERROR: RAILWAY_URL not set. Add it to your .env file.")
+        print("  Example: RAILWAY_URL=https://your-app.up.railway.app\n")
+        return
+    if not api_key:
+        print("\nERROR: AUTOSCORE_API_KEY not set in environment or .env file.\n")
+        return
+
+    endpoint = f"{url}/api/export-data"
+    print(f"\nDownloading data from {endpoint} ...")
+
+    req = urllib.request.Request(endpoint, headers={"X-Api-Key": api_key})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = resp.read()
+    except Exception as e:
+        print(f"  ERROR: {e}\n")
+        return
+
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        names = zf.namelist()
+        print(f"  Archive contains {len(names)} files")
+        for name in names:
+            dest = name  # paths inside zip are like "data/scorecards/149618.json"
+            os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+            with zf.open(name) as src, open(dest, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            print(f"  ✓ {name}")
+
+    print("\n✓ Local data/ folder updated from Railway.\n")
+
+
 def cmd_runserver():
     """Start the web server."""
     import uvicorn
@@ -479,6 +525,8 @@ def main():
         cmd_players(args[1] if len(args) >= 2 else None)
     elif args[0] == "auto-score":
         cmd_auto_score()
+    elif args[0] == "sync-data":
+        cmd_sync_data()
     elif args[0] == "runserver":
         cmd_runserver()
     else:
