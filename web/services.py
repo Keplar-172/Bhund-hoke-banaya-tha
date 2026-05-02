@@ -68,11 +68,15 @@ def get_dashboard_stats() -> Dict[str, Any]:
 
 
 def get_match_history_data() -> List[Dict[str, Any]]:
-    """Get processed match history."""
+    """Get processed match history, sorted by IPL match number (most recent first)."""
     history = load_match_history()
-    
-    # Reverse to show most recent first
-    return list(reversed(history))
+
+    enriched = []
+    for entry in history:
+        meta = _build_match_meta(entry["match_id"])
+        enriched.append({**entry, **meta})
+
+    return sorted(enriched, key=lambda x: x["match_number"] if x["match_number"] else 0, reverse=True)
 
 
 def _build_match_description(match_id: int) -> str:

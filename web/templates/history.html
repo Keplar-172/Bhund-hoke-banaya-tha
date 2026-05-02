@@ -33,7 +33,7 @@
             <div class="match-badge">
                 <div class="badge-header">
                     <h4 class="badge-title">{{ match.description }}</h4>
-                    <span class="badge-date">Game {{ loop.revindex }}</span>
+                    <span class="badge-date">{% if match.match_number_label %}{{ match.match_number_label }}{% if match.date_str %} · {{ match.date_str }}{% endif %}{% else %}Game {{ loop.revindex }}{% endif %}</span>
                 </div>
             </div>
             
