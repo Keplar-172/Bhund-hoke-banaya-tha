@@ -9,15 +9,15 @@ DATA_DIR="/app/data"
 echo "[entrypoint] Checking data directory at ${DATA_DIR}..."
 mkdir -p "${DATA_DIR}/scorecards"
 
-# Seed each file from data-seed if it doesn't exist on the volume
+# Seed each file from data-seed if it doesn't exist or is empty on the volume
 for src in "${SEED_DIR}"/*.json; do
     filename="$(basename "$src")"
     dest="${DATA_DIR}/${filename}"
-    if [ ! -f "$dest" ]; then
-        echo "[entrypoint] Seeding missing file: ${filename}"
+    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
+        echo "[entrypoint] Seeding: ${filename}"
         cp "$src" "$dest"
     else
-        echo "[entrypoint] File already exists, skipping: ${filename}"
+        echo "[entrypoint] Already exists, skipping: ${filename}"
     fi
 done
 
@@ -26,7 +26,7 @@ for src in "${SEED_DIR}/scorecards"/*.json; do
     [ -f "$src" ] || continue
     filename="$(basename "$src")"
     dest="${DATA_DIR}/scorecards/${filename}"
-    if [ ! -f "$dest" ]; then
+    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
         echo "[entrypoint] Seeding scorecard: ${filename}"
         cp "$src" "$dest"
     fi
