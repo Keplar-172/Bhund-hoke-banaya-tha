@@ -27,9 +27,13 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p data/scorecards logs "Match data"
 
+# Keep a bundled copy of the seed data (used by start.sh when volume is empty)
+RUN cp -r data /app/data_seed
+
 # Non-root user for security
 RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app/start.sh
 USER appuser
 
 # Expose port (Railway uses dynamic PORT from environment)
@@ -41,4 +45,4 @@ EXPOSE 8000
 
 # Run application with gunicorn (production-ready ASGI server)
 # Use shell form to allow $PORT variable substitution from Railway
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
+CMD ["/app/start.sh"]
