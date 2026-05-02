@@ -1,9 +1,12 @@
 """API routes – machine-readable endpoints for automation and integrations."""
+import io
+import os
 import threading
+import zipfile
 from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from web.auth import require_auth, User
 
@@ -154,3 +157,27 @@ async def auto_score_status(
             "last_run": _job_state["last_run"],
             "last_result": _job_state["last_result"],
         })
+
+
+@router.get("/export-data")
+async def export_data(user: User = Depends(require_auth)):
+    """Download all data files as a zip archive (admin use only)."""
+    from config import DATA_DIR, SCORECARD_CACHE_DIR
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for fname in ("cumulative_scores.json", "match_history.json",
+                      "scoring_sheet.json", "master_scoresheet.json"):
+            path = os.path.join(DATA_DIR, fname)
+            if os.path.exists(path):
+                zf.write(path, os.path.join("data", fname))
+        if os.path.isdir(SCORECARD_CACHE_DIR):
+            for sc in os.listdir(SCORECARD_CACHE_DIR):
+                path = os.path.join(SCORECARD_CACHE_DIR, sc)
+                if os.path.isfile(path):
+                    zf.write(path, os.path.join("data", "scorecards", sc))
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=railway_data.zip"},
+    )
