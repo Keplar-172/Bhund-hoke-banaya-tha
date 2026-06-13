@@ -2,6 +2,7 @@
 from typing import Dict, List, Any
 from collections import defaultdict
 
+from config import LeagueConfig
 from storage import load_master_scoresheet, load_match_history, load_teams
 
 
@@ -157,12 +158,12 @@ def calculate_match_winners_distribution(history: List[Dict]) -> Dict[str, Any]:
     }
 
 
-def get_analytics_summary() -> Dict[str, Any]:
+def get_analytics_summary(cfg: LeagueConfig = None) -> Dict[str, Any]:
     """Get comprehensive analytics data for dashboard."""
-    master = load_master_scoresheet()
-    history = load_match_history()
-    teams = load_teams()
-    
+    master = load_master_scoresheet(cfg)
+    history = load_match_history(cfg)
+    teams = load_teams(cfg)
+
     return {
         "top_performers": calculate_player_consistency(master),
         "team_trends": calculate_team_performance_trend(master, history),

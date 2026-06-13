@@ -6,11 +6,27 @@ from config import RAPIDAPI_KEY, RAPIDAPI_HOST, BASE_URL
 # Change this each season to avoid matching Women's IPL or previous seasons
 IPL_SEASON_YEAR = "2026"
 
+# Women's T20 World Cup series filter
+WWC_YEAR = "2026"
+WWC_KEYWORDS = [
+    "ICC WOMEN'S T20 WORLD CUP",
+    "WOMEN'S TWENTY20 WORLD CUP",
+    "WOMEN'S T20 WORLD CUP",
+    "WT20 WORLD CUP",
+    "ICC WT20",
+]
+
 
 def _is_ipl_series(series_name: str) -> bool:
     """Return True only for the target IPL season (e.g. Indian Premier League 2026)."""
     name = series_name.upper()
     return ("IPL" in name or "INDIAN PREMIER LEAGUE" in name) and IPL_SEASON_YEAR in name
+
+
+def _is_wwc_series(series_name: str) -> bool:
+    """Return True for Women's T20 World Cup 2026."""
+    name = series_name.upper()
+    return any(kw in name for kw in WWC_KEYWORDS) and WWC_YEAR in name
 
 
 HEADERS = {
@@ -105,6 +121,50 @@ def get_all_ipl_matches() -> list:
             pass  # endpoint not available on this plan – use fallback below
     # Fallback: recent-matches window (covers last ~10 matches)
     return get_recent_matches()
+
+
+# ── Women's T20 World Cup ────────────────────────────────────────────────────
+
+def get_wwc_series_id() -> int | None:
+    """Find the Women's T20 World Cup 2026 series ID."""
+    data = _get("/matches/v1/recent")
+    for type_match in data.get("typeMatches", []):
+        for series in type_match.get("seriesMatches", []):
+            series_info = series.get("seriesAdWrapper", {})
+            if series_info and _is_wwc_series(series_info.get("seriesName", "")):
+                return series_info.get("seriesId")
+    return None
+
+
+def get_recent_wwc_matches() -> list:
+    """Return recent Women's T20 World Cup 2026 matches."""
+    data = _get("/matches/v1/recent")
+    matches = []
+    for type_match in data.get("typeMatches", []):
+        for series in type_match.get("seriesMatches", []):
+            series_info = series.get("seriesAdWrapper", {})
+            if not series_info:
+                continue
+            series_name = series_info.get("seriesName", "")
+            if not _is_wwc_series(series_name):
+                continue
+            for match in series_info.get("matches", []):
+                info = match.get("matchInfo", {})
+                matches.append(_parse_match_info(info, series_name))
+    return matches
+
+
+def get_all_wwc_matches() -> list:
+    """Return all Women's T20 World Cup 2026 matches (series endpoint with fallback)."""
+    series_id = get_wwc_series_id()
+    if series_id:
+        try:
+            matches = get_series_matches(series_id)
+            if matches:
+                return matches
+        except Exception:
+            pass
+    return get_recent_wwc_matches()
 
 
 def get_scorecard(match_id: int) -> dict:

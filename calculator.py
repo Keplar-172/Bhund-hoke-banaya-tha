@@ -16,6 +16,7 @@ from scoring import (
     calculate_generic_points,
     apply_captain_bonus,
 )
+from config import LeagueConfig
 from storage import load_teams
 
 
@@ -128,7 +129,8 @@ def _remap_agg(agg: dict, canonical: dict, merge_fn) -> dict:
 
 # ── Per-Player Scoring ───────────────────────────────────────────────────────
 
-def calculate_match_scores(scorecard_data: dict) -> dict:
+def calculate_match_scores(scorecard_data: dict,
+                           cfg: LeagueConfig = None) -> dict:
     """
     Given raw Cricbuzz scorecard data, compute fantasy points for every
     player across all 11 fantasy teams.
@@ -149,7 +151,7 @@ def calculate_match_scores(scorecard_data: dict) -> dict:
             ...
         }
     """
-    teams_data = load_teams()
+    teams_data = load_teams(cfg)
     id_lookup, name_lookup = _build_roster_lookup(teams_data)
 
     parsed = parse_scorecard(scorecard_data)

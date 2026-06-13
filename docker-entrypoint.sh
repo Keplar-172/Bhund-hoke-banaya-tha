@@ -8,8 +8,9 @@ DATA_DIR="/app/data"
 
 echo "[entrypoint] Checking data directory at ${DATA_DIR}..."
 mkdir -p "${DATA_DIR}/scorecards"
+mkdir -p "${DATA_DIR}/wwc/scorecards"
 
-# Seed each file from data-seed if it doesn't exist or is empty on the volume
+# Seed each top-level IPL file from data-seed if missing or empty
 for src in "${SEED_DIR}"/*.json; do
     filename="$(basename "$src")"
     dest="${DATA_DIR}/${filename}"
@@ -21,13 +22,37 @@ for src in "${SEED_DIR}"/*.json; do
     fi
 done
 
-# Seed scorecard cache files
+# Seed IPL scorecard cache files
 for src in "${SEED_DIR}/scorecards"/*.json; do
     [ -f "$src" ] || continue
     filename="$(basename "$src")"
     dest="${DATA_DIR}/scorecards/${filename}"
     if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
         echo "[entrypoint] Seeding scorecard: ${filename}"
+        cp "$src" "$dest"
+    fi
+done
+
+# Seed WWC data files (teams, players, and any pre-existing scores)
+for src in "${SEED_DIR}/wwc"/*.json; do
+    [ -f "$src" ] || continue
+    filename="$(basename "$src")"
+    dest="${DATA_DIR}/wwc/${filename}"
+    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
+        echo "[entrypoint] Seeding WWC: ${filename}"
+        cp "$src" "$dest"
+    else
+        echo "[entrypoint] WWC already exists, skipping: ${filename}"
+    fi
+done
+
+# Seed WWC scorecard cache files
+for src in "${SEED_DIR}/wwc/scorecards"/*.json; do
+    [ -f "$src" ] || continue
+    filename="$(basename "$src")"
+    dest="${DATA_DIR}/wwc/scorecards/${filename}"
+    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
+        echo "[entrypoint] Seeding WWC scorecard: ${filename}"
         cp "$src" "$dest"
     fi
 done

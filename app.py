@@ -31,6 +31,8 @@ try:
     from web.auth import get_current_user, User
     from web.routers import dashboard, downloads, auth as auth_router, api as api_router, public as public_router
     from web.logger import setup_logging, get_logger
+    from config import IPL_CONFIG, WWC_CONFIG
+    from web.services import get_leaderboard_data, get_dashboard_stats
 except Exception as _import_err:
     import traceback
     print(f"FATAL: Failed to import web modules: {_import_err}")
@@ -110,7 +112,8 @@ templates = Jinja2Templates(directory=templates_dir)
 
 # Include routers
 app.include_router(auth_router.router, prefix="/auth", tags=["authentication"])
-app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+app.include_router(dashboard.router, prefix="/dashboard", tags=["ipl"])
+app.include_router(dashboard.router, prefix="/wwc", tags=["wwc"])
 app.include_router(downloads.router, prefix="/downloads", tags=["downloads"])
 app.include_router(api_router.router, prefix="/api", tags=["api"])
 app.include_router(public_router.router, prefix="/api/public", tags=["public"])
@@ -123,11 +126,25 @@ logger.info("Routers registered successfully")
 
 @app.get("/")
 async def root(request: Request):
-    """Root endpoint - redirect to dashboard if logged in, else login page."""
+    """Home page – league selector if logged in, else redirect to login."""
     username = request.session.get("username")
-    if username:
-        return RedirectResponse(url="/dashboard", status_code=302)
-    return RedirectResponse(url="/auth/login", status_code=302)
+    if not username:
+        return RedirectResponse(url="/auth/login", status_code=302)
+
+    ipl_stats = get_dashboard_stats(IPL_CONFIG)
+    wwc_stats = get_dashboard_stats(WWC_CONFIG)
+    ipl_lb = get_leaderboard_data(IPL_CONFIG)
+    wwc_lb = get_leaderboard_data(WWC_CONFIG)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context={
+            "user": {"username": username},
+            "ipl": {"config": IPL_CONFIG, "stats": ipl_stats, "leaderboard": ipl_lb},
+            "wwc": {"config": WWC_CONFIG, "stats": wwc_stats, "leaderboard": wwc_lb},
+        }
+    )
 
 
 @app.get("/health")

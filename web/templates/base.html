@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}IPL Fantasy League 2026{% endblock %}</title>
+    <title>{% block title %}{% if league %}{{ league.name }}{% else %}Fantasy League{% endif %}{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -13,17 +13,26 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <h1>🏏 IPL Fantasy League 2026</h1>
+                {% if league %}
+                <a href="{{ league.dashboard_prefix }}" style="text-decoration:none;color:inherit;">
+                    <h1>{{ league.emoji }} {{ league.name }}</h1>
+                </a>
+                {% else %}
+                <h1>🏏 Fantasy League</h1>
+                {% endif %}
             </div>
             {% if user %}
             <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle navigation">
                 <span></span><span></span><span></span>
             </button>
             <div class="nav-menu" id="nav-menu">
-                <a href="/dashboard" class="{% if page == 'home' %}active{% endif %}">Leaderboard</a>
-                <a href="/dashboard/history" class="{% if page == 'history' %}active{% endif %}">History</a>
-                <a href="/dashboard/master" class="{% if page == 'master' %}active{% endif %}">Master Sheet</a>
-                <a href="/dashboard/analytics" class="{% if page == 'analytics' %}active{% endif %}">Analytics</a>
+                {% if league %}
+                <a href="{{ league.dashboard_prefix }}" class="{% if page == 'home' %}active{% endif %}">Leaderboard</a>
+                <a href="{{ league.dashboard_prefix }}/history" class="{% if page == 'history' %}active{% endif %}">History</a>
+                <a href="{{ league.dashboard_prefix }}/master" class="{% if page == 'master' %}active{% endif %}">Master Sheet</a>
+                <a href="{{ league.dashboard_prefix }}/analytics" class="{% if page == 'analytics' %}active{% endif %}">Analytics</a>
+                <a href="/" class="nav-switch-league" title="Switch League">⇄ Leagues</a>
+                {% endif %}
                 <div class="nav-user">
                     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
                         <span class="theme-icon">🌙</span>
@@ -41,10 +50,9 @@
     </main>
 
     <footer>
-        <p>IPL Fantasy Premier League 2026 &copy; {{ now.year if now else 2026 }}</p>
+        <p>{% if league %}{{ league.name }}{% else %}Fantasy League{% endif %} &copy; {{ now.year if now else 2026 }}</p>
     </footer>
     <script>
-        // Mobile hamburger toggle
         const hamburger = document.getElementById('nav-hamburger');
         const navMenu = document.getElementById('nav-menu');
         if (hamburger && navMenu) {
@@ -52,7 +60,6 @@
                 const open = navMenu.classList.toggle('nav-menu-open');
                 hamburger.classList.toggle('nav-hamburger-open', open);
             });
-            // Close menu on nav link click
             navMenu.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', () => {
                     navMenu.classList.remove('nav-menu-open');

@@ -41,7 +41,11 @@ except ImportError:
 MATCH_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Match data")
 os.makedirs(MATCH_DATA_DIR, exist_ok=True)
 
-from cricbuzz_api import get_recent_matches, get_all_ipl_matches, get_scorecard, get_match_mom
+from config import IPL_CONFIG, WWC_CONFIG
+from cricbuzz_api import (
+    get_recent_matches, get_all_ipl_matches, get_scorecard, get_match_mom,
+    get_recent_wwc_matches, get_all_wwc_matches,
+)
 from calculator import calculate_match_scores
 from leaderboard import (
     show_leaderboard, show_match_history, show_match_detail,
@@ -452,6 +456,193 @@ def cmd_sync_data():
     print("\n✓ Local data/ folder updated from Railway.\n")
 
 
+def cmd_wwc(sub_args: list):
+    """
+    Women's T20 World Cup commands.
+    All operations mirror IPL but use the WWC_CONFIG data directory.
+    """
+    cfg = WWC_CONFIG
+
+    if not sub_args:
+        # Show WWC leaderboard
+        scores = {}
+        from storage import load_scores as _ls
+        try:
+            scores = _ls(cfg)
+        except Exception:
+            pass
+        if not scores:
+            print("\nWomen's T20 World Cup – no matches scored yet.\n")
+            return
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        print(f"\n{'='*50}")
+        print(f"  Women's T20 World Cup 2026 – Leaderboard")
+        print(f"{'='*50}")
+        for rank, (team, pts) in enumerate(ranked, 1):
+            print(f"  {rank}. {team:20s} {pts:.1f} pts")
+        print()
+        return
+
+    sub = sub_args[0]
+
+    if sub == "matches":
+        print("\nFetching recent Women's T20 World Cup matches...\n")
+        matches = get_recent_wwc_matches()
+        if not matches:
+            print("  No WWC matches found. Tournament may not have started yet.\n")
+            return
+        for m in matches:
+            state_tag = f"[{m['state']}]" if m["state"] else ""
+            print(f"  ID: {m['match_id']}  {m['team1']} vs {m['team2']}  "
+                  f"{m['description']}  {state_tag}")
+            print(f"      {m['status']}")
+        print()
+
+    elif sub == "score" and len(sub_args) >= 2:
+        _wwc_score(int(sub_args[1]), cfg)
+
+    elif sub == "history":
+        from storage import load_match_history as _lmh
+        history = _lmh(cfg)
+        if not history:
+            print("\nNo WWC matches scored yet.\n")
+            return
+        print(f"\n{'='*60}")
+        print(f"  Women's T20 World Cup – Match History ({len(history)} matches)")
+        print(f"{'='*60}")
+        for entry in history:
+            print(f"\n  Match {entry['match_id']}: {entry['description']}")
+            for owner, pts in sorted(entry['team_scores'].items(),
+                                     key=lambda x: x[1], reverse=True):
+                print(f"    {owner:20s} {pts:.1f}")
+        print()
+
+    elif sub == "master":
+        from storage import load_master_scoresheet as _lms
+        master = _lms(cfg)
+        if not master.get("teams"):
+            print("\nNo WWC master scoresheet data yet.\n")
+            return
+        print(f"\n{'='*60}")
+        print(f"  Women's T20 World Cup – Master Scoresheet")
+        print(f"{'='*60}")
+        teams = sorted(master["teams"].items(),
+                       key=lambda x: x[1]["cumulative_total"], reverse=True)
+        for rank, (owner, tdata) in enumerate(teams, 1):
+            print(f"  {rank}. {owner:20s} {tdata['cumulative_total']:.1f} pts")
+        print()
+
+    elif sub == "auto-score":
+        print("\nFetching Women's T20 World Cup match list...\n")
+        try:
+            matches = get_all_wwc_matches()
+        except Exception as e:
+            print(f"  ERROR: {e}\n")
+            return
+        if not matches:
+            print("  No WWC matches found.\n")
+            return
+        from storage import is_match_processed as _imp
+        completed = [m for m in matches
+                     if m.get("state", "").lower() == "complete" and m.get("match_id")]
+        new_matches = [m for m in completed if not _imp(m["match_id"], cfg)]
+        print(f"  Completed: {len(completed)} | New: {len(new_matches)}")
+        if not new_matches:
+            print("  All completed WWC matches already processed.\n")
+            return
+        for m in new_matches:
+            print(f"\n{'='*60}")
+            print(f"  {m['team1']} vs {m['team2']}  (Match ID: {m['match_id']})")
+            print('='*60)
+            try:
+                _wwc_score(m["match_id"], cfg)
+            except Exception as e:
+                print(f"  ERROR: {e}")
+        print("\n✓ WWC auto-score complete.\n")
+
+    elif sub == "rescore" and len(sub_args) >= 2:
+        match_id = int(sub_args[1])
+        from storage import (is_match_processed as _imp, unprocess_match as _um,
+                              load_scores as _ls, save_scores as _ss,
+                              remove_match_from_scoring_sheet as _rmss,
+                              remove_match_from_master as _rmm)
+        if not _imp(match_id, cfg):
+            print(f"\nMatch {match_id} not processed in WWC yet.\n")
+            return
+        old = _um(match_id, cfg)
+        scores = _ls(cfg)
+        for owner, pts in old.items():
+            scores[owner] = round(scores.get(owner, 0) - pts, 2)
+        _ss(scores, cfg)
+        _rmss(match_id, cfg)
+        _rmm(match_id, cfg)
+        print(f"Old WWC scores for match {match_id} removed. Recalculating...")
+        _wwc_score(match_id, cfg)
+
+    else:
+        print("\nWWC commands: matches, score <id>, history, master, auto-score, rescore <id>\n")
+
+
+def _wwc_score(match_id: int, cfg=None):
+    """Score a single WWC match (internal helper)."""
+    if cfg is None:
+        cfg = WWC_CONFIG
+    from storage import (is_match_processed as _imp, load_scores as _ls,
+                         save_scores as _ss, record_match as _rm,
+                         cache_scorecard as _cs, get_cached_scorecard as _gcs,
+                         append_to_scoring_sheet as _ats,
+                         update_master_scoresheet as _ums)
+
+    if _imp(match_id, cfg):
+        print(f"\nWWC match {match_id} already processed.\n")
+        return
+
+    scorecard_data = _gcs(match_id, cfg)
+    if scorecard_data:
+        print(f"\nUsing cached scorecard for WWC match {match_id}.")
+    else:
+        print(f"\nFetching scorecard for WWC match {match_id} from API...")
+        scorecard_data = get_scorecard(match_id)
+
+    if not scorecard_data.get("man_of_the_match"):
+        from cricbuzz_api import get_match_mom as _gmm
+        mom = _gmm(match_id)
+        if mom:
+            scorecard_data["man_of_the_match"] = mom
+
+    _cs(match_id, scorecard_data, cfg)
+
+    match_results = calculate_match_scores(scorecard_data, cfg)
+
+    desc = f"Match {match_id}"
+    header = scorecard_data.get("matchHeader", {})
+    if header:
+        t1 = header.get("team1", {}).get("shortName", "")
+        t2 = header.get("team2", {}).get("shortName", "")
+        status = header.get("status", "")
+        if t1 and t2:
+            desc = f"{t1} vs {t2} – {status}"
+
+    # Print summary
+    print(f"\n  {desc}")
+    for owner, data in sorted(match_results.items(),
+                               key=lambda x: x[1]["total"], reverse=True):
+        print(f"  {owner:20s} {data['total']:.1f} pts")
+
+    scores = _ls(cfg)
+    team_scores_for_record = {}
+    for owner, data in match_results.items():
+        scores[owner] = round(scores.get(owner, 0) + data["total"], 2)
+        team_scores_for_record[owner] = data["total"]
+
+    _ss(scores, cfg)
+    _rm(match_id, desc, team_scores_for_record, cfg)
+    _ats(match_id, desc, match_results, scores, cfg)
+    _ums(match_id, desc, match_results, scores, cfg)
+
+    print(f"\n✓ WWC match {match_id} scores saved.\n")
+
+
 def cmd_runserver():
     """Start the web server."""
     import uvicorn
@@ -529,6 +720,8 @@ def main():
         cmd_sync_data()
     elif args[0] == "runserver":
         cmd_runserver()
+    elif args[0] == "wwc":
+        cmd_wwc(args[1:])
     else:
         print(__doc__)
 

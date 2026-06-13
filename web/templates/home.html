@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Leagues</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/theme-toggle.js"></script>
+    <style>
+        .home-hero {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem;
+        }
+        .home-hero h1 {
+            font-size: 2rem;
+            margin-bottom: 0.4rem;
+        }
+        .home-hero p {
+            color: var(--text-muted, #888);
+            font-size: 1rem;
+        }
+        .league-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .league-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border, #e5e7eb);
+            border-radius: 12px;
+            padding: 1.8rem;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            display: block;
+        }
+        .league-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .league-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .league-emoji {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+        .league-card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .league-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .stat-pill {
+            background: var(--bg-subtle, #f3f4f6);
+            border-radius: 20px;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+        .league-standings {
+            border-top: 1px solid var(--border, #e5e7eb);
+            padding-top: 1rem;
+        }
+        .league-standings h4 {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #888);
+            margin: 0 0 0.6rem;
+        }
+        .standing-row {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+        .standing-rank {
+            width: 1.5rem;
+            font-weight: 700;
+            color: var(--text-muted, #888);
+            font-size: 0.8rem;
+        }
+        .standing-team {
+            flex: 1;
+            font-weight: 500;
+        }
+        .standing-pts {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .rank-1 .standing-rank { color: #f59e0b; }
+        .rank-2 .standing-rank { color: #94a3b8; }
+        .rank-3 .standing-rank { color: #b45309; }
+        .ipl-card { border-top: 3px solid #3b82f6; }
+        .wwc-card { border-top: 3px solid #ec4899; }
+        .cta-btn {
+            display: block;
+            text-align: center;
+            margin-top: 1.25rem;
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .ipl-card .cta-btn { background: #3b82f6; color: #fff; }
+        .wwc-card .cta-btn { background: #ec4899; color: #fff; }
+        .home-nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border, #e5e7eb);
+        }
+        .home-nav .nav-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .no-matches-msg {
+            color: var(--text-muted, #888);
+            font-size: 0.85rem;
+            font-style: italic;
+            padding: 0.4rem 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="home-nav">
+        <div class="nav-user-info">
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <span class="theme-icon">🌙</span>
+            </button>
+            <span>{{ user.username }}</span>
+            <a href="/auth/logout" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        <div class="home-hero">
+            <h1>🏏 Fantasy Cricket Leagues</h1>
+            <p>Select a league to view standings and match scores</p>
+        </div>
+
+        <div class="league-grid">
+
+            <!-- IPL Card -->
+            <a href="/dashboard" class="league-card ipl-card">
+                <div class="league-card-header">
+                    <span class="league-emoji">{{ ipl.config.emoji }}</span>
+                    <h2>{{ ipl.config.name }}</h2>
+                </div>
+                <div class="league-stats">
+                    <span class="stat-pill">{{ ipl.stats.total_matches }} matches played</span>
+                    <span class="stat-pill">{{ ipl.stats.total_teams }} teams</span>
+                    {% if ipl.stats.total_matches > 0 %}
+                    <span class="stat-pill">Leader: {{ ipl.stats.top_scorer.team }}</span>
+                    {% endif %}
+                </div>
+                <div class="league-standings">
+                    <h4>Current Standings</h4>
+                    {% if ipl.leaderboard %}
+                        {% for entry in ipl.leaderboard %}
+                        <div class="standing-row rank-{{ entry.rank }}">
+                            <span class="standing-rank">{{ entry.rank }}</span>
+                            <span class="standing-team">{{ entry.team }}</span>
+                            <span class="standing-pts">{{ entry.points }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-matches-msg">No matches scored yet</p>
+                    {% endif %}
+                </div>
+                <span class="cta-btn">Open IPL Dashboard →</span>
+            </a>
+
+            <!-- WWC Card -->
+            <a href="/wwc" class="league-card wwc-card">
+                <div class="league-card-header">
+                    <span class="league-emoji">{{ wwc.config.emoji }}</span>
+                    <h2>{{ wwc.config.name }}</h2>
+                </div>
+                <div class="league-stats">
+                    <span class="stat-pill">{{ wwc.stats.total_matches }} matches played</span>
+                    <span class="stat-pill">{{ wwc.stats.total_teams }} teams</span>
+                    {% if wwc.stats.total_matches > 0 %}
+                    <span class="stat-pill">Leader: {{ wwc.stats.top_scorer.team }}</span>
+                    {% endif %}
+                </div>
+                <div class="league-standings">
+                    <h4>Current Standings</h4>
+                    {% if wwc.leaderboard %}
+                        {% for entry in wwc.leaderboard %}
+                        <div class="standing-row rank-{{ entry.rank }}">
+                            <span class="standing-rank">{{ entry.rank }}</span>
+                            <span class="standing-team">{{ entry.team }}</span>
+                            <span class="standing-pts">{{ entry.points }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-matches-msg">No matches scored yet</p>
+                    {% endif %}
+                </div>
+                <span class="cta-btn">Open WWC Dashboard →</span>
+            </a>
+
+        </div>
+    </main>
+</body>
+</html>

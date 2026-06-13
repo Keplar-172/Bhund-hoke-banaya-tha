@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import os
 
+from config import LeagueConfig, IPL_CONFIG, WWC_CONFIG
 from web.auth import require_auth, User
 from web.services import (
     get_leaderboard_data,
@@ -21,11 +22,16 @@ templates_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
 templates = Jinja2Templates(directory=templates_dir)
 
 
+def _get_league(request: Request) -> LeagueConfig:
+    """Pick the correct league config based on the URL path prefix."""
+    return WWC_CONFIG if request.url.path.startswith("/wwc") else IPL_CONFIG
+
+
 @router.get("/", response_class=HTMLResponse)
 async def dashboard_home(request: Request, user: User = Depends(require_auth)):
-    """Main dashboard showing current leaderboard."""
-    leaderboard = get_leaderboard_data()
-    stats = get_dashboard_stats()
+    league = _get_league(request)
+    leaderboard = get_leaderboard_data(league)
+    stats = get_dashboard_stats(league)
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -33,37 +39,40 @@ async def dashboard_home(request: Request, user: User = Depends(require_auth)):
             "user": user,
             "leaderboard": leaderboard,
             "stats": stats,
-            "page": "home"
+            "page": "home",
+            "league": league,
         }
     )
 
 
 @router.get("/history", response_class=HTMLResponse)
 async def match_history(request: Request, user: User = Depends(require_auth)):
-    """Show match history."""
-    history = get_match_history_data()
+    league = _get_league(request)
+    history = get_match_history_data(league)
     return templates.TemplateResponse(
         request=request,
         name="history.html",
         context={
             "user": user,
             "history": history,
-            "page": "history"
+            "page": "history",
+            "league": league,
         }
     )
 
 
 @router.get("/master", response_class=HTMLResponse)
 async def master_scoresheet(request: Request, user: User = Depends(require_auth)):
-    """Show cumulative master scoresheet."""
-    master = get_master_scoresheet_data()
+    league = _get_league(request)
+    master = get_master_scoresheet_data(league)
     return templates.TemplateResponse(
         request=request,
         name="master.html",
         context={
             "user": user,
             "master": master,
-            "page": "master"
+            "page": "master",
+            "league": league,
         }
     )
 
@@ -74,9 +83,9 @@ async def match_detail(
     match_id: int,
     user: User = Depends(require_auth)
 ):
-    """Show detailed scores for a specific match."""
+    league = _get_league(request)
     try:
-        detail = get_match_detail_data(match_id)
+        detail = get_match_detail_data(match_id, league)
         return templates.TemplateResponse(
             request=request,
             name="match_detail.html",
@@ -84,7 +93,8 @@ async def match_detail(
                 "user": user,
                 "detail": detail,
                 "match_id": match_id,
-                "page": "match"
+                "page": "match",
+                "league": league,
             }
         )
     except FileNotFoundError:
@@ -101,14 +111,15 @@ async def match_detail(
 
 @router.get("/analytics", response_class=HTMLResponse)
 async def analytics_dashboard(request: Request, user: User = Depends(require_auth)):
-    """Show comprehensive analytics dashboard."""
-    analytics = get_analytics_summary()
+    league = _get_league(request)
+    analytics = get_analytics_summary(league)
     return templates.TemplateResponse(
         request=request,
         name="analytics.html",
         context={
             "user": user,
             "analytics": analytics,
-            "page": "analytics"
+            "page": "analytics",
+            "league": league,
         }
     )

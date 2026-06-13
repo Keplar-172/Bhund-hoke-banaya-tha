@@ -1,14 +1,19 @@
-name: Auto Score IPL Matches
+name: Auto Score Matches (IPL + WWC)
 
-# Runs every day at 9 PM, 11 PM, and 1 AM IST
-# (IST = UTC+5:30, so 3:30 PM, 5:30 PM, 7:30 PM UTC)
-# IPL matches typically start at 3:30 PM and 7:30 PM IST, so results are
-# available ~4 hours later.
+# Women's T20 World Cup 2026 match times (adjust as needed when schedule is published)
+# WWC matches typically run at various times depending on host country.
+# Current schedule targets: ~2 PM, 6 PM, and 10 PM IST as a safe catch-all.
+# IST = UTC+5:30, so:
+#   2:00 PM IST  = 08:30 UTC
+#   6:00 PM IST  = 12:30 UTC
+#  10:00 PM IST  = 16:30 UTC
+#
+# Also handles any remaining IPL matches (already finished — skips instantly).
 on:
   schedule:
-    - cron: "0 14 * * *"   # 7:30 PM IST  (after afternoon match)
-    - cron: "0 18 * * *"   # 11:30 PM IST (after evening match)
-    - cron: "0 22 * * *"   # 3:30 AM IST  (catch-up / retry)
+    - cron: "30 8  * * *"   # 2:00 PM IST
+    - cron: "30 12 * * *"   # 6:00 PM IST
+    - cron: "30 16 * * *"   # 10:00 PM IST
   workflow_dispatch:        # Allow manual trigger from GitHub UI
 
 jobs:
@@ -18,7 +23,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Trigger auto-score
+      - name: Trigger auto-score (IPL + WWC)
         run: |
           echo "Triggering auto-score on Railway..."
           RESPONSE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
@@ -38,8 +43,8 @@ jobs:
 
       - name: Wait and check status
         run: |
-          echo "Waiting 60 seconds for job to complete..."
-          sleep 60
+          echo "Waiting 90 seconds for job to complete..."
+          sleep 90
 
           echo "Checking auto-score status..."
           curl -s \
