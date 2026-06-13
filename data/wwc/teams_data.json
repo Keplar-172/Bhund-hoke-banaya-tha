@@ -1,6 +1,8 @@
 {
   "teams": {
     "Sanket": {
+      "captain": "Nat Sciver-Brunt",
+      "vice_captain": "Smriti Mandhana",
       "players": [
         {"name": "Harmanpreet Kaur", "role": "Allrounder"},
         {"name": "Sophie Ecclestone", "role": "Bowler"},
@@ -32,11 +34,11 @@
         {"name": "Sinalo Jafta", "role": "Wicketkeeper"},
         {"name": "Sultana Khatun", "role": "Bowler"},
         {"name": "Bharti Fulmali", "role": "Bowler"}
-      ],
-      "captain": "",
-      "vice_captain": ""
+      ]
     },
     "Priyanka": {
+      "captain": "Amelia Kerr",
+      "vice_captain": "Sophie Devine",
       "players": [
         {"name": "Amelia Kerr", "role": "Allrounder"},
         {"name": "Annabel Sutherland", "role": "Allrounder"},
@@ -68,11 +70,11 @@
         {"name": "Darcey Carter", "role": "Allrounder"},
         {"name": "Qiana Joseph", "role": "Allrounder"},
         {"name": "Amy Hunter", "role": "Batsman"}
-      ],
-      "captain": "",
-      "vice_captain": ""
+      ]
     },
     "Aishwarya": {
+      "captain": "Marizanne Kapp",
+      "vice_captain": "Deepti Sharma",
       "players": [
         {"name": "Ellyse Perry", "role": "Allrounder"},
         {"name": "Deepti Sharma", "role": "Allrounder"},
@@ -103,11 +105,11 @@
         {"name": "Leah Paul", "role": "Allrounder"},
         {"name": "Flora Devonshire", "role": "Batsman"},
         {"name": "Karishma Ramharack", "role": "Bowler"}
-      ],
-      "captain": "",
-      "vice_captain": ""
+      ]
     },
     "Mandy": {
+      "captain": "Hayley Matthews",
+      "vice_captain": "Ashleigh Gardner",
       "players": [
         {"name": "Ashleigh Gardner", "role": "Allrounder"},
         {"name": "Deandra Dottin", "role": "Allrounder"},
@@ -139,9 +141,7 @@
         {"name": "Freya Kemp", "role": "Allrounder"},
         {"name": "Sune Luus", "role": "Allrounder"},
         {"name": "Hasini Perera", "role": "Batsman"}
-      ],
-      "captain": "",
-      "vice_captain": ""
+      ]
     }
   }
 }
