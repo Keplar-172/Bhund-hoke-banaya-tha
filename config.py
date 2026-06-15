@@ -89,13 +89,14 @@ RELOAD = os.environ.get("RELOAD", "true").lower() == "true"
 # In production, replace with proper database and secure credential storage
 # Password hashes generated with: import bcrypt; bcrypt.hashpw(b'password', bcrypt.gensalt()).decode('utf-8')
 USERS_DB = {
-    # Default admin user - CHANGE PASSWORD IN PRODUCTION
     "admin": {
-        "password_hash": "$2b$12$EEtk9sihYENMAQTFZUnUM.p7gFMsupN84fjVG9qYvHs8Yt1N9HHkS",  # "admin123"
+        "password_hash": "$2b$12$9lIArDyg8/s1t4RWL85Glu3Ihqs0z6Y6H5KeIzLpvImjU0dkumgUK",
         "role": "admin"
     },
-    # Add more users as needed
-    # Example: "user1": {"password_hash": "hash_here", "role": "user"}
+    "viewer": {
+        "password_hash": "$2b$12$LDRjuyLZUDsbpeSkU8FBxenMgn6l9N7hK2VZLni.TMCXepgSsaaw6",
+        "role": "user"
+    },
 }
 
 # ── Environment Configuration ──

@@ -6,7 +6,7 @@
 <div class="page-header">
     <h2>Match History</h2>
     <div class="actions">
-        {% if league and league.short_name == "wwc" and history %}
+        {% if league and league.short_name == "wwc" and history and user.is_admin %}
         <button id="rescore-all-btn" class="btn btn-small btn-secondary" onclick="rescoreAll()">
             ♻️ Rescore All
         </button>
@@ -15,7 +15,7 @@
     </div>
 </div>
 
-{% if league and league.short_name == "wwc" %}
+{% if league and league.short_name == "wwc" and user.is_admin %}
 <div id="rescore-status" style="display:none;" class="alert-box"></div>
 {% endif %}
 
