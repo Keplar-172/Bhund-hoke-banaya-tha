@@ -6,8 +6,8 @@
 <div class="page-header">
     <h2>{{ detail.description }}</h2>
     <div class="actions">
-        <a href="/downloads/match/{{ match_id }}/team-points" class="btn btn-primary">📥 Team Points</a>
-        <a href="/downloads/match/{{ match_id }}/scorecard" class="btn btn-secondary">📥 Scorecard</a>
+        <a href="/downloads/match/{{ match_id }}/team-points?league={{ league.short_name }}" class="btn btn-primary">📥 Team Points</a>
+        <a href="/downloads/match/{{ match_id }}/scorecard?league={{ league.short_name }}" class="btn btn-secondary">📥 Scorecard</a>
     </div>
 </div>
 

@@ -86,10 +86,10 @@
                 <a href="{{ league.dashboard_prefix }}/match/{{ match.match_id }}" class="btn btn-small btn-primary">
                     <span>📋</span> View Details
                 </a>
-                <a href="/downloads/match/{{ match.match_id }}/team-points" class="btn btn-small btn-secondary">
+                <a href="/downloads/match/{{ match.match_id }}/team-points?league={{ league.short_name }}" class="btn btn-small btn-secondary">
                     <span>📥</span> Team Points
                 </a>
-                <a href="/downloads/match/{{ match.match_id }}/scorecard" class="btn btn-small btn-secondary">
+                <a href="/downloads/match/{{ match.match_id }}/scorecard?league={{ league.short_name }}" class="btn btn-small btn-secondary">
                     <span>📥</span> Scorecard
                 </a>
             </div>

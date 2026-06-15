@@ -756,7 +756,7 @@ def export_detailed_to_excel(match_results: dict, filename: str = "detailed.xlsx
     print(f"✓ Detailed view exported to {filename}")
 
 
-def export_master_to_excel(filename: str = "master_scoresheet.xlsx"):
+def export_master_to_excel(filename: str = "master_scoresheet.xlsx", cfg=None):
     """Export the cumulative master scoresheet to Excel with two sheets:
        1. Leaderboard – team standings with per-match totals
        2. One sheet per team – player-by-player breakdown across all matches
@@ -765,7 +765,7 @@ def export_master_to_excel(filename: str = "master_scoresheet.xlsx"):
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
-    master = load_master_scoresheet()
+    master = load_master_scoresheet(cfg)
     match_list = master.get("match_list", [])
     teams = master.get("teams", {})
 
@@ -1594,7 +1594,7 @@ def export_team_points_to_excel(match_results: dict, description: str = "",
 # TEAM DATA EXPORT – all fantasy teams with players, roles, prices
 # ══════════════════════════════════════════════════════════════════════════════
 
-def export_teams_to_excel(filename: str = "teams.xlsx"):
+def export_teams_to_excel(filename: str = "teams.xlsx", cfg=None):
     """Export all fantasy team rosters to Excel.
 
     Sheet 1: Overview – all teams with budget, captain, VC, player count, total spent.
@@ -1604,7 +1604,7 @@ def export_teams_to_excel(filename: str = "teams.xlsx"):
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from storage import load_teams
 
-    teams_data = load_teams()
+    teams_data = load_teams(cfg)
     teams = teams_data.get("teams", {})
 
     if not teams:
@@ -1783,7 +1783,7 @@ def export_teams_to_excel(filename: str = "teams.xlsx"):
 # ANALYTICS EXPORT – key stats & metrics for infographic display
 # ══════════════════════════════════════════════════════════════════════════════
 
-def export_analytics_to_excel(filename: str = "analytics.xlsx"):
+def export_analytics_to_excel(filename: str = "analytics.xlsx", cfg=None):
     """Export analytics dashboard to Excel with multiple sheets:
        1. Top Players by Role – highest scorers per role (Batsman, Bowler, WK, AR)
        2. Top Players Overall – overall highest scorers regardless of role
@@ -1796,7 +1796,7 @@ def export_analytics_to_excel(filename: str = "analytics.xlsx"):
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
-    master = load_master_scoresheet()
+    master = load_master_scoresheet(cfg)
     match_list = master.get("match_list", [])
     teams = master.get("teams", {})
 
