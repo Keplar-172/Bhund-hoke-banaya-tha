@@ -33,10 +33,24 @@ for src in "${SEED_DIR}/scorecards"/*.json; do
     fi
 done
 
-# Seed WWC data files (teams, players, and any pre-existing scores)
+# Always overwrite teams/players config from seed — these are code-managed and
+# must reflect the latest image (captains, rosters, prices).
+for config_file in "teams_data.json" "players_data.json"; do
+    src="${SEED_DIR}/wwc/${config_file}"
+    dest="${DATA_DIR}/wwc/${config_file}"
+    if [ -f "$src" ]; then
+        echo "[entrypoint] Syncing WWC config (always): ${config_file}"
+        cp "$src" "$dest"
+    fi
+done
+
+# Seed remaining WWC data files (scores, history) only if missing or empty
 for src in "${SEED_DIR}/wwc"/*.json; do
     [ -f "$src" ] || continue
     filename="$(basename "$src")"
+    # teams/players already handled above
+    [ "$filename" = "teams_data.json" ] && continue
+    [ "$filename" = "players_data.json" ] && continue
     dest="${DATA_DIR}/wwc/${filename}"
     if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
         echo "[entrypoint] Seeding WWC: ${filename}"
