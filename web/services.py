@@ -8,6 +8,7 @@ from storage import (
     load_scores,
     load_match_history,
     load_master_scoresheet,
+    load_players,
     get_cached_scorecard,
 )
 from calculator import calculate_match_scores
@@ -108,6 +109,18 @@ def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
     """Get master scoresheet with all matches and cumulative data."""
     master = load_master_scoresheet(cfg)
 
+    # Build name → team_short lookup from players database
+    team_short_lookup: Dict[str, str] = {}
+    try:
+        players_db = load_players(cfg)
+        for pdata in players_db.get("players", {}).values():
+            name = pdata.get("name", "")
+            short = pdata.get("ipl_team_short", "")
+            if name and short:
+                team_short_lookup[name] = short
+    except Exception:
+        pass
+
     raw_matches = [
         _build_match_meta(m.get("match_id"), cfg)
         for m in master.get("match_list", [])
@@ -116,10 +129,14 @@ def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
 
     teams_list = []
     for owner, tdata in master.get("teams", {}).items():
+        players = tdata.get("players", {})
+        # Inject team_short into each player entry
+        for pname, pdata in players.items():
+            pdata["team_short"] = team_short_lookup.get(pname, "")
         teams_list.append({
             "owner": owner,
             "total": tdata.get("cumulative_total", 0),
-            "players": tdata.get("players", {})
+            "players": players,
         })
 
     teams_list.sort(key=lambda x: x["total"], reverse=True)

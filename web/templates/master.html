@@ -73,7 +73,12 @@
                             {% for player_name, player_data in sorted_players %}
                             <div class="player-card-mini role-{{ player_data.role|lower|replace('-','') }}">
                                 <div class="player-header-mini">
-                                    <span class="player-name-mini">{{ player_name }}</span>
+                                    <div class="player-name-block">
+                                        <span class="player-name-mini">{{ player_name }}</span>
+                                        {% if player_data.team_short %}
+                                        <span class="player-team-short">{{ player_data.team_short }}</span>
+                                        {% endif %}
+                                    </div>
                                     <div class="player-badges">
                                         {% if player_data.is_captain %}
                                         <span class="badge-captain">C</span>
