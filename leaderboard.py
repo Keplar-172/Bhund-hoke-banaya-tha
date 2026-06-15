@@ -50,12 +50,12 @@ def _short_match_name_from_scorecard(scorecard_data: dict, match_id: int = 0) ->
     return f"Match {match_id}"
 
 
-def _match_label_for_master_entry(match: dict) -> str:
+def _match_label_for_master_entry(match: dict, cfg=None) -> str:
     description = match.get("description", "")
     short = _short_match_name_from_description(description)
 
     if not short or short.lower().startswith("match "):
-        cached = get_cached_scorecard(match.get("match_id"))
+        cached = get_cached_scorecard(match.get("match_id"), cfg)
         if cached:
             short = _short_match_name_from_scorecard(cached, match.get("match_id"))
 
@@ -808,7 +808,7 @@ def export_master_to_excel(filename: str = "master_scoresheet.xlsx", cfg=None):
 
     match_labels = []
     for m in match_list:
-        match_labels.append(_match_label_for_master_entry(m))
+        match_labels.append(_match_label_for_master_entry(m, cfg))
 
     row = 4
     # Headers: Rank | Team | <match names> | Total
@@ -899,7 +899,7 @@ def export_master_to_excel(filename: str = "master_scoresheet.xlsx", cfg=None):
     ws.cell(row=row, column=1, value="Match Key:").font = Font(bold=True, size=10)
     row += 1
     for i, m in enumerate(match_list):
-        match_label = _match_label_for_master_entry(m)
+        match_label = _match_label_for_master_entry(m, cfg)
         if match_label and match_label != m.get("description", ""):
             ws.cell(row=row, column=1, value=f"M{i+1}: {match_label} — {m['description']} (ID: {m['match_id']})")
         else:

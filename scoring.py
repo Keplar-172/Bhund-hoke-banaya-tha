@@ -16,7 +16,8 @@ class ScoringRules:
     duck_roles: tuple = ("Batsman", "Allrounder", "Wicketkeeper")
     # Bowling
     dot_ball_pts: float = 0.5          # per dot ball; IPL=0.5, WWC=1.0
-    over_bowled_pts: float = 0.0       # bonus per complete over bowled; WWC=5.0
+    over_bowled_pts: float = 0.0       # flat bonus per complete over (IPL: 0, unused when tiered)
+    over_bowled_tiered: bool = False   # WWC: tiered bonus based on total overs bowled
 
 
 IPL_RULES = ScoringRules()
@@ -26,7 +27,8 @@ WWC_RULES = ScoringRules(
     sr_250_bonus=True,
     duck_roles=("Batsman", "Allrounder"),
     dot_ball_pts=1.0,
-    over_bowled_pts=5.0,
+    over_bowled_pts=0.0,        # unused — tiered system used instead
+    over_bowled_tiered=True,    # >3 overs=20, >2=15, >1=10, 0-1=5
 )
 
 
@@ -113,8 +115,19 @@ def calculate_bowling_points(overs: float, maidens: int, runs_conceded: int,
     r = rules if rules is not None else IPL_RULES
     pts = 0.0
 
-    # Per complete over bowled (WWC: +5/over; IPL: 0)
-    pts += int(overs) * r.over_bowled_pts
+    # Overs bowled bonus
+    if r.over_bowled_tiered:
+        # WWC tiered: flat bonus based on total overs bowled
+        if overs > 3:
+            pts += 20
+        elif overs > 2:
+            pts += 15
+        elif overs > 1:
+            pts += 10
+        elif overs > 0:
+            pts += 5
+    else:
+        pts += int(overs) * r.over_bowled_pts
 
     # Base wicket points
     pts += wickets * 25
