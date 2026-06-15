@@ -15,6 +15,7 @@ from scoring import (
     calculate_fielding_points,
     calculate_generic_points,
     apply_captain_bonus,
+    get_scoring_rules,
 )
 from config import LeagueConfig
 from storage import load_teams
@@ -152,6 +153,7 @@ def calculate_match_scores(scorecard_data: dict,
         }
     """
     teams_data = load_teams(cfg)
+    rules = get_scoring_rules(cfg)
     id_lookup, name_lookup = _build_roster_lookup(teams_data)
 
     parsed = parse_scorecard(scorecard_data)
@@ -273,7 +275,7 @@ def calculate_match_scores(scorecard_data: dict,
                     ba = bat_agg[sc_name]
                     bat_pts = calculate_batting_points(
                         ba["runs"], ba["balls"], ba["fours"], ba["sixes"],
-                        ba["is_not_out"], role
+                        ba["is_not_out"], role, rules
                     )
 
                 # Bowling
@@ -282,7 +284,7 @@ def calculate_match_scores(scorecard_data: dict,
                     blw = bowled_lbw_map.get(sc_name, 0)
                     bowl_pts = calculate_bowling_points(
                         bo["overs"], bo["maidens"], bo["runs"],
-                        bo["wickets"], bo["dot_balls"], blw
+                        bo["wickets"], bo["dot_balls"], blw, rules
                     )
 
                 # Fielding

@@ -1,8 +1,40 @@
 """
-IPL Fantasy Premier League 2026 – Scoring Rules Engine.
+Fantasy Cricket Scoring Rules Engine.
 
-Rules as provided by the league commissioner.
+Supports league-specific rules via the ScoringRules dataclass.
+IPL and WWC rules differ in several areas; see ScoringRules for details.
 """
+from dataclasses import dataclass
+
+
+@dataclass
+class ScoringRules:
+    """Per-league scoring configuration. Passed to all scoring functions."""
+    # Batting
+    run_milestone_first: int = 30       # runs for first +5 milestone; IPL=30, WWC=25
+    sr_250_bonus: bool = False          # extra +20 tier for SR > 250 (WWC only)
+    duck_roles: tuple = ("Batsman", "Allrounder", "Wicketkeeper")
+    # Bowling
+    dot_ball_pts: float = 0.5          # per dot ball; IPL=0.5, WWC=1.0
+    over_bowled_pts: float = 0.0       # bonus per complete over bowled; WWC=5.0
+
+
+IPL_RULES = ScoringRules()
+
+WWC_RULES = ScoringRules(
+    run_milestone_first=25,
+    sr_250_bonus=True,
+    duck_roles=("Batsman", "Allrounder"),
+    dot_ball_pts=1.0,
+    over_bowled_pts=5.0,
+)
+
+
+def get_scoring_rules(cfg=None) -> ScoringRules:
+    """Return the ScoringRules for the given league config (defaults to IPL)."""
+    if cfg is not None and cfg.short_name == "wwc":
+        return WWC_RULES
+    return IPL_RULES
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -10,12 +42,14 @@ Rules as provided by the league commissioner.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def calculate_batting_points(runs: int, balls: int, fours: int, sixes: int,
-                              is_not_out: bool, role: str) -> float:
+                              is_not_out: bool, role: str,
+                              rules: ScoringRules = None) -> float:
     """
     Args:
-        role: one of "Batsman", "Bowler", "Allrounder", "Wicketkeeper"
-              Duck penalty applies only to Batsman, Allrounder, Wicketkeeper.
+        role:  one of "Batsman", "Bowler", "Allrounder", "Wicketkeeper"
+        rules: league-specific scoring rules (defaults to IPL_RULES)
     """
+    r = rules if rules is not None else IPL_RULES
     pts = 0.0
 
     # Per-run, boundary, six
@@ -34,18 +68,20 @@ def calculate_batting_points(runs: int, balls: int, fours: int, sixes: int,
         pts += 15
     elif runs >= 50:
         pts += 10
-    elif runs >= 30:
+    elif runs >= r.run_milestone_first:   # 30 for IPL, 25 for WWC
         pts += 5
 
-    # Duck: -5 (only for batsman, allrounders, wicketkeepers)
+    # Duck: -5 (role-dependent; WK excluded in WWC)
     if runs == 0 and not is_not_out and balls > 0:
-        if role in ("Batsman", "Allrounder", "Wicketkeeper"):
+        if role in r.duck_roles:
             pts -= 5
 
-    # Strike-rate bonus/penalty (min 10 balls)
+    # Strike-rate bonus/penalty (min 10 balls faced)
     if balls >= 10:
         sr = (runs / balls) * 100
-        if sr > 200:
+        if r.sr_250_bonus and sr > 250:   # WWC only
+            pts += 20
+        elif sr > 200:
             pts += 12
         elif sr > 150:
             pts += 8
@@ -65,14 +101,20 @@ def calculate_batting_points(runs: int, balls: int, fours: int, sixes: int,
 
 def calculate_bowling_points(overs: float, maidens: int, runs_conceded: int,
                               wickets: int, dot_balls: int,
-                              bowled_lbw_wickets: int = 0) -> float:
+                              bowled_lbw_wickets: int = 0,
+                              rules: ScoringRules = None) -> float:
     """
     Args:
         dot_balls:          Number of dot balls bowled.
         bowled_lbw_wickets: Count of wickets that were bowled, hit-wicket, or LBW
                             (each gets +10 bonus on top of the base +25).
+        rules:              League-specific scoring rules (defaults to IPL_RULES).
     """
+    r = rules if rules is not None else IPL_RULES
     pts = 0.0
+
+    # Per complete over bowled (WWC: +5/over; IPL: 0)
+    pts += int(overs) * r.over_bowled_pts
 
     # Base wicket points
     pts += wickets * 25
@@ -93,8 +135,8 @@ def calculate_bowling_points(overs: float, maidens: int, runs_conceded: int,
     # Maiden over bonus
     pts += maidens * 8
 
-    # Dot-ball bonus
-    pts += dot_balls * 0.5
+    # Dot-ball bonus (IPL: +0.5; WWC: +1)
+    pts += dot_balls * r.dot_ball_pts
 
     # Economy rate (minimum 1 over bowled)
     if overs >= 1:
@@ -148,9 +190,8 @@ def calculate_generic_points(played: bool, is_mom: bool) -> float:
         pts += 30      # Man of the match
     return pts
 
-# Note: Impact sub (+4), Orange cap (+100), Purple cap (+100), Hatrick (+25),
-# and Mankad (+20) are rare/manual events – they can be added via manual
-# adjustment when needed.
+# Note: Hat-trick (+25) requires ball-by-ball data — apply as a manual
+# adjustment when it occurs. Orange/Purple cap bonuses are also manual.
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -184,14 +225,16 @@ def calculate_player_match_score(
     played: bool = False, is_mom: bool = False,
     # Captain/VC
     is_captain: bool = False, is_vice_captain: bool = False,
+    # Rules
+    rules: ScoringRules = None,
 ) -> dict:
     """Calculate total fantasy points for a player in one match.
 
     Returns dict with breakdown and total.
     """
-    bat_pts = calculate_batting_points(runs, balls, fours, sixes, is_not_out, role)
+    bat_pts = calculate_batting_points(runs, balls, fours, sixes, is_not_out, role, rules)
     bowl_pts = calculate_bowling_points(overs, maidens, runs_conceded, wickets,
-                                         dot_balls, bowled_lbw_wickets)
+                                         dot_balls, bowled_lbw_wickets, rules)
     field_pts = calculate_fielding_points(catches, stumpings,
                                            run_out_shared, run_out_solo)
     generic_pts = calculate_generic_points(played, is_mom)
