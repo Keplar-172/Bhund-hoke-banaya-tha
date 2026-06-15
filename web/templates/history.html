@@ -6,9 +6,18 @@
 <div class="page-header">
     <h2>Match History</h2>
     <div class="actions">
+        {% if league and league.short_name == "wwc" and history %}
+        <button id="rescore-all-btn" class="btn btn-small btn-secondary" onclick="rescoreAll()">
+            ♻️ Rescore All
+        </button>
+        {% endif %}
         <button id="filter-all" class="btn btn-small btn-primary">All Matches</button>
     </div>
 </div>
+
+{% if league and league.short_name == "wwc" %}
+<div id="rescore-status" style="display:none;" class="alert-box"></div>
+{% endif %}
 
 <!-- Search and Filter Bar -->
 <div class="filter-bar">
@@ -74,7 +83,7 @@
             
             <!-- Actions -->
             <div class="match-actions">
-                <a href="/dashboard/match/{{ match.match_id }}" class="btn btn-small btn-primary">
+                <a href="{{ league.dashboard_prefix }}/match/{{ match.match_id }}" class="btn btn-small btn-primary">
                     <span>📋</span> View Details
                 </a>
                 <a href="/downloads/match/{{ match.match_id }}/team-points" class="btn btn-small btn-secondary">
@@ -135,5 +144,37 @@
             filterMatches();
         }
     });
+
+    async function rescoreAll() {
+        const btn = document.getElementById('rescore-all-btn');
+        const status = document.getElementById('rescore-status');
+        if (!confirm('Rescore all matches with the updated WWC scoring rules?')) return;
+        btn.disabled = true;
+        btn.textContent = 'Rescoring…';
+        status.style.display = 'block';
+        status.className = 'alert-box alert-info';
+        status.textContent = 'Rescoring all matches…';
+        try {
+            const resp = await fetch('/api/wwc/rescore-all', { method: 'POST' });
+            const data = await resp.json();
+            if (resp.ok) {
+                const ok = (data.matches || []).filter(m => m.status === 'ok').length;
+                const err = (data.matches || []).filter(m => m.status === 'error').length;
+                status.className = err ? 'alert-box alert-warning' : 'alert-box alert-success';
+                status.textContent = `Done — ${ok} match(es) rescored${err ? `, ${err} error(s)` : ''}. Refreshing…`;
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                status.className = 'alert-box alert-error';
+                status.textContent = data.detail || 'Rescore failed.';
+                btn.disabled = false;
+                btn.textContent = '♻️ Rescore All';
+            }
+        } catch (e) {
+            status.className = 'alert-box alert-error';
+            status.textContent = 'Network error: ' + e.message;
+            btn.disabled = false;
+            btn.textContent = '♻️ Rescore All';
+        }
+    }
 </script>
 {% endblock %}

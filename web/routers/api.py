@@ -179,6 +179,83 @@ async def auto_score_status(
         })
 
 
+@router.post("/wwc/rescore/{match_id}")
+async def rescore_wwc_match(
+    match_id: int,
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    """Rescore a single WWC match with the current scoring rules. Admin-only."""
+    _verify_auto_score_caller(request, x_api_key)
+    from config import WWC_CONFIG
+    from storage import (
+        is_match_processed, unprocess_match, load_scores, save_scores,
+        remove_match_from_scoring_sheet, remove_match_from_master, load_match_history,
+    )
+    from main import _wwc_score
+
+    cfg = WWC_CONFIG
+    if not is_match_processed(match_id, cfg):
+        raise HTTPException(status_code=404, detail=f"Match {match_id} not yet processed in WWC")
+
+    old = unprocess_match(match_id, cfg)
+    scores = load_scores(cfg)
+    for owner, pts in old.items():
+        scores[owner] = round(scores.get(owner, 0) - pts, 2)
+    save_scores(scores, cfg)
+    remove_match_from_scoring_sheet(match_id, cfg)
+    remove_match_from_master(match_id, cfg)
+
+    _wwc_score(match_id, cfg)
+
+    history = load_match_history(cfg)
+    last = next((m for m in reversed(history) if m["match_id"] == match_id), None)
+    return JSONResponse({
+        "status": "rescored",
+        "match_id": match_id,
+        "match_scores": last["team_scores"] if last else {},
+    })
+
+
+@router.post("/wwc/rescore-all")
+async def rescore_all_wwc_matches(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    """Rescore every processed WWC match with the current scoring rules. Admin-only."""
+    _verify_auto_score_caller(request, x_api_key)
+    from config import WWC_CONFIG
+    from storage import (
+        is_match_processed, unprocess_match, load_scores, save_scores,
+        remove_match_from_scoring_sheet, remove_match_from_master, load_match_history,
+    )
+    from main import _wwc_score
+
+    cfg = WWC_CONFIG
+    history = load_match_history(cfg)
+    match_ids = [m["match_id"] for m in history]
+
+    if not match_ids:
+        return JSONResponse({"status": "nothing_to_rescore", "matches": []})
+
+    results = []
+    for mid in match_ids:
+        try:
+            old = unprocess_match(mid, cfg)
+            scores = load_scores(cfg)
+            for owner, pts in old.items():
+                scores[owner] = round(scores.get(owner, 0) - pts, 2)
+            save_scores(scores, cfg)
+            remove_match_from_scoring_sheet(mid, cfg)
+            remove_match_from_master(mid, cfg)
+            _wwc_score(mid, cfg)
+            results.append({"match_id": mid, "status": "ok"})
+        except Exception as exc:
+            results.append({"match_id": mid, "status": "error", "error": str(exc)})
+
+    return JSONResponse({"status": "done", "matches": results})
+
+
 @router.get("/export-data")
 async def export_data(
     request: Request,
