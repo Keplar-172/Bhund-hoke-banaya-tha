@@ -24,7 +24,7 @@
     "Polly Inglis": {"name": "Polly Inglis", "ipl_team": "New Zealand", "ipl_team_short": "NZ", "role": "Wicketkeeper", "country": "New Zealand", "price": 20, "fantasy_owners": ["Sanket"]},
     "Nandni Sharma": {"name": "Nandni Sharma", "ipl_team": "India", "ipl_team_short": "IND", "role": "Allrounder", "country": "India", "price": 140, "fantasy_owners": ["Sanket"]},
     "Jess Kerr": {"name": "Jess Kerr", "ipl_team": "New Zealand", "ipl_team_short": "NZ", "role": "Bowler", "country": "New Zealand", "price": 20, "fantasy_owners": ["Sanket"]},
-    "Nensi Patel": {"name": "Nensi Patel", "ipl_team": "India", "ipl_team_short": "IND", "role": "Allrounder", "country": "India", "price": 20, "fantasy_owners": ["Sanket"]},
+    "Nensi Patel": {"name": "Nensi Patel", "ipl_team": "New Zealand", "ipl_team_short": "NZ", "role": "Allrounder", "country": "New Zealand", "price": 20, "fantasy_owners": ["Sanket"]},
     "Brooke Halliday": {"name": "Brooke Halliday", "ipl_team": "New Zealand", "ipl_team_short": "NZ", "role": "Batsman", "country": "New Zealand", "price": 20, "fantasy_owners": ["Sanket"]},
     "Lara McBride": {"name": "Lara McBride", "ipl_team": "Ireland", "ipl_team_short": "IRE", "role": "Allrounder", "country": "Ireland", "price": 20, "fantasy_owners": ["Sanket"]},
     "Sinalo Jafta": {"name": "Sinalo Jafta", "ipl_team": "South Africa", "ipl_team_short": "SA", "role": "Wicketkeeper", "country": "South Africa", "price": 40, "fantasy_owners": ["Sanket"]},
