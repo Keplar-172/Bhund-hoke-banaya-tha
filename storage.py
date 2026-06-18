@@ -209,8 +209,8 @@ def update_master_scoresheet(match_id: int, description: str,
             if pname not in players:
                 players[pname] = {
                     "role": pd.get("role", ""),
-                    "is_captain": pname == captain,
-                    "is_vice_captain": pname == vice_captain,
+                    "is_captain": False,
+                    "is_vice_captain": False,
                     "match_scores": {},
                     "cumulative": {
                         "batting": 0.0, "bowling": 0.0,
@@ -218,6 +218,9 @@ def update_master_scoresheet(match_id: int, description: str,
                         "total": 0.0, "matches_played": 0,
                     },
                 }
+            # Always sync captain/VC from current teams config
+            players[pname]["is_captain"] = (pname == captain)
+            players[pname]["is_vice_captain"] = (pname == vice_captain)
 
             played = pd.get("played", pd["total"] != 0)
             players[pname]["match_scores"][mid] = {

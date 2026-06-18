@@ -256,6 +256,37 @@ async def rescore_all_wwc_matches(
     return JSONResponse({"status": "done", "matches": results})
 
 
+@router.post("/wwc/refresh-captains")
+async def refresh_wwc_captains(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    """Re-sync is_captain/is_vice_captain in WWC master scoresheet from teams config. Admin-only."""
+    _verify_auto_score_caller(request, x_api_key)
+    from config import WWC_CONFIG
+    from storage import load_master_scoresheet, save_master_scoresheet, load_teams
+
+    cfg = WWC_CONFIG
+    master = load_master_scoresheet(cfg)
+    teams_data = load_teams(cfg)
+
+    changes = []
+    for owner, tdata in master.get("teams", {}).items():
+        team_info = teams_data.get("teams", {}).get(owner, {})
+        cap = team_info.get("captain", "")
+        vc = team_info.get("vice_captain", "")
+        for pname, pdata in tdata.get("players", {}).items():
+            new_c = (pname == cap)
+            new_vc = (pname == vc)
+            if pdata.get("is_captain") != new_c or pdata.get("is_vice_captain") != new_vc:
+                changes.append({"owner": owner, "player": pname, "captain": new_c, "vc": new_vc})
+            pdata["is_captain"] = new_c
+            pdata["is_vice_captain"] = new_vc
+
+    save_master_scoresheet(master, cfg)
+    return JSONResponse({"status": "done", "changes": changes, "total_updated": len(changes)})
+
+
 @router.get("/export-data")
 async def export_data(
     request: Request,

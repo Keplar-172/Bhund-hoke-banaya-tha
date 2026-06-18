@@ -6,6 +6,11 @@
 <div class="page-header">
     <h2>Match History</h2>
     <div class="actions">
+        {% if league and league.short_name == "wwc" and user.is_admin %}
+        <button id="refresh-captains-btn" class="btn btn-small btn-secondary" onclick="refreshCaptains()">
+            👑 Refresh C/VC
+        </button>
+        {% endif %}
         {% if league and league.short_name == "wwc" and history and user.is_admin %}
         <button id="rescore-all-btn" class="btn btn-small btn-secondary" onclick="rescoreAll()">
             ♻️ Rescore All
@@ -144,6 +149,35 @@
             filterMatches();
         }
     });
+
+    async function refreshCaptains() {
+        const btn = document.getElementById('refresh-captains-btn');
+        const status = document.getElementById('rescore-status');
+        btn.disabled = true;
+        btn.textContent = 'Refreshing…';
+        status.style.display = 'block';
+        status.className = 'alert-box alert-info';
+        status.textContent = 'Syncing captain/VC flags…';
+        try {
+            const resp = await fetch('/api/wwc/refresh-captains', { method: 'POST' });
+            const data = await resp.json();
+            if (resp.ok) {
+                status.className = 'alert-box alert-success';
+                status.textContent = `Done — ${data.total_updated} player(s) updated. Refreshing…`;
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                status.className = 'alert-box alert-error';
+                status.textContent = data.detail || 'Refresh failed.';
+                btn.disabled = false;
+                btn.textContent = '👑 Refresh C/VC';
+            }
+        } catch (e) {
+            status.className = 'alert-box alert-error';
+            status.textContent = 'Network error: ' + e.message;
+            btn.disabled = false;
+            btn.textContent = '👑 Refresh C/VC';
+        }
+    }
 
     async function rescoreAll() {
         const btn = document.getElementById('rescore-all-btn');
