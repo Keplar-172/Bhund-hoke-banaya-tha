@@ -60,13 +60,20 @@ def get_dashboard_stats(cfg: LeagueConfig = None) -> Dict[str, Any]:
 
 
 def get_match_history_data(cfg: LeagueConfig = None) -> List[Dict[str, Any]]:
-    """Get processed match history, sorted chronologically."""
+    """Get processed match history, newest first."""
     history = load_match_history(cfg)
     enriched = []
     for entry in history:
         meta = _build_match_meta(entry["match_id"], cfg)
         enriched.append({**entry, **meta})
-    return sorted(enriched, key=lambda x: x["match_number"] if x["match_number"] else 0)
+
+    def _sort_key(x):
+        mn = x.get("match_number", 0) or 0
+        mid = x.get("match_id", 0) or 0
+        # Prefer match_number (IPL has it); fall back to match_id (WWC uses Cricbuzz IDs)
+        return (mn, mid)
+
+    return sorted(enriched, key=_sort_key, reverse=True)
 
 
 def _build_match_meta(match_id: int,
