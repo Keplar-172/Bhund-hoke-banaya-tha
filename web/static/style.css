@@ -1230,6 +1230,12 @@ tbody tr:hover {
     min-width: 0;
 }
 
+.player-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
 .player-name-mini {
     font-weight: 600;
     color: var(--text-primary);

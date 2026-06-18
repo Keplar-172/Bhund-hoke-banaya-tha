@@ -74,17 +74,19 @@
                             <div class="player-card-mini role-{{ player_data.role|lower|replace('-','') }}">
                                 <div class="player-header-mini">
                                     <div class="player-name-block">
-                                        <span class="player-name-mini">{{ player_name }}</span>
+                                        <div class="player-name-row">
+                                            <span class="player-name-mini">{{ player_name }}</span>
+                                            {% if player_data.is_captain %}
+                                            <span class="badge-captain">C</span>
+                                            {% elif player_data.is_vice_captain %}
+                                            <span class="badge-vc">VC</span>
+                                            {% endif %}
+                                        </div>
                                         {% if player_data.team_short %}
                                         <span class="player-team-short">{{ player_data.team_short }}</span>
                                         {% endif %}
                                     </div>
                                     <div class="player-badges">
-                                        {% if player_data.is_captain %}
-                                        <span class="badge-captain">C</span>
-                                        {% elif player_data.is_vice_captain %}
-                                        <span class="badge-vc">VC</span>
-                                        {% endif %}
                                         <span class="role-pill role-{{ player_data.role|lower|replace('-','') }}">{{ player_data.role[:3]|upper }}</span>
                                     </div>
                                 </div>

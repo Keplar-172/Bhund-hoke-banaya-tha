@@ -1554,7 +1554,8 @@ def export_team_points_to_excel(match_results: dict, description: str = "",
             row += 1
 
         for pname, pd in not_played:
-            ws.cell(row=row, column=1, value=pname).border = border
+            tag = _player_tag(pd)
+            ws.cell(row=row, column=1, value=f"{pname}{tag}").border = border
             ws.cell(row=row, column=1).alignment = left_align
             ws.cell(row=row, column=2, value=pd.get("role", "")).border = border
             ws.cell(row=row, column=2).alignment = left_align
