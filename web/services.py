@@ -114,6 +114,7 @@ def _build_match_meta(match_id: int,
 
 def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
     """Get master scoresheet with all matches and cumulative data."""
+    from storage import load_teams
     master = load_master_scoresheet(cfg)
 
     # Build name → team_short lookup from players database
@@ -128,6 +129,17 @@ def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
     except Exception:
         pass
 
+    # Build owner → (captain, vc) lookup live from teams config
+    captain_lookup: Dict[str, str] = {}
+    vc_lookup: Dict[str, str] = {}
+    try:
+        teams_db = load_teams(cfg)
+        for owner, team in teams_db.get("teams", {}).items():
+            captain_lookup[owner] = team.get("captain", "")
+            vc_lookup[owner] = team.get("vice_captain", "")
+    except Exception:
+        pass
+
     raw_matches = [
         _build_match_meta(m.get("match_id"), cfg)
         for m in master.get("match_list", [])
@@ -137,9 +149,13 @@ def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
     teams_list = []
     for owner, tdata in master.get("teams", {}).items():
         players = tdata.get("players", {})
-        # Inject team_short into each player entry
+        cap = captain_lookup.get(owner, "")
+        vc = vc_lookup.get(owner, "")
         for pname, pdata in players.items():
             pdata["team_short"] = team_short_lookup.get(pname, "")
+            # Always derive from live teams config so display is never stale
+            pdata["is_captain"] = (pname == cap)
+            pdata["is_vice_captain"] = (pname == vc)
         teams_list.append({
             "owner": owner,
             "total": tdata.get("cumulative_total", 0),
