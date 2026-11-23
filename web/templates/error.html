@@ -5,7 +5,7 @@
 {% block content %}
 <div class="error-container">
     <h2>⚠️ Error</h2>
-    <p>{{ error }}</p>
+    <p>{{ error or message or 'Something went wrong.' }}</p>
     <a href="/" class="btn btn-primary">Back to Home</a>
 </div>
 {% endblock %}

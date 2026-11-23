@@ -31,7 +31,7 @@ try:
     from web.auth import get_current_user, User
     from web.routers import dashboard, downloads, auth as auth_router, api as api_router, public as public_router
     from web.logger import setup_logging, get_logger
-    from config import IPL_CONFIG, WWC_CONFIG
+    import tournaments
     from web.services import get_leaderboard_data, get_dashboard_stats
 except Exception as _import_err:
     import traceback
@@ -112,13 +112,25 @@ templates = Jinja2Templates(directory=templates_dir)
 
 # Include routers
 app.include_router(auth_router.router, prefix="/auth", tags=["authentication"])
-app.include_router(dashboard.router, prefix="/dashboard", tags=["ipl"])
-app.include_router(dashboard.router, prefix="/wwc", tags=["wwc"])
+# One set of dashboard pages per tournament, e.g. /ipl/2026, /wwc/2026, /wpl/2027
+for _t in tournaments.all_tournaments():
+    app.include_router(dashboard.router, prefix=_t.dashboard_prefix, tags=[_t.id])
+    logger.info(f"Tournament {_t.id} ({_t.status}) at {_t.dashboard_prefix}")
 app.include_router(downloads.router, prefix="/downloads", tags=["downloads"])
 app.include_router(api_router.router, prefix="/api", tags=["api"])
 app.include_router(public_router.router, prefix="/api/public", tags=["public"])
 
 logger.info("Routers registered successfully")
+
+
+@app.middleware("http")
+async def legacy_url_redirect(request: Request, call_next):
+    """Old single-league URLs (/dashboard/..., /wwc/...) -> /ipl/2026/..., /wwc/2026/..."""
+    new_path = tournaments.legacy_redirect(request.url.path)
+    if new_path:
+        query = f"?{request.url.query}" if request.url.query else ""
+        return RedirectResponse(url=new_path + query, status_code=301)
+    return await call_next(request)
 
 # ══════════════════════════════════════════════════════════════
 # ROUTES
@@ -131,19 +143,22 @@ async def root(request: Request):
     if not username:
         return RedirectResponse(url="/auth/login", status_code=302)
 
-    ipl_stats = get_dashboard_stats(IPL_CONFIG)
-    wwc_stats = get_dashboard_stats(WWC_CONFIG)
-    ipl_lb = get_leaderboard_data(IPL_CONFIG)
-    wwc_lb = get_leaderboard_data(WWC_CONFIG)
+    groups = []
+    for label, items in tournaments.grouped():
+        groups.append({
+            "label": label,
+            "tournaments": [
+                {"config": t,
+                 "stats": get_dashboard_stats(t),
+                 "leaderboard": get_leaderboard_data(t)}
+                for t in items
+            ],
+        })
 
     return templates.TemplateResponse(
         request=request,
         name="home.html",
-        context={
-            "user": {"username": username},
-            "ipl": {"config": IPL_CONFIG, "stats": ipl_stats, "leaderboard": ipl_lb},
-            "wwc": {"config": WWC_CONFIG, "stats": wwc_stats, "leaderboard": wwc_lb},
-        }
+        context={"user": {"username": username}, "groups": groups},
     )
 
 
@@ -221,7 +236,7 @@ async def not_found_handler(request: Request, exc):
     return templates.TemplateResponse(
         request=request,
         name="error.html",
-        context={"message": "Page not found", "status_code": 404},
+        context={"message": getattr(exc, "detail", None) or "Page not found", "status_code": 404},
         status_code=404
     )
 

@@ -1,22 +1,23 @@
 """Persistence layer – load/save cumulative scores, match history, scorecard cache, and scoring sheet."""
 import json
 import os
-from config import (
-    SCORES_FILE, MATCH_HISTORY_FILE, DATA_DIR, TEAMS_FILE,
-    SCORECARD_CACHE_DIR, SCORING_SHEET_FILE, MASTER_SCORESHEET_FILE,
-    PLAYERS_FILE, LeagueConfig, IPL_CONFIG,
-)
+from config import LeagueConfig
+import tournaments
 
 
 def _c(cfg):
-    """Return cfg if provided, else the default IPL config."""
-    return cfg if cfg is not None else IPL_CONFIG
+    """Return cfg if provided, else the default tournament (CLI: --t <id>)."""
+    return cfg if cfg is not None else tournaments.default()
 
 
 # ── Teams ────────────────────────────────────────────────────────────────────
 
 def load_teams(cfg: LeagueConfig = None) -> dict:
-    with open(_c(cfg).teams_file, "r") as f:
+    """Fantasy teams. A tournament without teams yet returns an empty set."""
+    path = _c(cfg).teams_file
+    if not os.path.exists(path):
+        return {"teams": {}}
+    with open(path, "r") as f:
         return json.load(f)
 
 
@@ -28,7 +29,10 @@ def save_teams(data: dict, cfg: LeagueConfig = None):
 # ── Players Database ────────────────────────────────────────────────────────
 
 def load_players(cfg: LeagueConfig = None) -> dict:
-    with open(_c(cfg).players_file, "r") as f:
+    path = _c(cfg).players_file
+    if not os.path.exists(path):
+        return {"players": {}}
+    with open(path, "r") as f:
         return json.load(f)
 
 

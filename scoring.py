@@ -32,11 +32,20 @@ WWC_RULES = ScoringRules(
 )
 
 
+# Tournaments pick their rules with "scoring_preset" in tournament.json.
+SCORING_PRESETS = {
+    "ipl": IPL_RULES,
+    "wwc": WWC_RULES,
+}
+
+
 def get_scoring_rules(cfg=None) -> ScoringRules:
-    """Return the ScoringRules for the given league config (defaults to IPL)."""
-    if cfg is not None and cfg.short_name == "wwc":
-        return WWC_RULES
-    return IPL_RULES
+    """Return the ScoringRules for a tournament (defaults to IPL rules)."""
+    preset = getattr(cfg, "scoring_preset", None) or "ipl"
+    if preset not in SCORING_PRESETS:
+        raise ValueError(f"Unknown scoring_preset '{preset}'. "
+                         f"Known: {', '.join(SCORING_PRESETS)}")
+    return SCORING_PRESETS[preset]
 
 
 # ══════════════════════════════════════════════════════════════════════════════

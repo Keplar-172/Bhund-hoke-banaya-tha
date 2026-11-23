@@ -24,10 +24,13 @@ MATCH_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "Match data
 
 
 def _get_cfg(request: Request):
-    """Return the league config based on ?league= query param (defaults to IPL)."""
-    from config import LEAGUES, IPL_CONFIG
-    key = request.query_params.get("league", "ipl")
-    return LEAGUES.get(key, IPL_CONFIG)
+    """Tournament from ?league=<id> (old keys 'ipl'/'wwc' still work)."""
+    import tournaments
+    key = request.query_params.get("league")
+    t = tournaments.get(key) if key else tournaments.default()
+    if t is None:
+        raise HTTPException(status_code=404, detail=f"Unknown tournament '{key}'")
+    return t
 
 
 @router.get("/master")
@@ -40,7 +43,7 @@ async def download_master(request: Request, user: User = Depends(require_auth)):
     export_master_to_excel(filename, cfg)
 
     if not os.path.exists(filename):
-        raise HTTPException(status_code=500, detail="Export generation failed")
+        raise HTTPException(status_code=404, detail="Nothing to export yet for this tournament")
 
     return FileResponse(
         path=filename,
@@ -76,7 +79,7 @@ async def download_team_points(
     export_team_points_to_excel(match_results, desc, filename, cfg=cfg)
 
     if not os.path.exists(filename):
-        raise HTTPException(status_code=500, detail="Export generation failed")
+        raise HTTPException(status_code=404, detail="Nothing to export yet for this tournament")
 
     return FileResponse(
         path=filename,
@@ -101,7 +104,7 @@ async def download_scorecard(
     export_scorecard_to_excel(scorecard_data, filename, match_id)
 
     if not os.path.exists(filename):
-        raise HTTPException(status_code=500, detail="Export generation failed")
+        raise HTTPException(status_code=404, detail="Nothing to export yet for this tournament")
 
     return FileResponse(
         path=filename,
@@ -120,7 +123,7 @@ async def download_teams(request: Request, user: User = Depends(require_auth)):
     export_teams_to_excel(filename, cfg)
 
     if not os.path.exists(filename):
-        raise HTTPException(status_code=500, detail="Export generation failed")
+        raise HTTPException(status_code=404, detail="Nothing to export yet for this tournament")
 
     return FileResponse(
         path=filename,
@@ -139,7 +142,7 @@ async def download_analytics(request: Request, user: User = Depends(require_auth
     export_analytics_to_excel(filename, cfg)
 
     if not os.path.exists(filename):
-        raise HTTPException(status_code=500, detail="Export generation failed")
+        raise HTTPException(status_code=404, detail="Nothing to export yet for this tournament")
 
     return FileResponse(
         path=filename,

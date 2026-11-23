@@ -105,6 +105,9 @@
         .rank-3 .standing-rank { color: #b45309; }
         .ipl-card { border-top: 3px solid #3b82f6; }
         .wwc-card { border-top: 3px solid #ec4899; }
+        .wpl-card { border-top: 3px solid #8b5cf6; }
+        .status-completed { opacity: 0.92; }
+        .league-group-title { margin: 1.75rem 0 0.75rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary, #6b7280); }
         .cta-btn {
             display: block;
             text-align: center;
@@ -116,6 +119,7 @@
         }
         .ipl-card .cta-btn { background: #3b82f6; color: #fff; }
         .wwc-card .cta-btn { background: #ec4899; color: #fff; }
+        .wpl-card .cta-btn { background: #8b5cf6; color: #fff; }
         .home-nav {
             display: flex;
             justify-content: flex-end;
@@ -155,69 +159,45 @@
             <p>Select a league to view standings and match scores</p>
         </div>
 
+        {% for group in groups %}
+        <h3 class="league-group-title">{{ group.label }}</h3>
         <div class="league-grid">
-
-            <!-- IPL Card -->
-            <a href="/dashboard" class="league-card ipl-card">
+            {% for item in group.tournaments %}
+            {% set t = item.config %}
+            <a href="{{ t.dashboard_prefix }}" class="league-card {{ t.competition }}-card status-{{ t.status }}">
                 <div class="league-card-header">
-                    <span class="league-emoji">{{ ipl.config.emoji }}</span>
-                    <h2>{{ ipl.config.name }}</h2>
+                    <span class="league-emoji">{{ t.emoji }}</span>
+                    <h2>{{ t.name }}</h2>
                 </div>
                 <div class="league-stats">
-                    <span class="stat-pill">{{ ipl.stats.total_matches }} matches played</span>
-                    <span class="stat-pill">{{ ipl.stats.total_teams }} teams</span>
-                    {% if ipl.stats.total_matches > 0 %}
-                    <span class="stat-pill">Leader: {{ ipl.stats.top_scorer.team }}</span>
+                    <span class="stat-pill">{{ t.status_label }}</span>
+                    <span class="stat-pill">{{ item.stats.total_matches }} matches played</span>
+                    <span class="stat-pill">{{ item.stats.total_teams }} teams</span>
+                    {% if item.stats.total_matches > 0 %}
+                    <span class="stat-pill">{% if t.status == "completed" %}Winner{% else %}Leader{% endif %}: {{ item.stats.top_scorer.team }}</span>
                     {% endif %}
                 </div>
                 <div class="league-standings">
-                    <h4>Current Standings</h4>
-                    {% if ipl.leaderboard %}
-                        {% for entry in ipl.leaderboard %}
+                    <h4>{% if t.status == "completed" %}Final Standings{% else %}Current Standings{% endif %}</h4>
+                    {% if item.leaderboard and item.stats.total_matches > 0 %}
+                        {% for entry in item.leaderboard %}
                         <div class="standing-row rank-{{ entry.rank }}">
                             <span class="standing-rank">{{ entry.rank }}</span>
                             <span class="standing-team">{{ entry.team }}</span>
                             <span class="standing-pts">{{ entry.points }}</span>
                         </div>
                         {% endfor %}
+                    {% elif t.status in ["upcoming", "auction"] %}
+                        <p class="no-matches-msg">{% if t.start_date %}Starts {{ t.start_date }}{% else %}Coming soon{% endif %}</p>
                     {% else %}
                         <p class="no-matches-msg">No matches scored yet</p>
                     {% endif %}
                 </div>
-                <span class="cta-btn">Open IPL Dashboard →</span>
+                <span class="cta-btn">Open {{ t.name }} →</span>
             </a>
-
-            <!-- WWC Card -->
-            <a href="/wwc" class="league-card wwc-card">
-                <div class="league-card-header">
-                    <span class="league-emoji">{{ wwc.config.emoji }}</span>
-                    <h2>{{ wwc.config.name }}</h2>
-                </div>
-                <div class="league-stats">
-                    <span class="stat-pill">{{ wwc.stats.total_matches }} matches played</span>
-                    <span class="stat-pill">{{ wwc.stats.total_teams }} teams</span>
-                    {% if wwc.stats.total_matches > 0 %}
-                    <span class="stat-pill">Leader: {{ wwc.stats.top_scorer.team }}</span>
-                    {% endif %}
-                </div>
-                <div class="league-standings">
-                    <h4>Current Standings</h4>
-                    {% if wwc.leaderboard %}
-                        {% for entry in wwc.leaderboard %}
-                        <div class="standing-row rank-{{ entry.rank }}">
-                            <span class="standing-rank">{{ entry.rank }}</span>
-                            <span class="standing-team">{{ entry.team }}</span>
-                            <span class="standing-pts">{{ entry.points }}</span>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="no-matches-msg">No matches scored yet</p>
-                    {% endif %}
-                </div>
-                <span class="cta-btn">Open WWC Dashboard →</span>
-            </a>
-
+            {% endfor %}
         </div>
+        {% endfor %}
     </main>
 </body>
 </html>

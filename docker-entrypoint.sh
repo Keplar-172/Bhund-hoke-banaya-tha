@@ -1,75 +1,10 @@
 #!/bin/sh
-# Docker entrypoint: seeds data files into the volume if they don't already exist.
-# The volume is mounted at /app/data, which overrides the files baked into the image.
-# We keep a read-only seed copy at /app/data-seed and copy files on first boot.
+# Docker entrypoint. The Railway volume is mounted at /app/data and hides the
+# data baked into the image; /app/data-seed keeps a read-only copy of it.
+# bootstrap.py migrates the volume to the tournament layout (once) and seeds
+# missing files from data-seed, then the app starts.
+set -e
 
-SEED_DIR="/app/data-seed"
-DATA_DIR="/app/data"
+python bootstrap.py --data /app/data --seed /app/data-seed
 
-echo "[entrypoint] Checking data directory at ${DATA_DIR}..."
-mkdir -p "${DATA_DIR}/scorecards"
-mkdir -p "${DATA_DIR}/wwc/scorecards"
-
-# Seed each top-level IPL file from data-seed if missing or empty
-for src in "${SEED_DIR}"/*.json; do
-    filename="$(basename "$src")"
-    dest="${DATA_DIR}/${filename}"
-    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
-        echo "[entrypoint] Seeding: ${filename}"
-        cp "$src" "$dest"
-    else
-        echo "[entrypoint] Already exists, skipping: ${filename}"
-    fi
-done
-
-# Seed IPL scorecard cache files
-for src in "${SEED_DIR}/scorecards"/*.json; do
-    [ -f "$src" ] || continue
-    filename="$(basename "$src")"
-    dest="${DATA_DIR}/scorecards/${filename}"
-    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
-        echo "[entrypoint] Seeding scorecard: ${filename}"
-        cp "$src" "$dest"
-    fi
-done
-
-# Always overwrite teams/players config from seed — these are code-managed and
-# must reflect the latest image (captains, rosters, prices).
-for config_file in "teams_data.json" "players_data.json"; do
-    src="${SEED_DIR}/wwc/${config_file}"
-    dest="${DATA_DIR}/wwc/${config_file}"
-    if [ -f "$src" ]; then
-        echo "[entrypoint] Syncing WWC config (always): ${config_file}"
-        cp "$src" "$dest"
-    fi
-done
-
-# Seed remaining WWC data files (scores, history) only if missing or empty
-for src in "${SEED_DIR}/wwc"/*.json; do
-    [ -f "$src" ] || continue
-    filename="$(basename "$src")"
-    # teams/players already handled above
-    [ "$filename" = "teams_data.json" ] && continue
-    [ "$filename" = "players_data.json" ] && continue
-    dest="${DATA_DIR}/wwc/${filename}"
-    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
-        echo "[entrypoint] Seeding WWC: ${filename}"
-        cp "$src" "$dest"
-    else
-        echo "[entrypoint] WWC already exists, skipping: ${filename}"
-    fi
-done
-
-# Seed WWC scorecard cache files
-for src in "${SEED_DIR}/wwc/scorecards"/*.json; do
-    [ -f "$src" ] || continue
-    filename="$(basename "$src")"
-    dest="${DATA_DIR}/wwc/scorecards/${filename}"
-    if [ ! -f "$dest" ] || [ ! -s "$dest" ]; then
-        echo "[entrypoint] Seeding WWC scorecard: ${filename}"
-        cp "$src" "$dest"
-    fi
-done
-
-echo "[entrypoint] Data directory ready. Starting application..."
 exec uvicorn app:app --host 0.0.0.0 --port "${PORT:-8000}" --log-level info

@@ -27,7 +27,7 @@ COPY . .
 # Create necessary directories and a read-only seed copy of data.
 # data-seed is never mounted as a volume, so it always holds the
 # latest committed data and acts as the initial state for the volume.
-RUN mkdir -p data/scorecards logs "Match data" && \
+RUN mkdir -p data/tournaments logs "Match data" && \
     cp -r data data-seed
 
 # Make entrypoint executable

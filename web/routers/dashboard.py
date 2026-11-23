@@ -1,10 +1,11 @@
 """Dashboard routes - main views for scores and analytics."""
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import os
 
-from config import LeagueConfig, IPL_CONFIG, WWC_CONFIG
+from config import LeagueConfig
+import tournaments
 from web.auth import require_auth, User
 from web.services import (
     get_leaderboard_data,
@@ -23,8 +24,11 @@ templates = Jinja2Templates(directory=templates_dir)
 
 
 def _get_league(request: Request) -> LeagueConfig:
-    """Pick the correct league config based on the URL path prefix."""
-    return WWC_CONFIG if request.url.path.startswith("/wwc") else IPL_CONFIG
+    """Pick the tournament from the URL prefix, e.g. /wpl/2027/... -> wpl-2027."""
+    t = tournaments.from_path(request.url.path)
+    if t is None:
+        raise HTTPException(status_code=404, detail="Unknown tournament")
+    return t
 
 
 @router.get("/", response_class=HTMLResponse)

@@ -52,7 +52,10 @@ def _short_match_name_from_scorecard(scorecard_data: dict, match_id: int = 0) ->
 
 def _league_title(cfg=None) -> str:
     """Display name for Excel headings (defaults to IPL 2026)."""
-    return cfg.name if cfg is not None else "IPL Fantasy League 2026"
+    if cfg is None:
+        import tournaments
+        cfg = tournaments.default()
+    return cfg.name
 
 
 # Knockout stages have no match number in the title; place them after the

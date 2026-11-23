@@ -1,0 +1,12 @@
+{
+  "competition": "ipl",
+  "season": "2026",
+  "name": "IPL Fantasy League 2026",
+  "emoji": "🏏",
+  "status": "completed",
+  "scoring_preset": "ipl",
+  "series_keywords": ["INDIAN PREMIER LEAGUE", "IPL"],
+  "series_year": "2026",
+  "series_exclude": ["WOMEN"],
+  "end_date": "2026-05-31"
+}

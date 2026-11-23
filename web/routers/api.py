@@ -50,69 +50,20 @@ def _verify_auto_score_caller(request: Request, x_api_key: str | None = Header(d
         )
 
 
-def _score_league(league_name: str, get_matches_fn, cfg, score_fn) -> dict:
-    """Score all new completed matches for one league. Returns per-league result."""
-    from storage import is_match_processed
-
-    result = {
-        "league": league_name,
-        "matches_found": 0,
-        "matches_completed": 0,
-        "matches_processed": [],
-        "matches_skipped": 0,
-        "errors": [],
-    }
-
-    try:
-        matches = get_matches_fn()
-    except Exception as exc:
-        result["errors"].append({"match_id": None, "error": f"Failed to fetch matches: {exc}"})
-        return result
-
-    result["matches_found"] = len(matches)
-    completed = [m for m in matches
-                 if m.get("state", "").lower() == "complete" and m.get("match_id")]
-    result["matches_completed"] = len(completed)
-
-    new_matches = [m for m in completed if not is_match_processed(m["match_id"], cfg)]
-    result["matches_skipped"] = len(completed) - len(new_matches)
-
-    for m in new_matches:
-        try:
-            score_fn(m["match_id"])
-            result["matches_processed"].append({
-                "match_id": m["match_id"],
-                "description": f"{m['team1']} vs {m['team2']}",
-            })
-        except Exception as exc:
-            result["errors"].append({"match_id": m["match_id"], "error": str(exc)})
-
-    return result
-
-
 def _run_auto_score_job() -> dict:
+    """Score new completed matches for every tournament whose status is 'live'.
+
+    Completed and upcoming tournaments are skipped, so they cost no API calls.
     """
-    Score new completed matches for all active leagues (IPL + WWC).
-    Returns a combined result dict.
-    """
-    from cricbuzz_api import get_all_ipl_matches, get_all_wwc_matches
-    from config import IPL_CONFIG, WWC_CONFIG
-    from main import cmd_score
-    from main import _wwc_score
+    import tournaments
+    from scoring_service import auto_score
 
-    result = {
-        "started_at": datetime.utcnow().isoformat(),
-        "leagues": {},
-    }
-
-    result["leagues"]["ipl"] = _score_league(
-        "IPL", get_all_ipl_matches, IPL_CONFIG, cmd_score
-    )
-    result["leagues"]["wwc"] = _score_league(
-        "Women's T20 World Cup", get_all_wwc_matches, WWC_CONFIG,
-        lambda mid: _wwc_score(mid)
-    )
-
+    result = {"started_at": datetime.utcnow().isoformat(), "tournaments": {}}
+    for t in tournaments.all_tournaments():
+        if t.is_live:
+            result["tournaments"][t.id] = auto_score(t)
+    if not result["tournaments"]:
+        result["note"] = "No live tournaments – nothing fetched."
     result["finished_at"] = datetime.utcnow().isoformat()
     return result
 
@@ -179,81 +130,51 @@ async def auto_score_status(
         })
 
 
-@router.post("/wwc/rescore/{match_id}")
-async def rescore_wwc_match(
+def _tournament_or_404(tid: str):
+    import tournaments
+    t = tournaments.get(tid)
+    if t is None:
+        raise HTTPException(status_code=404, detail=f"Unknown tournament '{tid}'")
+    return t
+
+
+@router.post("/t/{tid}/rescore/{match_id}")
+async def rescore_match_endpoint(
+    tid: str,
     match_id: int,
     request: Request,
     x_api_key: str | None = Header(default=None),
 ):
-    """Rescore a single WWC match with the current scoring rules. Admin-only."""
+    """Rescore one processed match with the current rules and teams. Admin-only."""
     _verify_auto_score_caller(request, x_api_key)
-    from config import WWC_CONFIG
-    from storage import (
-        is_match_processed, unprocess_match, load_scores, save_scores,
-        remove_match_from_scoring_sheet, remove_match_from_master, load_match_history,
-    )
-    from main import _wwc_score
-
-    cfg = WWC_CONFIG
-    if not is_match_processed(match_id, cfg):
-        raise HTTPException(status_code=404, detail=f"Match {match_id} not yet processed in WWC")
-
-    old = unprocess_match(match_id, cfg)
-    scores = load_scores(cfg)
-    for owner, pts in old.items():
-        scores[owner] = round(scores.get(owner, 0) - pts, 2)
-    save_scores(scores, cfg)
-    remove_match_from_scoring_sheet(match_id, cfg)
-    remove_match_from_master(match_id, cfg)
-
-    _wwc_score(match_id, cfg)
-
-    history = load_match_history(cfg)
-    last = next((m for m in reversed(history) if m["match_id"] == match_id), None)
+    from scoring_service import rescore_match
+    t = _tournament_or_404(tid)
+    try:
+        results = rescore_match(match_id, t)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
     return JSONResponse({
         "status": "rescored",
+        "tournament": t.id,
         "match_id": match_id,
-        "match_scores": last["team_scores"] if last else {},
+        "match_scores": {owner: d["total"] for owner, d in results.items()},
     })
 
 
-@router.post("/wwc/rescore-all")
-async def rescore_all_wwc_matches(
+@router.post("/t/{tid}/rescore-all")
+async def rescore_all_endpoint(
+    tid: str,
     request: Request,
     x_api_key: str | None = Header(default=None),
 ):
-    """Rescore every processed WWC match with the current scoring rules. Admin-only."""
+    """Rescore every processed match of a tournament. Admin-only."""
     _verify_auto_score_caller(request, x_api_key)
-    from config import WWC_CONFIG
-    from storage import (
-        is_match_processed, unprocess_match, load_scores, save_scores,
-        remove_match_from_scoring_sheet, remove_match_from_master, load_match_history,
-    )
-    from main import _wwc_score
-
-    cfg = WWC_CONFIG
-    history = load_match_history(cfg)
-    match_ids = [m["match_id"] for m in history]
-
-    if not match_ids:
+    from scoring_service import rescore_all
+    t = _tournament_or_404(tid)
+    results = rescore_all(t)
+    if not results:
         return JSONResponse({"status": "nothing_to_rescore", "matches": []})
-
-    results = []
-    for mid in match_ids:
-        try:
-            old = unprocess_match(mid, cfg)
-            scores = load_scores(cfg)
-            for owner, pts in old.items():
-                scores[owner] = round(scores.get(owner, 0) - pts, 2)
-            save_scores(scores, cfg)
-            remove_match_from_scoring_sheet(mid, cfg)
-            remove_match_from_master(mid, cfg)
-            _wwc_score(mid, cfg)
-            results.append({"match_id": mid, "status": "ok"})
-        except Exception as exc:
-            results.append({"match_id": mid, "status": "error", "error": str(exc)})
-
-    return JSONResponse({"status": "done", "matches": results})
+    return JSONResponse({"status": "done", "tournament": t.id, "matches": results})
 
 
 @router.get("/export-data")
@@ -261,23 +182,17 @@ async def export_data(
     request: Request,
     x_api_key: str | None = Header(default=None),
 ):
-    """Download all data files (IPL + WWC) as a zip archive."""
+    """Download all tournament data (every folder under data/tournaments) as a zip."""
     _verify_auto_score_caller(request, x_api_key)
-    from config import IPL_CONFIG, WWC_CONFIG
+    from tournaments import DATA_ROOT, TOURNAMENTS_DIR
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for cfg in (IPL_CONFIG, WWC_CONFIG):
-            for fname in ("cumulative_scores.json", "match_history.json",
-                          "scoring_sheet.json", "master_scoresheet.json"):
-                path = os.path.join(cfg.data_dir, fname)
-                if os.path.exists(path):
-                    zf.write(path, path)
-            if os.path.isdir(cfg.scorecard_cache_dir):
-                for sc in os.listdir(cfg.scorecard_cache_dir):
-                    path = os.path.join(cfg.scorecard_cache_dir, sc)
-                    if os.path.isfile(path):
-                        zf.write(path, path)
+        for root, _dirs, files in os.walk(TOURNAMENTS_DIR):
+            for fname in files:
+                path = os.path.join(root, fname)
+                # stored as data/tournaments/... so `main.py sync-data` restores in place
+                zf.write(path, os.path.join("data", os.path.relpath(path, DATA_ROOT)))
     buf.seek(0)
     return StreamingResponse(
         buf,

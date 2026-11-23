@@ -108,7 +108,7 @@ Effort: S = under 30 min, M = about 1–2 h, L = half a day or more, XL = 2 days
 
 ## G. Season setup for IPL 2027
 
-### G1. Add a new league config `ipl27` — S/M
+### G1. Add a new league config `ipl27` — S/M  ✅ **Done 23 Nov**
 - Keep IPL 2026 and WWC 2026 viewable as archives. Add `IPL27_CONFIG` (`data/ipl27/`, `/ipl27`), so the 2027 data never mixes with the 2026 data.
 - The home page lists all seasons, current one first.
 - Generalise the league-specific bits that still check `== "wwc"` (rescore buttons, rules) so they work through the config. This overlaps with D2.
@@ -179,7 +179,7 @@ Effort: S = under 30 min, M = about 1–2 h, L = half a day or more, XL = 2 days
 - C/VC is now read live from the teams config, so the button and `POST /api/wwc/refresh-captains` are dead weight.
 - **Files:** `web/routers/api.py`, `web/templates/history.html`
 
-### D2. Make the admin tools work for both leagues — M
+### D2. Make the admin tools work for both leagues — M  ✅ **Done 23 Nov**
 - **Problem:** Rescore and Rescore All exist only for WWC.
 - **Fix:** generalise to `POST /api/{league}/rescore/{id}` and `/api/{league}/rescore-all`, and show the buttons on both leagues' History pages. Optionally add a per-match "Rescore" button.
 - **Files:** `web/routers/api.py`, `web/templates/history.html`, `main.py` (shared score function)
@@ -189,7 +189,8 @@ Effort: S = under 30 min, M = about 1–2 h, L = half a day or more, XL = 2 days
 - CLI only, no effect on the website. Low priority.
 
 ### D4. Remove leftover files — S
-- Candidates: `_find_ids.py`, `config_prod.py` (check that nothing imports it), `data/test_*_export.xlsx`, and `DEPLOY_NOW.md` (check whether it's still accurate).
+- Candidates: `_find_ids.py`, `build_players_db.py` (one-off 2026 script; still points at the old root `teams_data.json`), `data/test_*_export.xlsx`, and `DEPLOY_NOW.md` (check whether it's still accurate).
+- **Keep** `config_prod.py`: `app.py` loads it for production settings.
 - **Decision:** confirm deletions.
 
 ---
@@ -216,6 +217,8 @@ C3 (a second data provider) stays parked; E3 and E4 cover the same risk for now.
 - [ ] D4: OK to delete the listed files?
 
 ## Decided
+- 23 Nov: **WPL 2027** (season 14 Jan – 7 Feb 2027; real auction was 28 Oct) is our next tournament. The WPL auction is done **offline**; the user supplies managers, teams and prices (prices may be 0). The auction feature stays a generic base feature for later (IPL).
+- 23 Nov: restructured into tournaments: `data/tournaments/<id>/tournament.json`, URLs `/<competition>/<season>` (old `/dashboard` and `/wwc` links redirect). One person = one login; team ownership is per tournament (F1).
 - 23 Nov: B4: website lists newest first; Excel columns oldest to newest. Knockouts are ordered after the league stage and labelled Q1/Elim/Q2/SF1/SF2/Final.
 - 23 Nov: C1: scheduled auto-score disabled until IPL 2027.
 - 23 Nov: C2: final 2026 data committed to git as an archive.

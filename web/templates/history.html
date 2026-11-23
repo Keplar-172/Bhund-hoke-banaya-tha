@@ -6,7 +6,7 @@
 <div class="page-header">
     <h2>Match History</h2>
     <div class="actions">
-        {% if league and league.short_name == "wwc" and history and user.is_admin %}
+        {% if league and history and user.is_admin %}
         <button id="rescore-all-btn" class="btn btn-small btn-secondary" onclick="rescoreAll()">
             ♻️ Rescore All
         </button>
@@ -15,7 +15,7 @@
     </div>
 </div>
 
-{% if league and league.short_name == "wwc" and user.is_admin %}
+{% if league and user.is_admin %}
 <div id="rescore-status" style="display:none;" class="alert-box"></div>
 {% endif %}
 
@@ -148,14 +148,14 @@
     async function rescoreAll() {
         const btn = document.getElementById('rescore-all-btn');
         const status = document.getElementById('rescore-status');
-        if (!confirm('Rescore all matches with the updated WWC scoring rules?')) return;
+        if (!confirm('Rescore all {{ league.name }} matches with the current scoring rules and teams?')) return;
         btn.disabled = true;
         btn.textContent = 'Rescoring…';
         status.style.display = 'block';
         status.className = 'alert-box alert-info';
         status.textContent = 'Rescoring all matches…';
         try {
-            const resp = await fetch('/api/wwc/rescore-all', { method: 'POST' });
+            const resp = await fetch('/api/t/{{ league.short_name }}/rescore-all', { method: 'POST' });
             const data = await resp.json();
             if (resp.ok) {
                 const ok = (data.matches || []).filter(m => m.status === 'ok').length;
