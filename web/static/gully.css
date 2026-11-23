@@ -30,6 +30,8 @@
   --nav-text: #DDE3DA;
   --nav-shadow: 0 6px 20px rgba(27,42,47,.18);
   --nav-edge: transparent;
+  --cap: #157A7A;            /* captain, analytics */
+  --vc: #D9692A;             /* vice-captain, analytics */
   --role-bat: #D6E9F2;
   --role-bowl: #F5D9CF;
   --role-ar: #E4EDC4;
@@ -62,13 +64,15 @@
   --nav-text: #EAF6F3;
   --nav-shadow: 0 8px 28px rgba(0,0,0,.55);
   --nav-edge: rgba(255,255,255,.14);
+  --cap: #3FB3A8;
+  --vc: #FFA65C;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --wall: #10201F; --paper: #182C2B; --paper-2: #1D3332; --ink: #EEF1E8; --ink-soft: #A9BAB6;
     --line: #3C5654; --rule: #2F4644; --rule-soft: #2A3F3E; --shutter-text: #5CC8BC; --brick: #FF8C73;
-    --gold: #E8AE3A; --slate: #1E2A2B; --slate-edge: #3C5654; --nav-bg: #157A7A; --nav-text: #EAF6F3; --nav-shadow: 0 8px 28px rgba(0,0,0,.55); --nav-edge: rgba(255,255,255,.14);
+    --gold: #E8AE3A; --slate: #1E2A2B; --slate-edge: #3C5654; --nav-bg: #157A7A; --nav-text: #EAF6F3; --nav-shadow: 0 8px 28px rgba(0,0,0,.55); --nav-edge: rgba(255,255,255,.14); --cap: #3FB3A8; --vc: #FFA65C;
   }
 }
 
@@ -95,6 +99,8 @@
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
+/* Anything marked hidden stays hidden, even when a class sets display (search, tabs) */
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -516,3 +522,63 @@ img, svg { max-width: 100%; }
     background: linear-gradient(to bottom, transparent, var(--wall) 55%);
   }
 }
+
+/* ---------- Match detail ---------- */
+.gx-kicker { margin: 0 0 6px; font-size: 14px; color: var(--ink-soft); }
+.gx-h1__sub { display: block; font-family: var(--font-body); font-weight: 600; font-size: 20px; margin-top: 6px; }
+@media (min-width: 900px) { .gx-h1__sub { font-size: 24px; } }
+.gx-scoreboard { display: flex; flex-direction: column; gap: 6px; }
+.gx-scoreboard__row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); font-size: 18px; color: var(--ink-soft); }
+.gx-scoreboard__row--won { color: var(--ink); font-weight: 700; }
+.gx-scoreboard__score { font-family: var(--font-display); font-size: 22px; white-space: nowrap; }
+.gx-scoreboard__score small { font-family: var(--font-body); font-size: 14px; font-weight: 500; }
+.gx-scoreboard__result { margin: 8px 0 0; padding-top: 10px; border-top: 2px dashed var(--rule); font-weight: 600; }
+@media (min-width: 900px) { .gx-scoreboard__row { font-size: 20px; } .gx-scoreboard__score { font-size: 28px; } }
+
+.gx-teams { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: var(--s5); }
+@media (min-width: 900px) { .gx-teams { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } }
+.gx-teamcard { scroll-margin-top: 16px; }
+.gx-teamcard__head { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+.gx-teamcard__name { margin: 0; font-size: 19px; font-weight: 700; }
+.gx-plist { list-style: none; margin: 0; padding: 0; }
+.gx-plist__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+.gx-plist__who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gx-plist__name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gx-plist__did { font-size: 14px; }
+.gx-plist__split { font-size: 12px; color: var(--ink-soft); }
+.gx-plist__pts { font-size: 16px; }
+.gx-plist__bench { margin: 10px 0 0; font-size: 13px; color: var(--ink-soft); }
+
+/* ---------- Analytics ---------- */
+.gx-tabs { display: flex; gap: 4px; padding: 4px; background: var(--paper); border: 2px solid var(--line); border-radius: var(--r-pill); width: fit-content; max-width: 100%; margin-bottom: var(--s4); }
+.gx-tabs [role="tab"] {
+  font: 600 15px var(--font-body); color: var(--ink); background: transparent; border: 0; border-radius: var(--r-pill);
+  min-height: 40px; padding: 0 18px; cursor: pointer;
+}
+.gx-tabs [role="tab"][aria-selected="true"] { background: var(--ball); color: var(--on-ball); }
+.gx-panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.gx-panels[hidden] { display: none; }
+@media (min-width: 900px) { .gx-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; } }
+
+.gx-hbars { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; }
+.gx-hbars li {
+  display: grid; grid-template-columns: minmax(0, 1fr) 64px; grid-template-areas: "label value" "bar bar";
+  column-gap: 10px; row-gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--rule-soft);
+}
+.gx-hbars li:last-child { border-bottom: 0; }
+.gx-hbars__label { grid-area: label; display: flex; flex-direction: column; min-width: 0; }
+.gx-hbars__name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-hbars__meta { font-size: 13px; color: var(--ink-soft); }
+.gx-hbars__value { grid-area: value; font-family: var(--font-display); font-size: 16px; text-align: right; align-self: center; }
+.gx-hbars__track { grid-area: bar; display: flex; height: 10px; background: var(--wall); border-radius: 3px; overflow: hidden; }
+.gx-hbars__fill { display: block; height: 100%; background: var(--shutter); }
+.gx-hbars__fill--gold { background: var(--gold); }
+.gx-hbars__fill--cap { background: var(--cap); }
+.gx-hbars__fill--vc { background: var(--vc); margin-left: 2px; }
+.gx-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.gx-dot--cap, .gx-key--cap { background: var(--cap); }
+.gx-dot--vc, .gx-key--vc { background: var(--vc); }
+.gx-hbars__people { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.gx-key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.gx-key--gold { background: var(--gold); }
+.gx-key--teal { background: var(--shutter); }

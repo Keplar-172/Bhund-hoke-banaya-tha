@@ -111,7 +111,8 @@ async def match_detail(
             name="error.html",
             context={
                 "user": user,
-                "error": f"Match {match_id} not found or not yet processed"
+                "error": f"Match {match_id} not found or not yet processed",
+                "status_code": 404,
             },
             status_code=404
         )

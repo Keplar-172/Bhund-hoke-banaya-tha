@@ -12,7 +12,7 @@
   {% if history %}
   <div class="gx-actions">
     <label class="gx-field gx-field--search">Search matches or teams
-      <input type="search" id="history-search" class="gx-input" placeholder="Try Final, RCB or a team" autocomplete="off">
+      <input type="search" id="history-search" class="gx-input" placeholder="Try Final, Qualifier, Match 70 or RCB" autocomplete="off">
     </label>
     {% if user.is_admin %}
     <button id="rescore-all-btn" type="button" class="gx-btn" onclick="rescoreAll()">Rescore all</button>
@@ -31,9 +31,11 @@
   {% set ranked = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
   {% set top = ranked[0][1] if ranked else 0 %}
   {% set scale = top if top > 0 else 1 %}
-  <li class="gx-card gx-match" data-search="{{ (match.match_number_label ~ ' ' ~ match.description ~ ' ' ~ match.match_id ~ ' ' ~ (ranked|map(attribute='0')|join(' ')))|lower }}">
+  {% set lbl = match.match_number_label or '' %}
+  {% set stage = {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final', 'Final': 'Final'}.get(lbl) or (('Match ' ~ lbl[1:]) if lbl[:1] == 'M' and lbl[1:].isdigit() else ('Match ' ~ match.match_id)) %}
+  <li class="gx-card gx-match" data-search="{{ (stage ~ ' ' ~ lbl ~ ' ' ~ match.description ~ ' ' ~ (match.date_str or '') ~ ' ' ~ match.match_id ~ ' ' ~ (ranked|map(attribute='0')|join(' ')))|lower }}">
     <div class="gx-match__top">
-      <h2 class="gx-match__label">{{ {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final'}.get(match.match_number_label, match.match_number_label) or ('Match ' ~ match.match_id) }}</h2>
+      <h2 class="gx-match__label">{{ stage }}</h2>
       <span class="gx-match__fixture">{{ match.description }}</span>
     </div>
     {% if match.date_str %}<p class="gx-match__date" style="margin-bottom: 0">{{ match.date_str }}</p>{% endif %}
@@ -65,7 +67,7 @@
   </li>
   {% endfor %}
 </ol>
-<p id="history-none" class="gx-card gx-empty" hidden><strong>No match found</strong>Try a team name, a fixture like RCB, or a stage like Final.</p>
+<p id="history-none" class="gx-card gx-empty" hidden><strong>No match found</strong>Try a stage like Final or Match 70, a team like RCB, or a date like 30 May.</p>
 {% else %}
 <div class="gx-card gx-empty">
   <strong>No matches scored yet</strong>

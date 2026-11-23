@@ -40,12 +40,10 @@ def calculate_team_performance_trend(master_data: Dict, history: List[Dict]) -> 
     for owner, team_data in master_data.get("teams", {}).items():
         cumulative = team_data.get("cumulative_total", 0)
         
-        # Calculate match-by-match trend from history
-        match_scores = []
-        for match in history:
-            team_score = match.get("team_scores", {}).get(owner, 0)
-            if team_score:
-                match_scores.append(team_score)
+        # Match-by-match scores in true match order. A match where the team
+        # scored 0 still counts as a match (it used to be skipped, which
+        # inflated the average).
+        match_scores = [match.get("team_scores", {}).get(owner, 0) or 0 for match in history]
         
         # Calculate trend (simple: compare first half vs second half)
         if len(match_scores) >= 2:
@@ -61,6 +59,8 @@ def calculate_team_performance_trend(master_data: Dict, history: List[Dict]) -> 
             "total_points": round(cumulative, 1),
             "matches": len(match_scores),
             "avg_per_match": round(cumulative / len(match_scores), 1) if match_scores else 0,
+            "first_half_avg": round(first_half_avg, 1) if len(match_scores) >= 2 else 0,
+            "second_half_avg": round(second_half_avg, 1) if len(match_scores) >= 2 else 0,
             "trend_percent": round(trend, 1),
             "trending": "📈" if trend > 5 else "📉" if trend < -5 else "➡️"
         })
@@ -160,8 +160,9 @@ def calculate_match_winners_distribution(history: List[Dict]) -> Dict[str, Any]:
 
 def get_analytics_summary(cfg: LeagueConfig = None) -> Dict[str, Any]:
     """Get comprehensive analytics data for dashboard."""
+    from web.services import get_match_history_data  # true match order (the file is not stored in order)
     master = load_master_scoresheet(cfg)
-    history = load_match_history(cfg)
+    history = list(reversed(get_match_history_data(cfg)))  # oldest first
     teams = load_teams(cfg)
 
     return {

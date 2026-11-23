@@ -1,70 +1,122 @@
 {% extends "base.html" %}
+{% import "_gully.html" as gx %}
 
-{% block legacy_css %}<link rel="stylesheet" href="/static/style.css">{% endblock %}
+{% set stages = {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final', 'Final': 'Final'} %}
+{% set stage = stages.get(detail.label, detail.label|replace('M', 'Match ') if detail.label else 'Match') %}
 
-{% block title %}Match {{ match_id }} - {{ league.name if league else 'Fantasy League' }}{% endblock %}
+{% block title %}{{ stage }}{% if detail.fixture %}, {{ detail.fixture }}{% endif %} · {{ league.name }} · Gully XI{% endblock %}
+
+{# One line describing what a player actually did: "75* (42), 9 fours, 3 sixes; 2/29 in 4 overs; 1 catch" #}
+{% macro did(raw) -%}
+{%- set parts = [] -%}
+{%- if raw.bat and (raw.bat.balls or raw.bat.runs) -%}
+  {%- set b = raw.bat -%}
+  {%- set s = b.runs ~ ('*' if b.is_not_out else '') ~ ' (' ~ b.balls ~ ')' -%}
+  {%- if b.fours %}{% set s = s ~ ', ' ~ b.fours ~ ' four' ~ ('' if b.fours == 1 else 's') %}{% endif -%}
+  {%- if b.sixes %}{% set s = s ~ ', ' ~ b.sixes ~ ' six' ~ ('' if b.sixes == 1 else 'es') %}{% endif -%}
+  {%- set _ = parts.append(s) -%}
+{%- endif -%}
+{%- if raw.bowl -%}
+  {%- set w = raw.bowl -%}
+  {%- set ov = (w.overs|int) if w.overs == (w.overs|int) else w.overs -%}
+  {%- set _ = parts.append(w.wickets ~ '/' ~ w.runs ~ ' in ' ~ ov ~ ' over' ~ ('' if ov == 1 else 's')) -%}
+{%- endif -%}
+{%- if raw.field -%}
+  {%- set f = raw.field -%}
+  {%- set ro = (f.run_out_solo or 0) + (f.run_out_shared or 0) -%}
+  {%- if f.catches %}{% set _ = parts.append(f.catches ~ ' catch' ~ ('' if f.catches == 1 else 'es')) %}{% endif -%}
+  {%- if f.stumpings %}{% set _ = parts.append(f.stumpings ~ ' stumping' ~ ('' if f.stumpings == 1 else 's')) %}{% endif -%}
+  {%- if ro %}{% set _ = parts.append(ro ~ ' run out' ~ ('' if ro == 1 else 's')) %}{% endif -%}
+{%- endif -%}
+{{ parts|join('; ') if parts else 'In the XI' }}
+{%- endmacro %}
+
+{% macro split(p) -%}
+{%- set bits = [] -%}
+{%- if p.batting %}{% set _ = bits.append('batting ' ~ gx.pts(p.batting)) %}{% endif -%}
+{%- if p.bowling %}{% set _ = bits.append('bowling ' ~ gx.pts(p.bowling)) %}{% endif -%}
+{%- if p.fielding %}{% set _ = bits.append('fielding ' ~ gx.pts(p.fielding)) %}{% endif -%}
+{%- if p.generic %}{% set _ = bits.append('bonus ' ~ gx.pts(p.generic)) %}{% endif -%}
+{%- if p.multiplier and p.multiplier != 1 %}{% set _ = bits.append('×' ~ p.multiplier ~ (' captain' if p.multiplier == 1.5 else ' vice-captain' if p.multiplier == 1.25 else '')) %}{% endif -%}
+{{ (bits|join(', '))|capitalize }}
+{%- endmacro %}
 
 {% block content %}
-<div class="page-header">
-    <h2>{{ detail.description }}</h2>
-    <div class="actions">
-        <a href="/downloads/match/{{ match_id }}?league={{ league.short_name }}" class="gx-btn gx-btn--ink" title="Excel: team points and the scorecard for this match"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download match sheet</a>
-    </div>
+<div class="gx-pagehead">
+  <div>
+    <p class="gx-kicker">{{ league.name }}{% if detail.date %}, {{ detail.date }}{% endif %}</p>
+    <h1 class="gx-h1">{{ stage }}{% if detail.fixture %}<span class="gx-h1__sub">{{ detail.fixture }}</span>{% endif %}</h1>
+  </div>
+  <div class="gx-actions">
+    <a href="{{ league.dashboard_prefix }}/history" class="gx-btn">All matches</a>
+    <a href="/downloads/match/{{ match_id }}?league={{ league.short_name }}" class="gx-btn gx-btn--ink" title="Excel: team points and the scorecard for this match">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download match sheet</a>
+  </div>
 </div>
 
-<div class="match-results">
-    {% for team in detail.teams %}
-    <div class="team-card">
-        <div class="team-header">
-            <div class="team-rank">
-                {% if team.rank == 1 %}🥇
-                {% elif team.rank == 2 %}🥈
-                {% elif team.rank == 3 %}🥉
-                {% else %}#{{ team.rank }}
-                {% endif %}
-            </div>
-            <h3>{{ team.owner }}</h3>
-            <div class="team-total">{{ team.total }} pts</div>
-        </div>
-        
-        <div class="players-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>Role</th>
-                        <th>Batting</th>
-                        <th>Bowling</th>
-                        <th>Fielding</th>
-                        <th>Generic</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for name, player in team.players.items() %}
-                    <tr class="{% if not player.played %}not-played{% endif %}">
-                        <td>
-                            {{ name }}
-                            {% if player.multiplier == 1.5 %}<span class="badge captain">C</span>
-                            {% elif player.multiplier == 1.25 %}<span class="badge vc">VC</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ player.role }}</td>
-                        {% if player.played %}
-                        <td>{{ player.batting }}</td>
-                        <td>{{ player.bowling }}</td>
-                        <td>{{ player.fielding }}</td>
-                        <td>{{ player.generic }}</td>
-                        <td class="total">{{ player.total }}</td>
-                        {% else %}
-                        <td colspan="5" class="dnp">Did not play</td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="gx-split">
+  <section class="gx-split__main gx-card gx-scoreboard" aria-label="Match result">
+    {% for inn in detail.innings %}
+    <div class="gx-scoreboard__row{% if loop.last and detail.result and inn.team and inn.team in detail.result %} gx-scoreboard__row--won{% endif %}">
+      <span class="gx-scoreboard__team">{{ inn.team }}</span>
+      <span class="gx-scoreboard__score">{{ inn.score }}/{{ inn.wickets }} <small>({{ inn.overs }})</small></span>
     </div>
     {% endfor %}
+    {% if detail.result %}<p class="gx-scoreboard__result">{{ detail.result }}</p>{% endif %}
+    {% if detail.player_of_match %}<p class="gx-muted" style="margin: 4px 0 0; font-size: 14px">Player of the match: <strong style="color: var(--ink)">{{ detail.player_of_match }}</strong></p>{% endif %}
+  </section>
+
+  {% set ranked = detail.teams %}
+  {% set top = ranked[0].total if ranked and ranked[0].total > 0 else 1 %}
+  <section class="gx-split__side gx-card" aria-labelledby="fp-h">
+    <h2 class="gx-h2" id="fp-h">Fantasy points</h2>
+    <ol class="gx-bars" style="margin-top: 12px" aria-label="Team points in this match">
+      {% for t in ranked %}
+      {% set place = 1 + ranked|selectattr('total', 'gt', t.total)|list|length %}
+      <li class="{% if place == 1 %}gx-bars__win{% endif %}">
+        <span class="gx-bars__pos">{{ place }}</span>
+        <a href="#team-{{ loop.index }}" style="color: inherit">{{ t.owner }}</a>
+        <span class="gx-bars__track" aria-hidden="true"><span class="gx-bars__fill" style="width: {{ ((t.total if t.total > 0 else 0) / top * 100)|round(1) }}%"></span></span>
+        <span class="gx-r">{{ gx.pts(t.total) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+
+<div class="gx-teams">
+  {% for team in detail.teams %}
+  {% set played = team.players.items()|selectattr('1.played')|list|sort(attribute='1.total', reverse=True) %}
+  {% set benched = team.players.items()|rejectattr('1.played')|map(attribute='0')|list %}
+  <section class="gx-card gx-teamcard" id="team-{{ loop.index }}" aria-labelledby="team-h-{{ loop.index }}">
+    <header class="gx-teamcard__head">
+      {% set place = 1 + detail.teams|selectattr('total', 'gt', team.total)|list|length %}
+      <span class="gx-formbox{% if place == 1 %} gx-formbox--win{% endif %}" aria-label="{{ gx.ordinal(place) }} in this match">{{ place }}</span>
+      <h2 class="gx-teamcard__name" id="team-h-{{ loop.index }}">{{ team.owner }}</h2>
+      <span class="gx-num">{{ gx.pts(team.total) }}</span>
+    </header>
+    {% if played %}
+    <ul class="gx-plist">
+      {% for name, p in played %}
+      <li class="gx-plist__row">
+        <span class="gx-plist__who">
+          <span class="gx-plist__name">{{ name }}
+            {% if p.multiplier == 1.5 %}<span class="gx-cap" title="Captain">C</span>{% elif p.multiplier == 1.25 %}<span class="gx-vc" title="Vice-captain">VC</span>{% endif %}
+          </span>
+          <span class="gx-plist__did">{{ did(p.raw or {}) }}</span>
+          <span class="gx-plist__split">{{ split(p) }}</span>
+        </span>
+        <span class="gx-plist__pts gx-num">{{ gx.pts(p.total) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="gx-muted" style="margin: 8px 0 0">No players from this squad played.</p>
+    {% endif %}
+    {% if benched %}
+    <p class="gx-plist__bench">Did not play: {{ benched|join(', ') }}</p>
+    {% endif %}
+  </section>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -201,10 +201,30 @@ def get_match_detail_data(match_id: int,
     for rank, team in enumerate(teams_list, 1):
         team["rank"] = rank
 
+    # Match facts for the page heading (additive; older keys unchanged)
+    meta = _build_match_meta(match_id, cfg)
+    innings = []
+    for inn in scorecard_data.get("scorecard", []) or []:
+        innings.append({
+            "team": inn.get("batteamname") or inn.get("batteamsname") or "",
+            "short": inn.get("batteamsname") or "",
+            "score": inn.get("score"),
+            "wickets": inn.get("wickets"),
+            "overs": inn.get("overs"),
+        })
+    if desc == f"Match {match_id}" and meta.get("description"):
+        desc = meta["description"]
+
     return {
         "match_id": match_id,
         "description": desc,
-        "teams": teams_list
+        "teams": teams_list,
+        "label": meta.get("match_number_label", ""),
+        "fixture": meta.get("description", ""),
+        "date": meta.get("date_str", ""),
+        "result": scorecard_data.get("status") or (header.get("status", "") if header else ""),
+        "player_of_match": scorecard_data.get("man_of_the_match", ""),
+        "innings": innings,
     }
 
 

@@ -1,474 +1,162 @@
 {% extends "base.html" %}
+{% import "_gully.html" as gx %}
 
-{% block legacy_css %}<link rel="stylesheet" href="/static/style.css">{% endblock %}
+{% block title %}Analytics · {{ league.name }} · Gully XI{% endblock %}
 
-{% block title %}Analytics Dashboard - {{ league.name if league else 'Fantasy League' }}{% endblock %}
+{% macro trend(t) -%}
+{%- if t.trend_percent > 5 -%}<span class="gx-move gx-move--up">↑{{ t.trend_percent|round|int }}%</span>
+{%- elif t.trend_percent < -5 -%}<span class="gx-move gx-move--down">↓{{ (-t.trend_percent)|round|int }}%</span>
+{%- else -%}<span class="gx-muted" style="font-size: 13px">steady</span>{%- endif -%}
+{%- endmacro %}
 
 {% block content %}
-<div class="page-header">
-    <h2>📊 Analytics Dashboard</h2>
-    <p class="subtitle">Comprehensive league insights and statistics</p>
+{% set a = analytics %}
+{% set n = a.match_winners.total_matches %}
+
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">Analytics</h1>
+    {% if n %}<p class="gx-lede">{{ league.name }}, {{ n }} match{{ '' if n == 1 else 'es' }}.</p>{% endif %}
+  </div>
+  {% if n %}
+  <div class="gx-actions">
+    <a href="/downloads/analytics?league={{ league.short_name }}" class="gx-btn gx-btn--ink" title="Excel: top players by role, best single matches and records">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download season stats</a>
+  </div>
+  {% endif %}
 </div>
 
-<!-- Analytics Tabs -->
-<div class="tabs-container">
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="overview">Overview</button>
-        <button class="tab-btn" data-tab="players">Player Analysis</button>
-        <button class="tab-btn" data-tab="teams">Team Trends</button>
-        <button class="tab-btn" data-tab="captains">Captain Stats</button>
-    </div>
+{% if not n %}
+<div class="gx-card gx-empty">
+  <strong>Nothing to analyse yet</strong>
+  {% if league.start_date %}{{ league.name }} starts on {{ gx.nice_date(league.start_date) }}. Charts appear after the first match is scored.{% else %}Charts appear after the first match is scored.{% endif %}
+</div>
+{% else %}
+
+<div class="gx-tabs" role="tablist" aria-label="Analytics views">
+  <button type="button" role="tab" id="tab-teams" aria-controls="panel-teams" aria-selected="true">Teams</button>
+  <button type="button" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="false" tabindex="-1">Players</button>
+  <button type="button" role="tab" id="tab-captains" aria-controls="panel-captains" aria-selected="false" tabindex="-1">Captains</button>
 </div>
 
-<!-- Tab Content: Overview -->
-<div class="tab-content active" id="tab-overview">
-    <div class="charts-row">
-        <!-- Match Winners Distribution -->
-        <div class="chart-card">
-            <h3>🏆 Match Wins Distribution</h3>
-            <div class="chart-wrapper"><canvas id="winsChart"></canvas></div>
-        </div>
-        
-        <!-- Team Performance Comparison -->
-        <div class="chart-card">
-            <h3>📈 Total Points Comparison</h3>
-            <div class="chart-wrapper"><canvas id="teamPointsChart"></canvas></div>
-        </div>
-    </div>
-    
-    <div class="charts-row">
-        <!-- Performance Trends -->
-        <div class="chart-card full-width">
-            <h3>🎯 Team Performance Trends</h3>
-            <div class="trends-table-container">
-                <table class="analytics-table">
-                    <thead>
-                        <tr>
-                            <th>Team</th>
-                            <th>Total Points</th>
-                            <th>Avg per Match</th>
-                            <th>Matches</th>
-                            <th>Trend</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for team in analytics.team_trends %}
-                        <tr>
-                            <td><strong>{{ team.team }}</strong></td>
-                            <td class="highlight">{{ team.total_points }}</td>
-                            <td>{{ team.avg_per_match }}</td>
-                            <td>{{ team.matches }}</td>
-                            <td>
-                                <span class="trend-indicator">
-                                    {{ team.trending }} {{ team.trend_percent }}%
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+{# ---------- Teams ---------- #}
+<div role="tabpanel" id="panel-teams" aria-labelledby="tab-teams" class="gx-panels">
+  {% set tmax = (a.team_trends|map(attribute='avg_per_match')|max) or 1 %}
+  <section class="gx-card">
+    <h2 class="gx-h2">Points per match</h2>
+    <p class="gx-lede" style="font-size: 14px">Season average. The arrow compares the second half of the season with the first.</p>
+    <ol class="gx-hbars">
+      {% for t in a.team_trends|sort(attribute='avg_per_match', reverse=True) %}
+      <li>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ t.team }}</span><span class="gx-hbars__meta">{{ gx.pts(t.first_half_avg) }} then {{ gx.pts(t.second_half_avg) }} {{ trend(t) }}</span></span>
+        <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (t.avg_per_match / tmax * 100)|round(1) }}%"></span></span>
+        <span class="gx-hbars__value">{{ gx.pts(t.avg_per_match) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% set dist = a.match_winners.distribution %}
+  {% set pmax = (dist|map(attribute='podium_finishes')|max) or 1 %}
+  <section class="gx-card">
+    <h2 class="gx-h2">Wins and runner-up finishes</h2>
+    <p class="gx-lede" style="font-size: 14px"><span class="gx-key gx-key--gold"></span>Match wins <span class="gx-key gx-key--teal" style="margin-left: 12px"></span>Second place</p>
+    <ol class="gx-hbars">
+      {% for d in dist|sort(attribute='podium_finishes', reverse=True) %}
+      <li>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ d.team }}</span><span class="gx-hbars__meta">{{ d.wins }} win{{ '' if d.wins == 1 else 's' }}, {{ d.runner_ups }} second</span></span>
+        <span class="gx-hbars__track" aria-hidden="true">
+          <span class="gx-hbars__fill gx-hbars__fill--gold" style="width: {{ (d.wins / pmax * 100)|round(1) }}%"></span><span class="gx-hbars__fill" style="width: {{ (d.runner_ups / pmax * 100)|round(1) }}%"></span>
+        </span>
+        <span class="gx-hbars__value">{{ d.podium_finishes }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
 </div>
 
-<!-- Tab Content: Players -->
-<div class="tab-content" id="tab-players">
-    <div class="charts-row">
-        <!-- Top Performers -->
-        <div class="chart-card">
-            <h3>⭐ Top Performers (Total Points)</h3>
-            <div class="chart-wrapper"><canvas id="topPlayersChart"></canvas></div>
-        </div>
-        
-        <!-- Value Picks -->
-        <div class="chart-card">
-            <h3>💎 Best Value Picks (Points per Game)</h3>
-            <div class="chart-wrapper"><canvas id="valuePicksChart"></canvas></div>
-        </div>
-    </div>
-    
-    <!-- Top Performers Table -->
-    <div class="chart-card full-width">
-        <h3>🌟 Top 20 Players</h3>
-        <div class="players-grid">
-            {% for player in analytics.top_performers[:12] %}
-            <div class="player-stat-card">
-                <div class="player-stat-header">
-                    <span class="rank-badge">#{{ loop.index }}</span>
-                    <strong>{{ player.name }}</strong>
-                </div>
-                <div class="player-stat-body">
-                    <div class="stat-row">
-                        <span class="stat-label">Team:</span>
-                        <span>{{ player.owner }}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Total:</span>
-                        <span class="stat-value">{{ player.total_points }} pts</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Average:</span>
-                        <span>{{ player.avg_points }} pts/match</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Matches:</span>
-                        <span>{{ player.matches }}</span>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
+{# ---------- Players ---------- #}
+<div role="tabpanel" id="panel-players" aria-labelledby="tab-players" class="gx-panels" hidden>
+  {% set top = a.top_performers %}
+  {% set max1 = (top|map(attribute='total_points')|max) or 1 %}
+  <section class="gx-card">
+    <h2 class="gx-h2">Top {{ top|length }} players</h2>
+    <p class="gx-lede" style="font-size: 14px">Season points, including captain and vice-captain multipliers.</p>
+    <ol class="gx-hbars gx-hbars--ranked">
+      {% for p in top %}
+      <li>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ p.owner }}, {{ p.matches }} matches, {{ gx.pts(p.avg_points) }} a match</span></span>
+        <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (p.total_points / max1 * 100)|round(1) }}%"></span></span>
+        <span class="gx-hbars__value">{{ gx.pts(p.total_points) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% set vp = a.value_picks %}
+  {% set max2 = (vp|map(attribute='points_per_game')|max) or 1 %}
+  <section class="gx-card">
+    <h2 class="gx-h2">Most points per match</h2>
+    <p class="gx-lede" style="font-size: 14px">Players who played at least 3 matches.</p>
+    <ol class="gx-hbars gx-hbars--ranked">
+      {% for p in vp %}
+      <li>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ p.owner }}, {{ p.matches }} matches, {{ gx.pts(p.total_points) }} in all</span></span>
+        <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (p.points_per_game / max2 * 100)|round(1) }}%"></span></span>
+        <span class="gx-hbars__value">{{ gx.pts(p.points_per_game) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
 </div>
 
-<!-- Tab Content: Teams -->
-<div class="tab-content" id="tab-teams">
-    <div class="charts-row">
-        <!-- Average Points per Match -->
-        <div class="chart-card">
-            <h3>📊 Average Points per Match</h3>
-            <div class="chart-wrapper"><canvas id="avgPointsChart"></canvas></div>
-        </div>
-        
-        <!-- Win Rate -->
-        <div class="chart-card">
-            <h3>🎯 Podium Finishes (Wins + Runner-ups)</h3>
-            <div class="chart-wrapper"><canvas id="podiumChart"></canvas></div>
-        </div>
-    </div>
-</div>
-
-<!-- Tab Content: Captains -->
-<div class="tab-content" id="tab-captains">
-    <div class="charts-row">
-        <!-- Captain Effectiveness -->
-        <div class="chart-card full-width">
-            <h3>👑 Captain & Vice-Captain Effectiveness</h3>
-            <div class="chart-wrapper"><canvas id="captainChart"></canvas></div>
-        </div>
-    </div>
-    
-    <!-- Captain Stats Table -->
-    <div class="chart-card full-width">
-        <h3>📋 Captain Statistics</h3>
-        <table class="analytics-table">
-            <thead>
-                <tr>
-                    <th>Team</th>
-                    <th>Captain</th>
-                    <th>Captain Points</th>
-                    <th>Vice-Captain</th>
-                    <th>VC Points</th>
-                    <th>Combined</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stat in analytics.captain_effectiveness %}
-                <tr>
-                    <td><strong>{{ stat.team }}</strong></td>
-                    <td>{{ stat.captain }}</td>
-                    <td class="highlight">{{ stat.captain_points }}</td>
-                    <td>{{ stat.vice_captain }}</td>
-                    <td class="highlight">{{ stat.vc_points }}</td>
-                    <td class="highlight-strong">{{ stat.combined_points }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{# ---------- Captains ---------- #}
+<div role="tabpanel" id="panel-captains" aria-labelledby="tab-captains" class="gx-panels" hidden>
+  {% set caps = a.captain_effectiveness|sort(attribute='combined_points', reverse=True) %}
+  {% set max3 = (caps|map(attribute='combined_points')|max) or 1 %}
+  <section class="gx-card">
+    <h2 class="gx-h2">Captain and vice-captain points</h2>
+    <p class="gx-lede" style="font-size: 14px"><span class="gx-key gx-key--cap"></span>Captain <span class="gx-key gx-key--vc" style="margin-left: 12px"></span>Vice-captain. Points include their multipliers.</p>
+    <ol class="gx-hbars">
+      {% for c in caps %}
+      <li>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ c.team }}</span><span class="gx-hbars__meta gx-hbars__people"><span><span class="gx-dot gx-dot--cap" aria-hidden="true"></span><span class="gx-sr">Captain </span>{{ c.captain }} {{ gx.pts(c.captain_points) }}</span><span><span class="gx-dot gx-dot--vc" aria-hidden="true"></span><span class="gx-sr">Vice-captain </span>{{ c.vice_captain }} {{ gx.pts(c.vc_points) }}</span></span></span>
+        <span class="gx-hbars__track" aria-hidden="true">
+          <span class="gx-hbars__fill gx-hbars__fill--cap" style="width: {{ (c.captain_points / max3 * 100)|round(1) }}%"></span><span class="gx-hbars__fill gx-hbars__fill--vc" style="width: {{ (c.vc_points / max3 * 100)|round(1) }}%"></span>
+        </span>
+        <span class="gx-hbars__value">{{ gx.pts(c.combined_points) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
 </div>
 
 <script>
-    // Tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.getAttribute('data-tab');
-            
-            // Update buttons
-            tabBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Update content
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === `tab-${targetTab}`) {
-                    content.classList.add('active');
-                }
-            });
-        });
+(function () {
+  const tabs = Array.from(document.querySelectorAll('.gx-tabs [role="tab"]'));
+  function select(tab, focus) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
-    
-    // Register datalabels plugin; disable globally, enable per-chart as needed
-    Chart.register(ChartDataLabels);
-    Chart.defaults.plugins.datalabels = { display: false };
-
-    // Chart.js theme-aware colors
-    const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    const isDark = theme === 'dark';
-    
-    const colors = {
-        primary: 'rgba(26, 115, 232, 0.8)',
-        orange: 'rgba(245, 124, 0, 0.8)',
-        purple: 'rgba(156, 39, 176, 0.8)',
-        gold: 'rgba(255, 215, 0, 0.8)',
-        green: 'rgba(76, 175, 80, 0.8)',
-        red: 'rgba(244, 67, 54, 0.8)',
-        cyan: 'rgba(0, 188, 212, 0.8)',
-        deepOrange: 'rgba(255, 152, 0, 0.8)'
-    };
-    
-    const chartColors = Object.values(colors);
-    const textColor = isDark ? '#e5e7eb' : '#1f2937';
-    const gridColor = isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.5)';
-    
-    // Match Wins Distribution
-    const winsData = {{ analytics.match_winners | tojson }};
-    new Chart(document.getElementById('winsChart'), {
-        type: 'bar',
-        data: {
-            labels: winsData.distribution.map(d => d.team),
-            datasets: [{
-                label: 'Match Wins',
-                data: winsData.distribution.map(d => d.wins),
-                backgroundColor: colors.gold,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: textColor, font: { size: 12 } } }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    ticks: { color: textColor, stepSize: 1 },
-                    grid: { color: gridColor }
-                },
-                x: { ticks: { color: textColor }, grid: { display: false } }
-            }
-        }
+    if (focus) tab.focus();
+    history.replaceState(null, '', '#' + tab.id.replace('tab-', ''));
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        select(next, true);
+      }
     });
-    
-    // Team Points Comparison
-    const teamTrends = {{ analytics.team_trends | tojson }};
-    new Chart(document.getElementById('teamPointsChart'), {
-        type: 'bar',
-        data: {
-            labels: teamTrends.map(t => t.team),
-            datasets: [{
-                label: 'Total Points',
-                data: teamTrends.map(t => t.total_points),
-                backgroundColor: chartColors,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { 
-                    ticks: { color: textColor },
-                    grid: { color: gridColor }
-                },
-                y: { ticks: { color: textColor }, grid: { display: false } }
-            }
-        }
-    });
-    
-    // Top Players
-    const topPlayers = {{ analytics.top_performers | tojson }};
-    new Chart(document.getElementById('topPlayersChart'), {
-        type: 'bar',
-        data: {
-            labels: topPlayers.slice(0, 10).map(p => p.name),
-            datasets: [{
-                label: 'Total Points',
-                data: topPlayers.slice(0, 10).map(p => p.total_points),
-                backgroundColor: colors.primary,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'right',
-                    color: textColor,
-                    font: { size: 10, weight: '600' },
-                    formatter: v => Math.round(v)
-                }
-            },
-            scales: {
-                x: { 
-                    ticks: { color: textColor },
-                    grid: { color: gridColor }
-                },
-                y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
-            }
-        }
-    });
-    
-    // Value Picks
-    const valuePicks = {{ analytics.value_picks | tojson }};
-    new Chart(document.getElementById('valuePicksChart'), {
-        type: 'bar',
-        data: {
-            labels: valuePicks.slice(0, 10).map(p => p.name),
-            datasets: [{
-                label: 'Points per Game',
-                data: valuePicks.slice(0, 10).map(p => p.points_per_game),
-                backgroundColor: colors.green,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'right',
-                    color: textColor,
-                    font: { size: 10, weight: '600' },
-                    formatter: v => v.toFixed(1)
-                }
-            },
-            scales: {
-                x: { 
-                    ticks: { color: textColor },
-                    grid: { color: gridColor }
-                },
-                y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
-            }
-        }
-    });
-    
-    // Average Points per Match
-    new Chart(document.getElementById('avgPointsChart'), {
-        type: 'line',
-        data: {
-            labels: teamTrends.map(t => t.team),
-            datasets: [{
-                label: 'Avg Points per Match',
-                data: teamTrends.map(t => t.avg_per_match),
-                borderColor: colors.purple,
-                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 7
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: textColor } }
-            },
-            scales: {
-                y: { 
-                    ticks: { color: textColor },
-                    grid: { color: gridColor }
-                },
-                x: { ticks: { color: textColor }, grid: { display: false } }
-            }
-        }
-    });
-    
-    // Podium Finishes
-    new Chart(document.getElementById('podiumChart'), {
-        type: 'bar',
-        data: {
-            labels: winsData.distribution.map(d => d.team),
-            datasets: [
-                {
-                    label: 'Wins',
-                    data: winsData.distribution.map(d => d.wins),
-                    backgroundColor: colors.gold
-                },
-                {
-                    label: 'Runner-ups',
-                    data: winsData.distribution.map(d => d.runner_ups),
-                    backgroundColor: 'rgba(192, 192, 192, 0.8)'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: textColor } }
-            },
-            scales: {
-                y: { 
-                    stacked: true,
-                    ticks: { color: textColor, stepSize: 1 },
-                    grid: { color: gridColor }
-                },
-                x: { stacked: true, ticks: { color: textColor }, grid: { display: false } }
-            }
-        }
-    });
-    
-    // Captain Effectiveness
-    const captainStats = {{ analytics.captain_effectiveness | tojson }};
-    new Chart(document.getElementById('captainChart'), {
-        type: 'bar',
-        data: {
-            labels: captainStats.map(c => c.team),
-            datasets: [
-                {
-                    label: 'Captain Points',
-                    data: captainStats.map(c => c.captain_points),
-                    backgroundColor: colors.gold
-                },
-                {
-                    label: 'VC Points',
-                    data: captainStats.map(c => c.vc_points),
-                    backgroundColor: 'rgba(192, 192, 192, 0.8)'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: textColor } },
-                datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'top',
-                    color: textColor,
-                    font: { size: 10, weight: '600' },
-                    formatter: v => v > 0 ? Math.round(v) : ''
-                }
-            },
-            scales: {
-                y: { 
-                    ticks: { color: textColor },
-                    grid: { color: gridColor }
-                },
-                x: { ticks: { color: textColor }, grid: { display: false } }
-            }
-        }
-    });
+  });
+  const fromHash = document.getElementById('tab-' + location.hash.slice(1));
+  if (fromHash) select(fromHash);
+})();
 </script>
+{% endif %}
 {% endblock %}
