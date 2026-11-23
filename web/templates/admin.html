@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Scoring admin · {{ league.name }} · Gully XI{% endblock %}
+
+{% block content %}
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">Scoring admin</h1>
+    <p class="gx-lede">{{ league.name }}. Status: {{ league.status_label }}{% if not league.is_live %}. Automatic scoring is off until the status is "live"{% endif %}.</p>
+  </div>
+</div>
+
+<div id="admin-status" class="gx-alert" role="status" hidden></div>
+
+<div class="gx-split">
+  <div class="gx-split__main gx-stack">
+
+    <section class="gx-card">
+      <h2 class="gx-h2">Cricbuzz API calls, {{ usage.month }}</h2>
+      {% set pct = (100 * usage.key1_used / usage.key1_cap)|round|int if usage.key1_cap else 0 %}
+      <p class="gx-num" style="font-size: 40px; margin: 12px 0 4px">{{ usage.key1_used }} <span class="gx-muted" style="font-size: 20px">of {{ usage.key1_cap }}</span></p>
+      <div style="height: 10px; border: 2px solid var(--line); border-radius: 6px; overflow: hidden" aria-hidden="true">
+        <div style="height: 100%; width: {{ [pct, 100]|min }}%; background: {{ 'var(--ball)' if pct < 80 else '#C2452D' }}"></div>
+      </div>
+      <p class="gx-muted" style="margin: 8px 0 0">
+        Main key. Calls stop at the cap so the free plan (200 a month) is never exceeded.
+        {% if usage.key2_configured %}Backup key: {{ usage.key2_used_today }} of {{ usage.key2_daily_cap }} today ({{ usage.key2_used_month }} this month).{% else %}No backup key set (RAPIDAPI_KEY_2).{% endif %}
+        {% if usage.refused_month %}<strong>{{ usage.refused_month }} call(s) refused this month because the budget was used up.</strong>{% endif %}
+      </p>
+      {% if usage.recent %}
+      <details style="margin-top: 12px">
+        <summary>Last {{ usage.recent|length }} calls</summary>
+        <ul class="gx-muted" style="font-size: 13px; padding-left: 18px">
+          {% for c in usage.recent %}<li>{{ c.at[:16]|replace('T', ' ') }} UTC, {{ c.key }}, {{ c.endpoint }}{% if not c.ok %} (failed){% endif %}</li>{% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+    </section>
+
+    <section class="gx-card">
+      <h2 class="gx-h2">Upload a scorecard</h2>
+      <p class="gx-muted">For any match the API missed. It's scored exactly like an API result and replaces any earlier score for that match. Uses no API calls.</p>
+      <form id="upload-form" class="gx-stack" style="gap: 12px">
+        <label class="gx-field">Cricbuzz match ID
+          <input class="gx-input" name="match_id" inputmode="numeric" pattern="[0-9]+" required placeholder="e.g. 149618">
+        </label>
+        <label class="gx-field">Scorecard file (.json, the hscard response)
+          <input class="gx-input" type="file" name="file" accept=".json,application/json">
+        </label>
+        <label class="gx-field">…or paste the JSON
+          <textarea class="gx-input" name="json" rows="4" style="font-family: ui-monospace, monospace; font-size: 12px; min-height: 90px"></textarea>
+        </label>
+        <label class="gx-field">Man of the Match (optional, full name as on the scorecard)
+          <input class="gx-input" name="mom" autocomplete="off">
+        </label>
+        <div><button type="submit" class="gx-btn gx-btn--ink">Score this match</button></div>
+      </form>
+    </section>
+  </div>
+
+  <aside class="gx-split__side gx-stack">
+    <section class="gx-card">
+      <h2 class="gx-h2">Schedule</h2>
+      {% if sched.total %}
+      <p class="gx-muted">{{ sched.total }} fixtures saved{% if sched.fetched_at %}, fetched {{ sched.fetched_at[:10] }}{% endif %}. Refreshed weekly. Only matches that started 4 hours ago and aren't scored are fetched.</p>
+      {% if sched.upcoming %}
+      <h3 style="font-size: 15px; margin: 12px 0 4px">Next up</h3>
+      <ul style="padding-left: 18px; margin: 0">{% for m in sched.upcoming %}<li>{{ m.title }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% else %}
+      <p class="gx-muted">No fixtures saved yet. They're fetched on the first auto-score run, or press Refresh.</p>
+      {% endif %}
+      {% if sched.stuck %}
+      <h3 style="font-size: 15px; margin: 12px 0 4px">Gave up after 4 tries: upload these by hand</h3>
+      <ul style="padding-left: 18px; margin: 0">{% for m in sched.stuck %}<li>{{ m.match_id }}: {{ m.title }} <span class="gx-muted">({{ m.note }})</span></li>{% endfor %}</ul>
+      {% endif %}
+      {% if sched.mom_pending %}
+      <h3 style="font-size: 15px; margin: 12px 0 4px">Waiting for Man of the Match</h3>
+      <ul style="padding-left: 18px; margin: 0">{% for m in sched.mom_pending %}<li>{{ m.match_id }}: {{ m.title }}</li>{% endfor %}</ul>
+      {% endif %}
+      <div class="gx-actions" style="margin-top: 16px">
+        <button type="button" class="gx-btn gx-btn--sm" data-post="/api/t/{{ league.id }}/schedule/refresh" data-confirm="Fetch the fixture list again? Uses 1 or 2 API calls.">Refresh schedule</button>
+        <button type="button" class="gx-btn gx-btn--sm gx-btn--ink" data-post="/api/t/{{ league.id }}/auto-score">Score due matches now</button>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const status = document.getElementById('admin-status');
+  const show = (cls, msg) => { status.hidden = false; status.className = 'gx-alert ' + cls; status.textContent = msg; window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const detail = (d) => typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail || d);
+
+  document.querySelectorAll('[data-post]').forEach(btn => btn.addEventListener('click', async () => {
+    if (btn.dataset.confirm && !confirm(btn.dataset.confirm)) return;
+    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
+    try {
+      const r = await fetch(btn.dataset.post, { method: 'POST' });
+      const d = await r.json();
+      if (!r.ok) { show('gx-alert--error', detail(d)); return; }
+      let msg = 'Done.';
+      if (d.matches_processed !== undefined) {
+        const n = d.matches_processed.length;
+        msg = n ? `Scored ${n} match${n === 1 ? '' : 'es'}.` : 'Nothing due right now.';
+        if (d.waiting.length) msg += ` Still in progress: ${d.waiting.join(', ')}.`;
+        if (d.mom_found.length) msg += ` Man of the Match added for ${d.mom_found.length}.`;
+        if (d.errors.length) msg += ' Problems: ' + d.errors.map(e => e.error).join('; ');
+      } else if (d.matches !== undefined) {
+        msg = `Schedule saved: ${d.matches} fixtures.`;
+      }
+      show(d.errors && d.errors.length ? 'gx-alert--warn' : 'gx-alert--ok', msg + ' Refreshing…');
+      setTimeout(() => location.reload(), 2000);
+    } catch (e) { show('gx-alert--error', 'Could not reach the server: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }));
+
+  document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button'); btn.disabled = true;
+    try {
+      const r = await fetch('/api/t/{{ league.id }}/upload-scorecard', { method: 'POST', body: new FormData(e.target) });
+      const d = await r.json();
+      if (!r.ok) { show('gx-alert--error', detail(d)); return; }
+      const top = Object.entries(d.match_scores).sort((a, b) => b[1] - a[1])[0];
+      show('gx-alert--ok', `Match ${d.match_id} scored${top ? `: ${top[0]} top with ${top[1]}` : ''}.${d.mom ? '' : ' No Man of the Match yet; it will be looked up on the next run.'}`);
+      e.target.reset();
+    } catch (err) { show('gx-alert--error', 'Could not reach the server: ' + err.message); }
+    finally { btn.disabled = false; }
+  });
+})();
+</script>
+{% endblock %}

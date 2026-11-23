@@ -19,29 +19,29 @@ Effort: S = under 30 min, M = about 1–2 h, L = half a day or more, XL = 2 days
 **Diagnosis:** the cost comes from the number of calls. Each run makes list calls for both leagues, 5 runs a day, so about 300 calls a month before any scorecard. Each new match adds 2 more (`hscard` and `comm` for Man of the Match).
 **Target:** about 130 calls a month during IPL. The current listing (`cricbuzz-cricket`) has a free Basic plan of 200 a month.
 
-### E1. Schedule cache — M
+### E1. Schedule cache — M  ✅ **Done 24 Nov**
 - Fetch the season fixture list once, store it in `data/<league>/schedule.json`, and refresh it weekly. The refresh is 1 call.
 - On each run, pick only matches where start time + 4 h has passed, the match isn't processed yet, and its schedule entry isn't marked complete. Then fetch only those scorecards.
 - If no match is due, the run makes **0 API calls**.
 - **Files:** `cricbuzz_api.py`, `main.py` (auto-score), `web/routers/api.py`
 
-### E2. Call budget guard — S
+### E2. Call budget guard — S  ✅ **Done 24 Nov**
 - Count every API call in `data/api_usage.json`, per month and per key.
 - Refuse calls above a configurable cap (default 180 a month), and show the usage on the admin page.
 
-### E3. Second free key as overflow — S/M
+### E3. Second free key as overflow — S/M  🟡 **Built 24 Nov, response shape not verified: needs a free key on that listing**
 - Test the `cricbuzz-cricket2` listing (free plan, 100 a day). If its `hscard` response has the same shape, use it automatically when key 1 reaches its cap.
 - If the shape differs, write a small adapter, or drop this item.
 
-### E4. Manual scorecard upload — M
+### E4. Manual scorecard upload — M  ✅ **Done 24 Nov (Scoring admin page)**
 - Admin page to upload a scorecard JSON for a match ID (or paste one). It is cached and scored exactly like an API result.
 - This is the safety net for any match the API misses.
 
-### E5. Retry Man of the Match — S
+### E5. Retry Man of the Match — S  ✅ **Done 24 Nov**
 - The `comm` call is made only when the scorecard has no MoM, and it's retried on the next run if MoM wasn't announced yet.
 - Rescoring then adds the +30 once MoM is found.
 
-### E6. Schedule the GitHub Action for match days only — S
+### E6. Schedule the GitHub Action for match days only — S  ✅ **Cron on 24 Nov (3 runs a day; idle runs cost 0 calls)**
 - With E1 in place, the Action can run often; empty runs cost nothing. Change the cron to cover IPL match windows (about 7:30 PM and 11:30 PM IST, plus the afternoon for double-headers) and turn it on only during the season.
 - **Action for the user:** check which RapidAPI plan you're on, and move to Basic (free) once E1 and E2 are live.
 

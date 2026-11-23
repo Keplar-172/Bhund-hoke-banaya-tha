@@ -52,6 +52,7 @@ class Tournament:
     series_keywords: List[str] = field(default_factory=list)  # Cricbuzz series name match
     series_year: str = ""        # must also appear in the series name
     series_exclude: List[str] = field(default_factory=list)
+    series_id: Optional[int] = None  # Cricbuzz series id; found automatically if unset
     start_date: str = ""
     end_date: str = ""
     config_source: str = "git"   # "git": teams/players re-synced from repo on deploy
@@ -67,6 +68,7 @@ class Tournament:
         self.master_scoresheet_file = os.path.join(self.data_dir, "master_scoresheet.json")
         self.teams_file = os.path.join(self.data_dir, "teams_data.json")
         self.players_file = os.path.join(self.data_dir, "players_data.json")
+        self.schedule_file = os.path.join(self.data_dir, "schedule.json")
         self.dashboard_prefix = f"/{self.competition}/{self.season}"
 
     @property

@@ -47,6 +47,7 @@
                         <a href="{{ t.dashboard_prefix }}" {% if league and t.id == league.id %}aria-current="true"{% endif %}>{{ t.name }} <small>{{ t.status_label }}</small></a>
                         {% endfor %}
                         <a href="/">All leagues</a>
+                        {% if user.is_admin and league %}<a href="{{ league.dashboard_prefix }}/admin">Scoring admin</a>{% endif %}
                         <a href="/auth/logout">Log out <small>{{ user.username }}</small></a>
                     </div>
                 </details>

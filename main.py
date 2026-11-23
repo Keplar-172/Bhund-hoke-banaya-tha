@@ -47,7 +47,7 @@ os.makedirs(MATCH_DATA_DIR, exist_ok=True)
 
 import tournaments
 from cricbuzz_api import (
-    get_recent_matches, get_all_matches, get_scorecard, get_match_mom,
+    get_recent_matches, get_scorecard, get_match_mom,
 )
 from calculator import calculate_match_scores
 from leaderboard import (
@@ -366,54 +366,26 @@ def cmd_players(ipl_team_filter: str = None):
 
 
 def cmd_auto_score():
-    """
-    Automatically detect and process all completed IPL matches that have
-    not been scored yet. Fetches the full season match list from the API,
-    skips already-processed matches, and runs cmd_score() for each new one.
-    """
+    """Score due matches for the selected tournament using the saved schedule.
+    Makes no API calls when nothing is due (see match_schedule.py)."""
+    from scoring_service import auto_score
+    from cricbuzz_api import usage_summary
     t = tournaments.default()
-    print(f"\nFetching full {t.name} match list from API...")
-    try:
-        matches = get_all_matches(t)
-    except Exception as e:
-        print(f"  ERROR fetching matches: {e}\n")
-        return
-
-    if not matches:
-        print("  No matches returned. Check API key or season dates.\n")
-        return
-
-    completed = [
-        m for m in matches
-        if m.get("state", "").lower() == "complete"
-        and m.get("match_id")
-    ]
-    new_matches = [m for m in completed if not is_match_processed(m["match_id"])]
-
-    total = len(matches)
-    done = len(completed) - len(new_matches)
-    print(f"  Season total: {total} matches | Completed: {len(completed)} | "
-          f"Already scored: {done} | New to process: {len(new_matches)}")
-
-    if not new_matches:
-        print("  All completed matches already processed. Nothing to do.\n")
-        return
-
-    print(f"\n  Processing {len(new_matches)} new match(es):\n")
-    for m in new_matches:
-        print(f"  → {m['team1']} vs {m['team2']}  (ID: {m['match_id']})")
-
-    print()
-    for m in new_matches:
-        print(f"\n{'='*60}")
-        print(f"  {m['team1']} vs {m['team2']}  (Match ID: {m['match_id']})")
-        print('='*60)
-        try:
-            cmd_score(m["match_id"])
-        except Exception as e:
-            print(f"  ERROR processing match {m['match_id']}: {e}")
-
-    print("\n✓ Auto-score complete.\n")
+    print(f"\nAuto-score: {t.name}")
+    r = auto_score(t)
+    print(f"  Due: {r['due'] or 'none'}")
+    for m in r["matches_processed"]:
+        print(f"  ✓ scored {m['match_id']}  {m['description']}")
+    for mid in r["waiting"]:
+        print(f"  … {mid} not finished yet, will retry")
+    for mid in r["abandoned"]:
+        print(f"  – {mid} abandoned, skipped")
+    for m in r["mom_found"]:
+        print(f"  ★ MoM for {m['match_id']}: {m['mom']} (rescored)")
+    for e in r["errors"]:
+        print(f"  ERROR {e['match_id']}: {e['error']}")
+    u = usage_summary()
+    print(f"  API calls this month: {u['key1_used']}/{u['key1_cap']}\n")
 
 
 def cmd_sync_data():

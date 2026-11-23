@@ -132,3 +132,24 @@ async def analytics_dashboard(request: Request, user: User = Depends(require_aut
             "league": league,
         }
     )
+
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request, user: User = Depends(require_auth)):
+    """Scoring admin: API budget, schedule, manual scorecard upload."""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    import match_schedule
+    from cricbuzz_api import usage_summary
+    league = _get_league(request)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={
+            "user": user,
+            "league": league,
+            "page": "admin",
+            "usage": usage_summary(),
+            "sched": match_schedule.summary(league),
+        },
+    )

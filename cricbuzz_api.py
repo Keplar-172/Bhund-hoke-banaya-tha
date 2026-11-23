@@ -1,19 +1,124 @@
 """Cricbuzz API client via RapidAPI – fetch matches & scorecards."""
+import json
+import os
 import re
-import requests
-from config import RAPIDAPI_KEY, RAPIDAPI_HOST, BASE_URL
+import threading
+from datetime import datetime, timezone
 
-HEADERS = {
-    "x-rapidapi-key": RAPIDAPI_KEY,
-    "x-rapidapi-host": RAPIDAPI_HOST,
-}
+import requests
+from config import RAPIDAPI_KEY, RAPIDAPI_HOST
+
+# ── Call budget (free tier) ──────────────────────────────────────────────────
+# Every API call is counted in data/api_usage.json. Key 1 (the main listing,
+# free Basic plan = 200 calls/month) is capped at API_MONTHLY_CAP. When it is
+# used up, an optional second key (RAPIDAPI_KEY_2, e.g. the cricbuzz-cricket2
+# listing, free plan = 100/day) takes over, capped at API2_DAILY_CAP per day.
+# When both are used up, calls are refused instead of being billed.
+
+API_MONTHLY_CAP = int(os.environ.get("API_MONTHLY_CAP", "180"))
+API2_DAILY_CAP = int(os.environ.get("API2_DAILY_CAP", "90"))
+RAPIDAPI_KEY_2 = os.environ.get("RAPIDAPI_KEY_2")
+RAPIDAPI_HOST_2 = os.environ.get("RAPIDAPI_HOST_2", "cricbuzz-cricket2.p.rapidapi.com")
+
+_usage_lock = threading.Lock()
+
+
+class ApiBudgetExceeded(RuntimeError):
+    """Raised instead of making a call that would go over the free-tier cap."""
+
+
+def _usage_file() -> str:
+    return os.path.join(os.environ.get("DATA_ROOT", "data"), "api_usage.json")
+
+
+def _now():
+    return datetime.now(timezone.utc)
+
+
+def load_usage() -> dict:
+    try:
+        with open(_usage_file()) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"months": {}, "days": {}, "log": []}
+
+
+def usage_summary() -> dict:
+    """Counts for this month/day, for the admin page and /api/usage."""
+    u = load_usage()
+    month, day = _now().strftime("%Y-%m"), _now().strftime("%Y-%m-%d")
+    m = u.get("months", {}).get(month, {})
+    d = u.get("days", {}).get(day, {})
+    return {
+        "month": month,
+        "key1_used": m.get("key1", 0),
+        "key1_cap": API_MONTHLY_CAP,
+        "key2_configured": bool(RAPIDAPI_KEY_2),
+        "key2_used_today": d.get("key2", 0),
+        "key2_used_month": m.get("key2", 0),
+        "key2_daily_cap": API2_DAILY_CAP,
+        "refused_month": m.get("refused", 0),
+        "recent": u.get("log", [])[-20:][::-1],
+    }
+
+
+def _pick_key() -> tuple:
+    """Return (slot, key, host) for the next call, or raise ApiBudgetExceeded."""
+    u = load_usage()
+    month, day = _now().strftime("%Y-%m"), _now().strftime("%Y-%m-%d")
+    used1 = u.get("months", {}).get(month, {}).get("key1", 0)
+    if RAPIDAPI_KEY and used1 < API_MONTHLY_CAP:
+        return "key1", RAPIDAPI_KEY, RAPIDAPI_HOST
+    used2 = u.get("days", {}).get(day, {}).get("key2", 0)
+    if RAPIDAPI_KEY_2 and used2 < API2_DAILY_CAP:
+        return "key2", RAPIDAPI_KEY_2, RAPIDAPI_HOST_2
+    raise ApiBudgetExceeded(
+        f"API budget used up ({used1}/{API_MONTHLY_CAP} this month on key 1"
+        + (f", {used2}/{API2_DAILY_CAP} today on key 2" if RAPIDAPI_KEY_2 else "")
+        + "). Upload the scorecard by hand or raise API_MONTHLY_CAP.")
+
+
+def _record(slot: str, endpoint: str, ok: bool) -> None:
+    with _usage_lock:
+        u = load_usage()
+        month, day = _now().strftime("%Y-%m"), _now().strftime("%Y-%m-%d")
+        m = u.setdefault("months", {}).setdefault(month, {})
+        m[slot] = m.get(slot, 0) + 1
+        if slot != "refused":
+            d = u.setdefault("days", {}).setdefault(day, {})
+            d[slot] = d.get(slot, 0) + 1
+            # keep ~2 months of daily counters
+            for old in sorted(u["days"])[:-62]:
+                u["days"].pop(old, None)
+        u.setdefault("log", []).append({
+            "at": _now().isoformat(timespec="seconds"),
+            "key": slot, "endpoint": endpoint, "ok": ok,
+        })
+        u["log"] = u["log"][-100:]
+        path = _usage_file()
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(u, f, indent=1)
+        os.replace(tmp, path)
 
 
 def _get(endpoint: str) -> dict:
-    url = f"{BASE_URL}{endpoint}"
-    resp = requests.get(url, headers=HEADERS, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
+    try:
+        slot, key, host = _pick_key()
+    except ApiBudgetExceeded:
+        _record("refused", endpoint, False)
+        raise
+    url = f"https://{host}{endpoint}"
+    headers = {"x-rapidapi-key": key, "x-rapidapi-host": host}
+    ok = False
+    try:
+        resp = requests.get(url, headers=headers, timeout=30)
+        resp.raise_for_status()
+        ok = True
+        return resp.json()
+    finally:
+        _record(slot, endpoint, ok)  # RapidAPI bills failed calls too
 
 
 # ── Match Listing ────────────────────────────────────────────────────────────
@@ -27,6 +132,7 @@ def _parse_match_info(info: dict, series_name: str = "") -> dict:
         "team1": info.get("team1", {}).get("teamSName", ""),
         "team2": info.get("team2", {}).get("teamSName", ""),
         "state": info.get("state", ""),
+        "start_ms": int(info.get("startDate") or 0),
         "series_name": series_name,
     }
 
