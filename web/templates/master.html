@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Master Scoresheet - IPL Fantasy League{% endblock %}
+{% block title %}Master Scoresheet - {{ league.name if league else 'Fantasy League' }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -130,6 +130,7 @@
             {% for match in master.matches %}
             <tr class="match-row" 
                 data-match-number="{{ match.match_number }}"
+                data-match-id="{{ match.match_id }}"
                 data-date="{{ match.date_str }}">
                 <td class="ms-td-num">
                     <span class="match-num-badge">{{ match.match_number_label or match.match_id }}</span>
@@ -137,7 +138,7 @@
                 <td class="ms-td-teams">{{ match.description }}</td>
                 <td class="ms-td-date">{{ match.date_str or "—" }}</td>
                 <td class="ms-td-link">
-                    <a href="/dashboard/match/{{ match.match_id }}" class="btn btn-small">View</a>
+                    <a href="{{ league.dashboard_prefix }}/match/{{ match.match_id }}" class="btn btn-small">View</a>
                 </td>
             </tr>
             {% endfor %}
@@ -279,13 +280,15 @@
 
             rows.sort((a, b) => {
                 if (sortBy === 'number') {
-                    return parseInt(a.getAttribute('data-match-number') || 0)
-                         - parseInt(b.getAttribute('data-match-number') || 0);
+                    return (parseInt(b.getAttribute('data-match-number') || 0)
+                          - parseInt(a.getAttribute('data-match-number') || 0))
+                        || (parseInt(b.getAttribute('data-match-id') || 0)
+                          - parseInt(a.getAttribute('data-match-id') || 0));
                 } else {
                     // date sort: parse "26 Apr 2026" → Date
                     const da = new Date(a.getAttribute('data-date') || 0);
                     const db = new Date(b.getAttribute('data-date') || 0);
-                    return da - db;
+                    return db - da;
                 }
             });
 

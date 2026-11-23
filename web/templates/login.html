@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Login - IPL Fantasy League{% endblock %}
+{% block title %}Login - {{ league.name if league else 'Fantasy League' }}{% endblock %}
 
 {% block content %}
 <div class="login-container">
     <div class="login-card">
-        <h2>🏏 IPL Fantasy League</h2>
+        <h2>🏏 Fantasy League</h2>
         <h3>Login</h3>
         
         {% if error %}

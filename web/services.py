@@ -1,5 +1,4 @@
 """Service layer - convert storage data to web-friendly view models."""
-import re
 from datetime import datetime, timezone
 from typing import Dict, List, Any
 
@@ -12,6 +11,7 @@ from storage import (
     get_cached_scorecard,
 )
 from calculator import calculate_match_scores
+from leaderboard import match_order_from_title
 
 
 def get_leaderboard_data(cfg: LeagueConfig = None) -> List[Dict[str, Any]]:
@@ -94,10 +94,7 @@ def _build_match_meta(match_id: int,
                 description = f"{t1} vs {t2}"
 
         title = data.get("appindex", {}).get("seotitle", "")
-        m = re.search(r"(\d+)(?:st|nd|rd|th)\s+Match", title, re.I)
-        if m:
-            match_number = int(m.group(1))
-            match_number_label = f"M{match_number}"
+        match_number, match_number_label = match_order_from_title(title)
 
         ts = data.get("responselastupdated", 0)
         if ts:
@@ -144,7 +141,8 @@ def get_master_scoresheet_data(cfg: LeagueConfig = None) -> Dict[str, Any]:
         _build_match_meta(m.get("match_id"), cfg)
         for m in master.get("match_list", [])
     ]
-    raw_matches.sort(key=lambda x: x["match_number"] if x["match_number"] else float("inf"))
+    # Newest first, same ordering as the History page
+    raw_matches.sort(key=lambda x: (x["match_number"] or 0, x["match_id"] or 0), reverse=True)
 
     teams_list = []
     for owner, tdata in master.get("teams", {}).items():

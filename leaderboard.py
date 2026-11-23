@@ -50,6 +50,53 @@ def _short_match_name_from_scorecard(scorecard_data: dict, match_id: int = 0) ->
     return f"Match {match_id}"
 
 
+def _league_title(cfg=None) -> str:
+    """Display name for Excel headings (defaults to IPL 2026)."""
+    return cfg.name if cfg is not None else "IPL Fantasy League 2026"
+
+
+# Knockout stages have no match number in the title; place them after the
+# league stage in their real order. (pattern, sort offset, short label)
+_KNOCKOUT_STAGES = [
+    (r"qualifier\s*1", 1, "Q1"),
+    (r"eliminator", 2, "Elim"),
+    (r"qualifier\s*2", 3, "Q2"),
+    (r"(1st|first)\s+semi", 1, "SF1"),
+    (r"(2nd|second)\s+semi", 2, "SF2"),
+    (r"semi", 2, "SF"),
+    (r"\bfinal\b", 9, "Final"),
+]
+_KNOCKOUT_BASE = 1000
+
+
+def match_order_from_title(title: str) -> tuple:
+    """Return (sort_number, label) from a Cricbuzz SEO title.
+
+    League matches: (N, "MN"). Knockouts: (1000 + stage, "Q1"/"SF1"/"Final"...).
+    Unknown: (0, "").
+    """
+    import re
+    title = title or ""
+    m = re.search(r"(\d+)(?:st|nd|rd|th)\s+Match", title, re.I)
+    if m:
+        n = int(m.group(1))
+        return n, f"M{n}"
+    for pattern, offset, label in _KNOCKOUT_STAGES:
+        if re.search(pattern, title, re.I):
+            return _KNOCKOUT_BASE + offset, label
+    return 0, ""
+
+
+def _match_sort_key(match: dict, cfg=None) -> tuple:
+    """Chronological key: stage/match number from the cached scorecard, then match_id."""
+    mid = match.get("match_id") or 0
+    cached = get_cached_scorecard(mid, cfg)
+    num = 0
+    if cached:
+        num, _ = match_order_from_title((cached.get("appindex") or {}).get("seotitle", ""))
+    return (num, mid)
+
+
 def _match_label_for_master_entry(match: dict, cfg=None) -> str:
     description = match.get("description", "")
     short = _short_match_name_from_description(description)
@@ -766,7 +813,9 @@ def export_master_to_excel(filename: str = "master_scoresheet.xlsx", cfg=None):
     from openpyxl.utils import get_column_letter
 
     master = load_master_scoresheet(cfg)
-    match_list = master.get("match_list", [])
+    # Oldest -> newest, left to right (stored order can be scrambled by rescoring)
+    match_list = sorted(master.get("match_list", []),
+                        key=lambda m: _match_sort_key(m, cfg))
     teams = master.get("teams", {})
 
     if not match_list or not teams:
@@ -797,7 +846,7 @@ def export_master_to_excel(filename: str = "master_scoresheet.xlsx", cfg=None):
     ws = wb.active
     ws.title = "Leaderboard"
 
-    ws['A1'] = "IPL Fantasy Premier League 2026 – Master Scoresheet"
+    ws['A1'] = f"{_league_title(cfg)} – Master Scoresheet"
     ws['A1'].font = title_font
     num_matches = len(match_list)
     last_col = 3 + num_matches  # Rank, Team, match labels, Total
@@ -1365,7 +1414,7 @@ def export_scorecard_to_excel(scorecard_data: dict, filename: str,
 # ══════════════════════════════════════════════════════════════════════════════
 
 def export_team_points_to_excel(match_results: dict, description: str = "",
-                                 filename: str = "team_points.xlsx"):
+                                 filename: str = "team_points.xlsx", cfg=None):
     """Export matchwise team points to Excel.
 
     Sheet 1: Team Rankings – all teams ranked by match points.
@@ -1402,7 +1451,7 @@ def export_team_points_to_excel(match_results: dict, description: str = "",
     ws = wb.active
     ws.title = "Team Rankings"
 
-    ws['A1'] = f"IPL Fantasy Premier League 2026 – Team Points"
+    ws['A1'] = f"{_league_title(cfg)} – Team Points"
     ws['A1'].font = title_font
     ws.merge_cells('A1:G1')
 
@@ -1635,7 +1684,7 @@ def export_teams_to_excel(filename: str = "teams.xlsx", cfg=None):
     ws = wb.active
     ws.title = "Overview"
 
-    ws['A1'] = "IPL Fantasy Premier League 2026 – Team Rosters"
+    ws['A1'] = f"{_league_title(cfg)} – Team Rosters"
     ws['A1'].font = title_font
     ws.merge_cells('A1:H1')
 
@@ -1885,7 +1934,7 @@ def export_analytics_to_excel(filename: str = "analytics.xlsx", cfg=None):
     ws = wb.active
     ws.title = "Top by Role"
 
-    ws['A1'] = "IPL Fantasy Premier League 2026 – Top Players by Role"
+    ws['A1'] = f"{_league_title(cfg)} – Top Players by Role"
     ws['A1'].font = title_font
     ws.merge_cells('A1:I1')
     ws['A2'] = f"Across {num_matches} matches"

@@ -73,7 +73,7 @@ async def download_team_points(
     today = date.today().strftime("%Y%m%d")
     filename = os.path.join(MATCH_DATA_DIR, f"{today}_team_points_{match_id}_{cfg.short_name}.xlsx")
 
-    export_team_points_to_excel(match_results, desc, filename)
+    export_team_points_to_excel(match_results, desc, filename, cfg=cfg)
 
     if not os.path.exists(filename):
         raise HTTPException(status_code=500, detail="Export generation failed")

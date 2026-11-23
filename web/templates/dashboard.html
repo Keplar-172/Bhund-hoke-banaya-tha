@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Leaderboard - IPL Fantasy League{% endblock %}
+{% block title %}Leaderboard - {{ league.name if league else 'Fantasy League' }}{% endblock %}
 
 {% block content %}
 <!-- Stats Summary Banner -->

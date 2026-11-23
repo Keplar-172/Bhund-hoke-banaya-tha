@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Error - IPL Fantasy League{% endblock %}
+{% block title %}Error - {{ league.name if league else 'Fantasy League' }}{% endblock %}
 
 {% block content %}
 <div class="error-container">
     <h2>⚠️ Error</h2>
     <p>{{ error }}</p>
-    <a href="/dashboard" class="btn btn-primary">Return to Dashboard</a>
+    <a href="/" class="btn btn-primary">Back to Home</a>
 </div>
 {% endblock %}
