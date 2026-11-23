@@ -32,7 +32,7 @@ try:
     from web.routers import dashboard, downloads, auth as auth_router, api as api_router, public as public_router
     from web.logger import setup_logging, get_logger
     import tournaments
-    from web.services import get_leaderboard_data, get_dashboard_stats
+    from web.services import get_leaderboard_data, get_dashboard_stats, get_match_history_data, get_season_form
 except Exception as _import_err:
     import traceback
     print(f"FATAL: Failed to import web modules: {_import_err}")
@@ -60,7 +60,7 @@ logger = get_logger("app")
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="IPL Fantasy Premier League 2026",
+    title="Gully XI",
     description="Fantasy cricket scoring and leaderboard system",
     version="1.0.0",
     docs_url="/docs" if ENVIRONMENT == "development" else None,  # Disable docs in prod
@@ -105,6 +105,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Templates
 templates_dir = os.path.join(os.path.dirname(__file__), "web", "templates")
 templates = Jinja2Templates(directory=templates_dir)
+templates.env.globals["all_tournaments"] = tournaments.all_tournaments
 
 # ══════════════════════════════════════════════════════════════
 # ROUTERS
@@ -158,8 +159,61 @@ async def root(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="home.html",
-        context={"user": {"username": username}, "groups": groups},
+        context={"user": {"username": username}, "groups": groups,
+                 "featured": _featured_tournament(groups),
+                 "upcoming": _next_tournament(groups)},
     )
+
+
+def _featured_tournament(groups):
+    """The tournament the home page leads with: a live one with matches,
+    otherwise the most recently finished one. None if nothing has been scored."""
+    items = [it for g in groups for it in g["tournaments"] if it["stats"]["total_matches"] > 0]
+    if not items:
+        return None
+    live = [it for it in items if it["config"].status == "live"]
+    pick = live[0] if live else max(items, key=lambda it: it["config"].end_date or "")
+    t = pick["config"]
+    history = get_match_history_data(t)  # newest first
+    latest = None
+    if history:
+        m = history[0]
+        ranked = sorted(m.get("team_scores", {}).items(), key=lambda x: x[1], reverse=True)
+        latest = {
+            "label": m.get("match_number_label") or "Latest match",
+            "description": m.get("description", ""),
+            "date": m.get("date_str", ""),
+            "top": [{"team": k, "points": v, "place": 1 + sum(1 for _, o in ranked if o > v)}
+                    for k, v in ranked[:3]],
+            "margin": round(ranked[0][1] - ranked[1][1], 2) if len(ranked) > 1 else 0,
+            "match_id": m.get("match_id"),
+        }
+    board = pick["leaderboard"]
+    return {
+        "config": t,
+        "leaderboard": board,
+        "stats": pick["stats"],
+        "lead_margin": round(board[0]["points"] - board[1]["points"], 2) if len(board) > 1 else 0,
+        "form": get_season_form(t),
+        "latest": latest,
+    }
+
+
+def _next_tournament(groups):
+    """Soonest upcoming tournament with a start date, plus days to go."""
+    from datetime import date
+    best = None
+    for g in groups:
+        for it in g["tournaments"]:
+            t = it["config"]
+            if t.status in ("upcoming", "auction") and t.start_date:
+                try:
+                    days = (date.fromisoformat(t.start_date) - date.today()).days
+                except ValueError:
+                    continue
+                if best is None or days < best["days"]:
+                    best = {"config": t, "days": days}
+    return best
 
 
 @app.get("/health")
@@ -208,7 +262,7 @@ async def ping():
 async def startup_event():
     """Run on application startup."""
     logger.info("="*60)
-    logger.info(f"  IPL Fantasy League 2026 - Starting Up")
+    logger.info("  Gully XI - Starting Up")
     logger.info(f"  Environment: {ENVIRONMENT}")
     logger.info(f"  Version: {app.version}")
     logger.info(f"  Debug Mode: {DEBUG if 'DEBUG' in dir() else False}")

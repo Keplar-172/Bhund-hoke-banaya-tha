@@ -1,34 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}Login - {{ league.name if league else 'Fantasy League' }}{% endblock %}
+{% block title %}Log in · Gully XI{% endblock %}
 
 {% block content %}
-<div class="login-container">
-    <div class="login-card">
-        <h2>🏏 Fantasy League</h2>
-        <h3>Login</h3>
-        
-        {% if error %}
-        <div class="alert alert-error">
-            {{ error }}
-        </div>
-        {% endif %}
-        
-        <form method="post" action="/auth/login">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" 
-                       value="{{ username if username else '' }}" 
-                       required autofocus>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
-    </div>
+<div class="gx-auth">
+  <div class="gx-card">
+    <h1 class="gx-h1" style="font-size: 32px">Log in</h1>
+    <p class="gx-lede">Gully XI fantasy cricket for our league.</p>
+
+    {% if error %}
+    <div class="gx-alert gx-alert--error" role="alert" style="margin: var(--s4) 0 0">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/auth/login">
+      <label class="gx-field" for="username">Username
+        <input class="gx-input" type="text" id="username" name="username" value="{{ username if username else '' }}" autocomplete="username" required autofocus>
+      </label>
+      <label class="gx-field" for="password">Password
+        <input class="gx-input" type="password" id="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="gx-btn gx-btn--ink">Log in</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

@@ -13,6 +13,7 @@ from web.services import (
     get_master_scoresheet_data,
     get_match_detail_data,
     get_dashboard_stats,
+    get_season_form,
 )
 from web.analytics import get_analytics_summary
 
@@ -21,6 +22,7 @@ router = APIRouter()
 
 templates_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
 templates = Jinja2Templates(directory=templates_dir)
+templates.env.globals["all_tournaments"] = tournaments.all_tournaments
 
 
 def _get_league(request: Request) -> LeagueConfig:
@@ -36,6 +38,7 @@ async def dashboard_home(request: Request, user: User = Depends(require_auth)):
     league = _get_league(request)
     leaderboard = get_leaderboard_data(league)
     stats = get_dashboard_stats(league)
+    form = get_season_form(league)
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -43,6 +46,7 @@ async def dashboard_home(request: Request, user: User = Depends(require_auth)):
             "user": user,
             "leaderboard": leaderboard,
             "stats": stats,
+            "form": form,
             "page": "home",
             "league": league,
         }

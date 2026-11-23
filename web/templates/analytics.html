@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block legacy_css %}<link rel="stylesheet" href="/static/style.css">{% endblock %}
+
 {% block title %}Analytics Dashboard - {{ league.name if league else 'Fantasy League' }}{% endblock %}
 
 {% block content %}

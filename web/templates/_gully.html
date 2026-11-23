@@ -1,0 +1,86 @@
+{# Gully XI shared template pieces. Import with:
+   {% import "_gully.html" as gx %} #}
+
+{# "2027-01-14" -> 14 Jan 2027; anything else is shown as given #}
+{% macro nice_date(s) -%}
+{%- set parts = (s or '').split('-') -%}
+{%- if parts|length == 3 and parts[1]|int >= 1 and parts[1]|int <= 12 -%}
+{{ parts[2]|int }} {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parts[1]|int - 1] }} {{ parts[0] }}
+{%- else -%}{{ s }}{%- endif -%}
+{%- endmacro %}
+
+{# 8842.5 -> 8,842.5   8652.0 -> 8,652   8373.75 -> 8,373.75 #}
+{% macro pts(n) -%}
+{%- set s = "{:,.2f}".format((n or 0)|float) -%}
+{{ s.rstrip('0').rstrip('.') if '.' in s else s }}
+{%- endmacro %}
+
+{% macro ordinal(n) -%}
+{%- if n is none -%}–{%- else -%}
+{%- set v = n % 100 -%}
+{{ n }}{% if v in [11, 12, 13] %}th{% elif n % 10 == 1 %}st{% elif n % 10 == 2 %}nd{% elif n % 10 == 3 %}rd{% else %}th{% endif %}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro stumps(cls="gx-panel__stumps") -%}
+<svg class="{{ cls }}" viewBox="0 0 96 150" aria-hidden="true" fill="none" stroke="#F4F7EE" stroke-linecap="round">
+  <path d="M14 22 C15 60, 13 100, 15 146" stroke-width="4"/>
+  <path d="M48 20 C47 62, 49 104, 47 147" stroke-width="4"/>
+  <path d="M82 22 C83 58, 81 102, 82 146" stroke-width="4"/>
+  <path d="M10 16 L44 13 M52 13 L86 16" stroke-width="3.5"/>
+</svg>
+{%- endmacro %}
+
+{# Chalk tally: groups of five, the fifth struck across #}
+{% macro tally(n, seed=0) -%}
+{%- set width = 4 + ((n + 4) // 5) * 34 -%}
+<svg width="{{ width }}" height="24" viewBox="0 0 {{ width }} 24" role="img" aria-label="{{ n }} match win{{ '' if n == 1 else 's' }}">
+{%- for i in range(n) -%}
+  {%- set g = i // 5 -%}{%- set k = i % 5 -%}{%- set gx = 4 + g * 34 -%}
+  {%- set j1 = ((i * 37 + seed * 11) % 7 - 3) * 0.45 -%}{%- set j2 = ((i * 53 + seed * 7) % 7 - 3) * 0.45 -%}
+  {%- if k < 4 -%}
+  <line x1="{{ gx + k * 7 + j1 }}" y1="{{ 3 + j2 }}" x2="{{ gx + k * 7 - j2 }}" y2="{{ 21 + j1 }}"/>
+  {%- else -%}
+  <line x1="{{ gx - 3 }}" y1="{{ 17 + j1 }}" x2="{{ gx + 25 }}" y2="{{ 6 + j2 }}"/>
+  {%- endif -%}
+{%- endfor -%}
+</svg>
+{%- endmacro %}
+
+{% macro wins_board(wins, total_matches) -%}
+<section class="gx-slate" aria-labelledby="wins-h">
+  <h2 class="gx-h2" id="wins-h">Match wins</h2>
+  <p class="gx-slate__note">Matches where the team scored the most points{% if total_matches %}, all {{ total_matches }} of them{% endif %}</p>
+  <ul class="gx-slate__list">
+    {% for w in wins %}
+    <li class="gx-slate__row">
+      <span class="gx-slate__team">{{ w.team }}</span>
+      {{ tally(w.wins, loop.index) }}
+      <span class="gx-slate__count">{{ w.wins }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{%- endmacro %}
+
+{% macro form_boxes(form) -%}
+<ol class="gx-form" aria-label="Form, last {{ form|length }} matches">
+  {% for f in form %}
+  <li class="gx-formbox{% if f.win %} gx-formbox--win{% elif f.place is none %} gx-formbox--none{% endif %}"
+      title="{{ f.label }}: {{ ordinal(f.place) }}, {{ pts(f.points) }} points"
+      aria-label="{{ f.label }}: {{ ordinal(f.place) }}, {{ pts(f.points) }} points{% if f.win %}, match win{% endif %}">{{ f.place if f.place is not none else '–' }}</li>
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
+{% macro form_cell(f) -%}
+<span class="gx-board__wide" role="cell"><span class="gx-formbox{% if f.win %} gx-formbox--win{% elif f.place is none %} gx-formbox--none{% endif %}"
+  title="{{ f.label }}: {{ ordinal(f.place) }}, {{ pts(f.points) }} points"
+  aria-label="{{ f.label }}: {{ ordinal(f.place) }}, {{ pts(f.points) }} points{% if f.win %}, match win{% endif %}">{{ f.place if f.place is not none else '–' }}</span></span>
+{%- endmacro %}
+
+{% macro move(m) -%}
+{%- if m > 0 %}<span class="gx-move gx-move--up" aria-label="up {{ m }} place{{ '' if m == 1 else 's' }}">↑{{ m }}</span>
+{%- elif m < 0 %}<span class="gx-move gx-move--down" aria-label="down {{ -m }} place{{ '' if m == -1 else 's' }}">↓{{ -m }}</span>
+{%- endif -%}
+{%- endmacro %}

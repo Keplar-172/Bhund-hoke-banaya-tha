@@ -1,203 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Leagues</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/theme-toggle.js"></script>
-    <style>
-        .home-hero {
-            text-align: center;
-            padding: 2.5rem 1rem 1.5rem;
-        }
-        .home-hero h1 {
-            font-size: 2rem;
-            margin-bottom: 0.4rem;
-        }
-        .home-hero p {
-            color: var(--text-muted, #888);
-            font-size: 1rem;
-        }
-        .league-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .league-card {
-            background: var(--card-bg, #fff);
-            border: 1px solid var(--border, #e5e7eb);
-            border-radius: 12px;
-            padding: 1.8rem;
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            display: block;
-        }
-        .league-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-        .league-card-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-        }
-        .league-emoji {
-            font-size: 2.2rem;
-            line-height: 1;
-        }
-        .league-card-header h2 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        .league-stats {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
-        .stat-pill {
-            background: var(--bg-subtle, #f3f4f6);
-            border-radius: 20px;
-            padding: 0.3rem 0.75rem;
-            font-size: 0.82rem;
-            font-weight: 500;
-        }
-        .league-standings {
-            border-top: 1px solid var(--border, #e5e7eb);
-            padding-top: 1rem;
-        }
-        .league-standings h4 {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted, #888);
-            margin: 0 0 0.6rem;
-        }
-        .standing-row {
-            display: flex;
-            align-items: center;
-            padding: 0.25rem 0;
-            font-size: 0.9rem;
-        }
-        .standing-rank {
-            width: 1.5rem;
-            font-weight: 700;
-            color: var(--text-muted, #888);
-            font-size: 0.8rem;
-        }
-        .standing-team {
-            flex: 1;
-            font-weight: 500;
-        }
-        .standing-pts {
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-        }
-        .rank-1 .standing-rank { color: #f59e0b; }
-        .rank-2 .standing-rank { color: #94a3b8; }
-        .rank-3 .standing-rank { color: #b45309; }
-        .ipl-card { border-top: 3px solid #3b82f6; }
-        .wwc-card { border-top: 3px solid #ec4899; }
-        .wpl-card { border-top: 3px solid #8b5cf6; }
-        .status-completed { opacity: 0.92; }
-        .league-group-title { margin: 1.75rem 0 0.75rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary, #6b7280); }
-        .cta-btn {
-            display: block;
-            text-align: center;
-            margin-top: 1.25rem;
-            padding: 0.6rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .ipl-card .cta-btn { background: #3b82f6; color: #fff; }
-        .wwc-card .cta-btn { background: #ec4899; color: #fff; }
-        .wpl-card .cta-btn { background: #8b5cf6; color: #fff; }
-        .home-nav {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1.5rem;
-            border-bottom: 1px solid var(--border, #e5e7eb);
-        }
-        .home-nav .nav-user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9rem;
-        }
-        .no-matches-msg {
-            color: var(--text-muted, #888);
-            font-size: 0.85rem;
-            font-style: italic;
-            padding: 0.4rem 0;
-        }
-    </style>
-</head>
-<body>
-    <nav class="home-nav">
-        <div class="nav-user-info">
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
-                <span class="theme-icon">🌙</span>
-            </button>
-            <span>{{ user.username }}</span>
-            <a href="/auth/logout" class="btn-logout">Logout</a>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% import "_gully.html" as gx %}
 
-    <main class="container fade-in">
-        <div class="home-hero">
-            <h1>🏏 Fantasy Cricket Leagues</h1>
-            <p>Select a league to view standings and match scores</p>
-        </div>
+{% block title %}Gully XI{% endblock %}
 
-        {% for group in groups %}
-        <h3 class="league-group-title">{{ group.label }}</h3>
-        <div class="league-grid">
-            {% for item in group.tournaments %}
-            {% set t = item.config %}
-            <a href="{{ t.dashboard_prefix }}" class="league-card {{ t.competition }}-card status-{{ t.status }}">
-                <div class="league-card-header">
-                    <span class="league-emoji">{{ t.emoji }}</span>
-                    <h2>{{ t.name }}</h2>
-                </div>
-                <div class="league-stats">
-                    <span class="stat-pill">{{ t.status_label }}</span>
-                    <span class="stat-pill">{{ item.stats.total_matches }} matches played</span>
-                    <span class="stat-pill">{{ item.stats.total_teams }} teams</span>
-                    {% if item.stats.total_matches > 0 %}
-                    <span class="stat-pill">{% if t.status == "completed" %}Winner{% else %}Leader{% endif %}: {{ item.stats.top_scorer.team }}</span>
-                    {% endif %}
-                </div>
-                <div class="league-standings">
-                    <h4>{% if t.status == "completed" %}Final Standings{% else %}Current Standings{% endif %}</h4>
-                    {% if item.leaderboard and item.stats.total_matches > 0 %}
-                        {% for entry in item.leaderboard %}
-                        <div class="standing-row rank-{{ entry.rank }}">
-                            <span class="standing-rank">{{ entry.rank }}</span>
-                            <span class="standing-team">{{ entry.team }}</span>
-                            <span class="standing-pts">{{ entry.points }}</span>
-                        </div>
-                        {% endfor %}
-                    {% elif t.status in ["upcoming", "auction"] %}
-                        <p class="no-matches-msg">{% if t.start_date %}Starts {{ t.start_date }}{% else %}Coming soon{% endif %}</p>
-                    {% else %}
-                        <p class="no-matches-msg">No matches scored yet</p>
-                    {% endif %}
-                </div>
-                <span class="cta-btn">Open {{ t.name }} →</span>
-            </a>
-            {% endfor %}
+{% block content %}
+<div class="gx-stack">
+
+{% if featured %}
+  {% set t = featured.config %}
+  {% set board = featured.leaderboard %}
+  {% set done = t.status == 'completed' %}
+  <section class="gx-home-hero" aria-label="{{ t.name }}">
+    <div class="gx-panel">
+      {{ gx.stumps() }}
+      <div class="gx-panel__kicker">{{ t.name }} {{ 'champion' if done else 'leader' }}</div>
+      <h1 class="gx-panel__name">{{ board[0].team }}</h1>
+      <div class="gx-sticker">{{ gx.pts(board[0].points) }}</div>
+      <p class="gx-panel__note">
+        {% if board|length > 1 %}{{ gx.pts(featured.lead_margin) }} clear of {{ board[1].team }} after {{ featured.stats.total_matches }} matches.{% endif %}
+        {% set m = featured.form.teams.get(board[0].team, {}).get('move', 0) %}
+        {% if m > 0 %}Took first place in the last {{ featured.form.labels|length }} matches.{% endif %}
+      </p>
+      <p style="position: relative; margin: 18px 0 0"><a class="gx-btn gx-btn--ball" href="{{ t.dashboard_prefix }}">Open the points table</a></p>
+    </div>
+
+    <div class="gx-home-side">
+      {% if featured.latest %}
+      {% set lm = featured.latest %}
+      <div class="gx-card">
+        <h2 class="gx-h2">{{ 'The final' if lm.label == 'Final' else lm.label }}</h2>
+        <div class="gx-latest__line" style="margin-top: 6px"><span class="gx-muted">{{ lm.description }}</span>{% if lm.date %}<span class="gx-muted">{{ lm.date }}</span>{% endif %}</div>
+        <ol class="gx-latest__list" aria-label="Top teams in this match">
+          {% for r in lm.top %}
+          <li>
+            <span class="gx-formbox{% if r.place == 1 %} gx-formbox--win{% endif %}">{{ r.place }}</span>
+            <span style="font-weight: {{ 700 if r.place == 1 else 500 }}">{{ r.team }}</span>
+            <span class="gx-num" style="font-size: 16px">{{ gx.pts(r.points) }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+        <p class="gx-muted" style="margin: 10px 0 0; font-size: 14px">Won by {{ gx.pts(lm.margin) }} points.
+          <a href="{{ t.dashboard_prefix }}/match/{{ lm.match_id }}">Match details</a></p>
+      </div>
+      {% endif %}
+      {% if board|length >= 3 %}
+      <div class="gx-podium">
+        {% for e in board[1:3] %}
+        <div class="gx-podium__item">
+          <div class="gx-podium__place">{{ gx.ordinal(e.rank) }}</div>
+          <div class="gx-podium__team">{{ e.team }}</div>
+          <div class="gx-podium__pts">{{ gx.pts(e.points) }}</div>
         </div>
         {% endfor %}
-    </main>
-</body>
-</html>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if featured.form.wins %}{{ gx.wins_board(featured.form.wins, featured.stats.total_matches) }}{% endif %}
+{% else %}
+  <div>
+    <h1 class="gx-h1">Gully XI</h1>
+    <p class="gx-lede">No matches have been scored yet. Pick a league to see its teams.</p>
+  </div>
+{% endif %}
+
+  <section aria-labelledby="leagues-h" style="display: flex; flex-direction: column; gap: var(--s4)">
+    <h2 class="gx-h2" id="leagues-h">Leagues</h2>
+    <div class="gx-leagues">
+      {% for group in groups %}
+      {% for item in group.tournaments %}
+      {% set t = item.config %}
+      {% set is_next = upcoming and upcoming.config.id == t.id %}
+      <a href="{{ t.dashboard_prefix }}" class="gx-league{% if is_next %} gx-league--next{% endif %}">
+        <span class="gx-league__top">
+          <span class="gx-league__name">{{ t.name }}</span>
+          {% if is_next and upcoming.days >= 0 %}
+            <span class="gx-num">{{ upcoming.days }} day{{ '' if upcoming.days == 1 else 's' }}</span>
+          {% elif item.stats.total_matches %}
+            <span class="gx-num">{{ gx.pts(item.stats.top_scorer.points) }}</span>
+          {% endif %}
+        </span>
+        <span class="gx-league__meta">
+          {% if item.stats.total_matches %}
+            {{ item.stats.total_teams }} teams, {{ item.stats.total_matches }} matches. {{ 'Won by' if t.status == 'completed' else 'Led by' }} {{ item.stats.top_scorer.team }}.
+          {% elif t.start_date %}
+            {{ t.status_label }}. {{ gx.nice_date(t.start_date) }} to {{ gx.nice_date(t.end_date) if t.end_date else 'TBC' }}.
+          {% else %}
+            {{ t.status_label }}. No matches scored yet.
+          {% endif %}
+        </span>
+      </a>
+      {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

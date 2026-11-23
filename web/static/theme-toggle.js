@@ -67,6 +67,10 @@
         }
     }
     
+    // Set the theme straight away (this script runs in <head>) so the page
+    // never paints in the wrong theme first
+    document.documentElement.setAttribute('data-theme', getInitialTheme());
+
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

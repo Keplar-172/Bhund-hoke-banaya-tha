@@ -23,7 +23,7 @@ def get_leaderboard_data(cfg: LeagueConfig = None) -> List[Dict[str, Any]]:
         leaderboard.append({
             "rank": rank,
             "team": team,
-            "points": round(points, 1)
+            "points": round(points, 2)
         })
     return leaderboard
 
@@ -43,10 +43,10 @@ def get_dashboard_stats(cfg: LeagueConfig = None) -> Dict[str, Any]:
         }
 
     sorted_teams = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    top_scorer = {"team": sorted_teams[0][0], "points": round(sorted_teams[0][1], 1)}
+    top_scorer = {"team": sorted_teams[0][0], "points": round(sorted_teams[0][1], 2)}
     avg_points = round(sum(scores.values()) / len(scores), 1) if scores else 0
     points_distribution = [
-        {"team": team, "points": round(points, 1)}
+        {"team": team, "points": round(points, 2)}
         for team, points in sorted_teams
     ]
 
@@ -205,4 +205,89 @@ def get_match_detail_data(match_id: int,
         "match_id": match_id,
         "description": desc,
         "teams": teams_list
+    }
+
+
+def _place(scores: Dict[str, float], team: str) -> int:
+    """Finishing place with shared places for ties (1, 2, 2, 4...)."""
+    mine = scores.get(team, 0)
+    return 1 + sum(1 for v in scores.values() if v > mine)
+
+
+def get_season_form(cfg: LeagueConfig = None, last_n: int = 5,
+                    checkpoints: int = 8) -> Dict[str, Any]:
+    """Form guide, match wins and positions over the season, for the redesign.
+
+    Uses get_match_history_data() so matches are in true match order
+    (match_history.json itself is not stored in order).
+
+    Returns:
+        labels      short labels of the last N matches, oldest first ("M70", "Q1"...)
+        teams       {team: {"form": [{place, points, win, label}], "move": int, "wins": int}}
+        wins        [{"team", "wins"}] most wins first (a shared top score counts for each)
+        positions   {"labels": [match count...], "teams": {team: [place...]}}
+        total_matches
+    """
+    history = list(reversed(get_match_history_data(cfg)))  # oldest first
+    scores = load_scores(cfg)
+    names = list(scores.keys())
+    for m in history:
+        for t in m.get("team_scores", {}):
+            if t not in names:
+                names.append(t)
+
+    def _label(m):
+        return m.get("match_number_label") or m.get("description") or f"Match {m.get('match_id')}"
+
+    # Cumulative places after each match
+    running = {t: 0.0 for t in names}
+    places_after: List[Dict[str, int]] = []
+    wins = {t: 0 for t in names}
+    for m in history:
+        ts = m.get("team_scores", {})
+        for t in names:
+            running[t] += ts.get(t, 0) or 0
+        places_after.append({t: _place(running, t) for t in names})
+        if ts:
+            top = max(ts.values())
+            for t, v in ts.items():
+                if v == top:
+                    wins[t] = wins.get(t, 0) + 1
+
+    recent = history[-last_n:] if last_n else []
+    teams: Dict[str, Any] = {}
+    for t in names:
+        form = []
+        for m in recent:
+            ts = m.get("team_scores", {})
+            place = _place(ts, t) if t in ts else None
+            form.append({
+                "place": place,
+                "points": round(ts.get(t, 0) or 0, 2),
+                "win": place == 1,
+                "label": _label(m),
+            })
+        move = 0
+        if len(history) > len(recent) and places_after:
+            before = places_after[len(history) - len(recent) - 1].get(t)
+            now = places_after[-1].get(t)
+            if before and now:
+                move = before - now  # positive = climbed
+        teams[t] = {"form": form, "move": move, "wins": wins.get(t, 0)}
+
+    # Evenly spaced checkpoints for the positions chart
+    n = len(history)
+    idx = sorted({max(1, round(n * (i + 1) / checkpoints)) for i in range(checkpoints)}) if n else []
+    positions = {
+        "labels": idx,
+        "teams": {t: [places_after[i - 1][t] for i in idx] for t in names},
+    }
+
+    return {
+        "labels": [_label(m) for m in recent],
+        "teams": teams,
+        "wins": sorted(({"team": t, "wins": w} for t, w in wins.items()),
+                       key=lambda x: (-x["wins"], x["team"])),
+        "positions": positions,
+        "total_matches": n,
     }

@@ -1,194 +1,145 @@
 {% extends "base.html" %}
+{% import "_gully.html" as gx %}
 
-{% block title %}Leaderboard - {{ league.name if league else 'Fantasy League' }}{% endblock %}
+{% block title %}Leaderboard · {{ league.name }} · Gully XI{% endblock %}
 
 {% block content %}
-<!-- Stats Summary Banner -->
-<div class="stats-banner">
-    <div class="stat-card stat-card-border-blue">
-        <div class="stat-icon">🏏</div>
-        <div class="stat-content">
-            <div class="stat-value">{{ stats.total_matches }}</div>
-            <div class="stat-label">Matches Played</div>
-        </div>
-    </div>
-    <div class="stat-card stat-card-highlight">
-        <div class="stat-icon">👑</div>
-        <div class="stat-content">
-            <div class="stat-value">{{ stats.top_scorer.team }}</div>
-            <div class="stat-label">Leader · {{ stats.top_scorer.points }} pts</div>
-        </div>
-    </div>
-    <div class="stat-card stat-card-border-green">
-        <div class="stat-icon">📊</div>
-        <div class="stat-content">
-            <div class="stat-value">{{ stats.avg_points }}</div>
-            <div class="stat-label">League Avg pts</div>
-        </div>
-    </div>
-    <div class="stat-card stat-card-border-purple">
-        <div class="stat-icon">👥</div>
-        <div class="stat-content">
-            <div class="stat-value">{{ stats.total_teams }}</div>
-            <div class="stat-label">Teams</div>
-        </div>
-    </div>
+{% set done = league.status == 'completed' %}
+{% set n_form = form.labels|length %}
+
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">Points table</h1>
+    {% if stats.total_matches %}
+    <p class="gx-lede">{{ league.name }}, {{ 'final' if done else 'standings' }} after {{ stats.total_matches }} match{{ '' if stats.total_matches == 1 else 'es' }}.
+      {% if n_form %}Form shows each team's finishing place in the last {{ n_form }} match{{ '' if n_form == 1 else 'es' }}, gold for a match win.{% endif %}
+      {% if stats.total_matches > n_form %}Arrows show places gained or lost over those {{ n_form }}.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% if stats.total_matches %}
+  <div class="gx-actions">
+    <details class="gx-dl">
+      <summary class="gx-btn gx-btn--ink"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </summary>
+      <div class="gx-dl__menu">
+        <a href="/downloads/master?league={{ league.short_name }}">
+          <span class="gx-dl__name">Season points sheet</span>
+          <span class="gx-dl__what">Every player's points in every match, team by team</span></a>
+        <a href="/downloads/teams?league={{ league.short_name }}">
+          <span class="gx-dl__name">Squads and prices</span>
+          <span class="gx-dl__what">Each team's players, captain, vice-captain and budget</span></a>
+        <a href="/downloads/analytics?league={{ league.short_name }}">
+          <span class="gx-dl__name">Season stats</span>
+          <span class="gx-dl__what">Top players by role, best single matches and records</span></a>
+        <span class="gx-dl__note">Excel files. For one match, use Download match sheet on the History page.</span>
+      </div>
+    </details>
+  </div>
+  {% endif %}
 </div>
 
-<div class="page-header">
-    <h2>Current Leaderboard</h2>
-    <div class="actions">
-        <a href="/downloads/master?league={{ league.short_name }}" class="btn btn-primary">📥 Master Sheet</a>
-        <a href="/downloads/teams?league={{ league.short_name }}" class="btn btn-secondary">📥 Teams</a>
-        <a href="/downloads/analytics?league={{ league.short_name }}" class="btn btn-secondary">📊 Analytics</a>
+{% if not stats.total_matches %}
+<div class="gx-card gx-empty">
+  <strong>No matches scored yet</strong>
+  {% if league.start_date %}{{ league.name }} starts on {{ gx.nice_date(league.start_date) }}. The table fills in after the first match is scored.{% else %}The table fills in after the first match is scored.{% endif %}
+</div>
+{% else %}
+
+<div class="gx-split">
+  <div class="gx-split__main">
+    <div class="gx-board" role="table" aria-label="{{ league.name }} points table" style="--form-n: {{ n_form if n_form else 1 }}">
+      <div class="gx-board__head" role="row">
+        <span role="columnheader">Pos</span>
+        <span role="columnheader">Team</span>
+        {% for l in form.labels %}<span role="columnheader">{{ l }}</span>{% endfor %}
+        <span role="columnheader">Points</span>
+        <span role="columnheader">Behind</span>
+      </div>
+      {% set lead = leaderboard[0].points if leaderboard else 0 %}
+      {% for entry in leaderboard %}
+      {% set tf = form.teams.get(entry.team, {}) %}
+      <div class="gx-board__row{% if entry.rank == 1 %} gx-board__row--first{% endif %}" role="row">
+        <span role="cell" class="gx-rank{% if entry.rank == 1 %} gx-rank--first{% elif entry.rank <= 3 %} gx-rank--podium{% endif %}">{{ entry.rank }}</span>
+        <span role="cell" class="gx-board__who">
+          <span class="gx-board__name">{{ entry.team }} {{ gx.move(tf.move or 0) }}</span>
+          {% if tf.form %}{{ gx.form_boxes(tf.form) }}{% endif %}
+        </span>
+        {% for f in tf.form or [] %}{{ gx.form_cell(f) }}{% endfor %}
+        {% if not tf.form %}{% for l in form.labels %}<span role="cell" class="gx-board__wide"></span>{% endfor %}{% endif %}
+        <span class="gx-board__score">
+          <span role="cell" class="gx-num">{{ gx.pts(entry.points) }}</span>
+          <span role="cell" class="gx-board__behind">{% if entry.rank == 1 %}{{ 'Champion' if done else 'Leader' }}{% else %}{{ gx.pts(lead - entry.points) }}<span class="gx-sr"> behind</span>{% endif %}</span>
+        </span>
+      </div>
+      {% endfor %}
     </div>
+  </div>
+
+  {% if form.positions.labels|length > 1 %}
+  <aside class="gx-split__side gx-chart">
+    <h2 class="gx-h2">Who led when</h2>
+    <p>Position after every {{ (stats.total_matches / form.positions.labels|length)|round|int }} or so matches</p>
+    <div class="gx-chart__canvas"><canvas id="positionsChart" role="img" aria-label="Table position of each team at {{ form.positions.labels|length }} points in the season"></canvas></div>
+  </aside>
+  {% endif %}
 </div>
 
-<!-- Podium Cards for Top 3 -->
-{% if leaderboard|length >= 3 %}
-<div class="podium-container">
-    <!-- 2nd Place -->
-    <div class="podium-card podium-card-2">
-        <div class="podium-medal">🥈</div>
-        <div class="podium-rank">2nd Place</div>
-        <div class="podium-team">{{ leaderboard[1].team }}</div>
-        <div class="podium-points">{{ leaderboard[1].points }} pts</div>
-    </div>
-    
-    <!-- 1st Place (Champion) -->
-    <div class="podium-card podium-card-1">
-        <div class="podium-crown">👑</div>
-        <div class="podium-medal">🥇</div>
-        <div class="podium-rank">Champion</div>
-        <div class="podium-team">{{ leaderboard[0].team }}</div>
-        <div class="podium-points">{{ leaderboard[0].points }} pts</div>
-    </div>
-    
-    <!-- 3rd Place -->
-    <div class="podium-card podium-card-3">
-        <div class="podium-medal">🥉</div>
-        <div class="podium-rank">3rd Place</div>
-        <div class="podium-team">{{ leaderboard[2].team }}</div>
-        <div class="podium-points">{{ leaderboard[2].points }} pts</div>
-    </div>
+<div style="margin-top: var(--s5)">
+  {{ gx.wins_board(form.wins, stats.total_matches) }}
 </div>
 {% endif %}
 
-<!-- Full Leaderboard Table -->
-<div class="leaderboard-section">
-    <h3>Complete Standings</h3>
-    <div class="leaderboard-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Team</th>
-                    <th>Total Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in leaderboard %}
-                <tr class="{% if entry.rank <= 3 %}podium-{{ entry.rank }}{% endif %}">
-                    <td class="rank">
-                        {% if entry.rank == 1 %}🥇
-                        {% elif entry.rank == 2 %}🥈
-                        {% elif entry.rank == 3 %}🥉
-                        {% else %}{{ entry.rank }}
-                        {% endif %}
-                    </td>
-                    <td class="team-name">{{ entry.team }}</td>
-                    <td class="points">{{ entry.points }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Points Distribution Chart -->
-<div class="chart-section">
-    <h3>Points Distribution</h3>
-    <div class="chart-container">
-        <canvas id="pointsChart"></canvas>
-    </div>
-</div>
-
+{% if stats.total_matches and form.positions.labels|length > 1 %}
 <script>
-    // Points Distribution Doughnut Chart
-    Chart.register(ChartDataLabels);
-    // Disable datalabels globally on this page, then enable only for this chart
-    Chart.defaults.plugins.datalabels = { display: false };
-
-    const ctx = document.getElementById('pointsChart').getContext('2d');
-    const pointsData = {{ stats.points_distribution | tojson }};
-    
-    // Get theme for colors
-    const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    const isDark = theme === 'dark';
-    
-    const chartColors = [
-        'rgba(26, 115, 232, 0.85)',
-        'rgba(245, 124, 0, 0.85)',
-        'rgba(156, 39, 176, 0.85)',
-        'rgba(255, 215, 0, 0.85)',
-        'rgba(76, 175, 80, 0.85)',
-        'rgba(244, 67, 54, 0.85)',
-        'rgba(0, 188, 212, 0.85)',
-        'rgba(255, 152, 0, 0.85)',
-        'rgba(63, 81, 181, 0.85)',
-        'rgba(0, 150, 136, 0.85)',
-        'rgba(233, 30, 99, 0.85)',
-    ];
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: pointsData.map(d => d.team),
-            datasets: [{
-                data: pointsData.map(d => d.points),
-                backgroundColor: chartColors,
-                borderColor: isDark ? '#1f2937' : '#ffffff',
-                borderWidth: 2,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    display: true,
-                    color: '#fff',
-                    textAlign: 'center',
-                    font: { weight: 'bold', size: 11 },
-                    formatter: (value, ctx) => {
-                        const label = ctx.chart.data.labels[ctx.dataIndex];
-                        const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                        const pct = ((value / total) * 100).toFixed(1);
-                        return label + '\n' + value + ' pts\n(' + pct + '%)';
-                    }
-                },
-                tooltip: {
-                    backgroundColor: isDark ? '#374151' : '#ffffff',
-                    titleColor: isDark ? '#e5e7eb' : '#1f2937',
-                    bodyColor: isDark ? '#e5e7eb' : '#1f2937',
-                    borderColor: isDark ? '#4b5563' : '#e5e7eb',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: true,
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} pts (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
+(function () {
+  Chart.register(ChartDataLabels);
+  const pos = {{ form.positions | tojson }};
+  const order = {{ leaderboard | map(attribute='team') | list | tojson }};
+  const highlight = ['#D7EA3B', '#FFFFFF', '#FFB199', '#9FE3FF'];
+  const muted = 'rgba(255,255,255,0.28)';
+  const nTeams = order.length;
+  const datasets = order.map((team, i) => {
+    const hi = i < 4;
+    const colour = hi ? highlight[i] : muted;
+    return {
+      label: team,
+      data: pos.teams[team] || [],
+      borderColor: colour,
+      backgroundColor: colour,
+      borderWidth: hi ? 4 : 2,
+      pointRadius: (ctx) => ctx.dataIndex === pos.labels.length - 1 ? (hi ? 5 : 3) : 0,
+      pointHoverRadius: 6,
+      cubicInterpolationMode: 'monotone',
+      order: hi ? 0 : 1,
+      datalabels: {
+        display: (ctx) => ctx.dataIndex === pos.labels.length - 1,
+        align: 'right', anchor: 'center', offset: 8,
+        color: hi ? '#FFFFFF' : '#CFE8E4',
+        font: { family: 'Rubik', size: 13, weight: hi ? 600 : 400 },
+        formatter: () => team,
+      },
+    };
+  });
+  new Chart(document.getElementById('positionsChart'), {
+    type: 'line',
+    data: { labels: pos.labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 72, top: 8 } },
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        y: { reverse: true, min: 1, max: nTeams, ticks: { stepSize: 1, color: '#DDF0EC', font: { family: 'Rubik' } }, grid: { display: false }, border: { display: false } },
+        x: { ticks: { color: '#DDF0EC', font: { family: 'Rubik' } }, grid: { color: 'rgba(255,255,255,0.15)' }, border: { display: false },
+             title: { display: true, text: 'After match', color: '#DDF0EC', font: { family: 'Rubik' } } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: (items) => 'After match ' + items[0].label, label: (c) => c.dataset.label + ': ' + c.parsed.y } },
+      },
+    },
+  });
+})();
 </script>
+{% endif %}
 {% endblock %}

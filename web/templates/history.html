@@ -1,180 +1,142 @@
 {% extends "base.html" %}
+{% import "_gully.html" as gx %}
 
-{% block title %}Match History - {{ league.name if league else 'Fantasy League' }}{% endblock %}
+{% block title %}Match history · {{ league.name }} · Gully XI{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Match History</h2>
-    <div class="actions">
-        {% if league and history and user.is_admin %}
-        <button id="rescore-all-btn" class="btn btn-small btn-secondary" onclick="rescoreAll()">
-            ♻️ Rescore All
-        </button>
-        {% endif %}
-        <button id="filter-all" class="btn btn-small btn-primary">All Matches</button>
-    </div>
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">Match history</h1>
+    <p class="gx-lede"><span id="match-count">{{ history|length }} match{{ '' if history|length == 1 else 'es' }}</span>, newest first. Gold marks the match winner.</p>
+  </div>
+  {% if history %}
+  <div class="gx-actions">
+    <label class="gx-field gx-field--search">Search matches or teams
+      <input type="search" id="history-search" class="gx-input" placeholder="Try Final, RCB or a team" autocomplete="off">
+    </label>
+    {% if user.is_admin %}
+    <button id="rescore-all-btn" type="button" class="gx-btn" onclick="rescoreAll()">Rescore all</button>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
-{% if league and user.is_admin %}
-<div id="rescore-status" style="display:none;" class="alert-box"></div>
+{% if user.is_admin %}
+<div id="rescore-status" class="gx-alert" role="status" hidden></div>
 {% endif %}
 
-<!-- Search and Filter Bar -->
-<div class="filter-bar">
-    <input type="text" id="history-search" class="search-input" placeholder="🔍 Search matches or teams...">
-    <div class="filter-info">
-        <span id="match-count">{{ history|length }} matches</span>
-    </div>
-</div>
-
 {% if history %}
-<div class="timeline">
-    {% for match in history %}
-    <div class="timeline-item" data-match-id="{{ match.match_id }}" data-description="{{ match.description|lower }}">
-        <!-- Timeline Node -->
-        <div class="timeline-node">
-            <div class="node-circle"></div>
-        </div>
-        
-        <!-- Timeline Content -->
-        <div class="timeline-content">
-            <!-- Match Badge -->
-            <div class="match-badge">
-                <div class="badge-header">
-                    <h4 class="badge-title">{{ match.description }}</h4>
-                    <span class="badge-date">{% if match.match_number_label %}{{ match.match_number_label }}{% if match.date_str %} · {{ match.date_str }}{% endif %}{% else %}Game {{ loop.revindex }}{% endif %}</span>
-                </div>
-            </div>
-            
-            <!-- Scores Grid -->
-            <div class="scores-grid">
-                {% set sorted_teams = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
-                {% for team, score in sorted_teams %}
-                <div class="score-item {% if loop.first %}winner{% endif %}">
-                    {% if loop.first %}
-                    <span class="winner-badge">👑</span>
-                    {% endif %}
-                    <div class="score-team">{{ team }}</div>
-                    <div class="score-points">{{ score }} pts</div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Quick Stats -->
-            <div class="match-stats">
-                {% set sorted_teams = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
-                {% set winner = sorted_teams[0] %}
-                {% set runner_up = sorted_teams[1] if sorted_teams|length > 1 else None %}
-                <span class="stat">
-                    <span class="stat-icon">🎯</span>
-                    <span class="stat-text">Top Score: {{ winner[1] }} pts</span>
-                </span>
-                {% if runner_up %}
-                <span class="stat">
-                    <span class="stat-icon">📊</span>
-                    <span class="stat-text">Margin: {{ "%.1f"|format(winner[1] - runner_up[1]) }} pts</span>
-                </span>
-                {% endif %}
-                <span class="stat">
-                    <span class="stat-icon">👥</span>
-                    <span class="stat-text">{{ match.team_scores|length }} teams</span>
-                </span>
-            </div>
-            
-            <!-- Actions -->
-            <div class="match-actions">
-                <a href="{{ league.dashboard_prefix }}/match/{{ match.match_id }}" class="btn btn-small btn-primary">
-                    <span>📋</span> View Details
-                </a>
-                <a href="/downloads/match/{{ match.match_id }}/team-points?league={{ league.short_name }}" class="btn btn-small btn-secondary">
-                    <span>📥</span> Team Points
-                </a>
-                <a href="/downloads/match/{{ match.match_id }}/scorecard?league={{ league.short_name }}" class="btn btn-small btn-secondary">
-                    <span>📥</span> Scorecard
-                </a>
-            </div>
-        </div>
+<ol class="gx-history" id="history-list">
+  {% for match in history %}
+  {% set ranked = match.team_scores.items()|list|sort(attribute='1', reverse=True) %}
+  {% set top = ranked[0][1] if ranked else 0 %}
+  {% set scale = top if top > 0 else 1 %}
+  <li class="gx-card gx-match" data-search="{{ (match.match_number_label ~ ' ' ~ match.description ~ ' ' ~ match.match_id ~ ' ' ~ (ranked|map(attribute='0')|join(' ')))|lower }}">
+    <div class="gx-match__top">
+      <h2 class="gx-match__label">{{ {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final'}.get(match.match_number_label, match.match_number_label) or ('Match ' ~ match.match_id) }}</h2>
+      <span class="gx-match__fixture">{{ match.description }}</span>
     </div>
-    {% endfor %}
-</div>
+    {% if match.date_str %}<p class="gx-match__date" style="margin-bottom: 0">{{ match.date_str }}</p>{% endif %}
+
+    <ol class="gx-bars" aria-label="Team points">
+      {% for team, score in ranked %}
+      {% set place = 1 + ranked|selectattr('1', 'gt', score)|list|length %}
+      <li class="{% if place == 1 %}gx-bars__win{% endif %}">
+        <span class="gx-bars__pos">{{ place }}</span>
+        <span>{{ team }}</span>
+        <span class="gx-bars__track" aria-hidden="true"><span class="gx-bars__fill" style="width: {{ ((score if score > 0 else 0) / scale * 100)|round(1) }}%"></span></span>
+        <span class="gx-r">{{ gx.pts(score) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% if ranked|length > 3 %}
+    <button type="button" class="gx-match__more" aria-expanded="false" aria-label="Show all {{ ranked|length }} teams">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    {% endif %}
+
+    <div class="gx-match__foot">
+      <span class="gx-muted" style="font-size: 14px">{% if ranked|length > 1 %}Won by {{ gx.pts(ranked[0][1] - ranked[1][1]) }} points{% endif %}</span>
+      <span class="gx-match__links">
+        <a href="{{ league.dashboard_prefix }}/match/{{ match.match_id }}" class="gx-btn gx-btn--sm gx-btn--ball" aria-label="Match details"><span class="gx-wide-only">Match details</span><span class="gx-narrow-only" aria-hidden="true">Details</span></a>
+        <a href="/downloads/match/{{ match.match_id }}?league={{ league.short_name }}" class="gx-btn gx-btn--sm" title="Excel: team points and the scorecard for this match"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download match sheet</a>
+      </span>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+<p id="history-none" class="gx-card gx-empty" hidden><strong>No match found</strong>Try a team name, a fixture like RCB, or a stage like Final.</p>
 {% else %}
-<div class="empty-state">
-    <div class="empty-icon">🏏</div>
-    <h3>No Matches Yet</h3>
-    <p>Match history will appear here once matches are processed.</p>
+<div class="gx-card gx-empty">
+  <strong>No matches scored yet</strong>
+  {% if league.start_date %}{{ league.name }} starts on {{ gx.nice_date(league.start_date) }}. Matches appear here once they are scored.{% else %}Matches appear here once they are scored.{% endif %}
 </div>
 {% endif %}
 
 <script>
-    // Search and filter functionality
-    const searchInput = document.getElementById('history-search');
-    const timelineItems = document.querySelectorAll('.timeline-item');
-    const matchCount = document.getElementById('match-count');
-    
-    function filterMatches() {
-        const searchTerm = searchInput.value.toLowerCase();
-        let visibleCount = 0;
-        
-        timelineItems.forEach(item => {
-            const description = item.getAttribute('data-description');
-            const matchId = item.getAttribute('data-match-id');
-            const teamNames = Array.from(item.querySelectorAll('.score-team'))
-                .map(el => el.textContent.toLowerCase())
-                .join(' ');
-            
-            const searchText = `${description} ${matchId} ${teamNames}`;
-            
-            if (searchText.includes(searchTerm)) {
-                item.style.display = '';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-        matchCount.textContent = `${visibleCount} match${visibleCount !== 1 ? 'es' : ''}`;
-    }
-    
-    searchInput.addEventListener('input', filterMatches);
-    
-    // Clear search button
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            searchInput.value = '';
-            filterMatches();
-        }
+(function () {
+  document.querySelectorAll('.gx-match__more').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.gx-match');
+      const open = card.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(open));
+      const n = card.querySelectorAll('.gx-bars li').length;
+      btn.setAttribute('aria-label', open ? 'Show top three only' : 'Show all ' + n + ' teams');
     });
+  });
 
-    async function rescoreAll() {
-        const btn = document.getElementById('rescore-all-btn');
-        const status = document.getElementById('rescore-status');
-        if (!confirm('Rescore all {{ league.name }} matches with the current scoring rules and teams?')) return;
-        btn.disabled = true;
-        btn.textContent = 'Rescoring…';
-        status.style.display = 'block';
-        status.className = 'alert-box alert-info';
-        status.textContent = 'Rescoring all matches…';
-        try {
-            const resp = await fetch('/api/t/{{ league.short_name }}/rescore-all', { method: 'POST' });
-            const data = await resp.json();
-            if (resp.ok) {
-                const ok = (data.matches || []).filter(m => m.status === 'ok').length;
-                const err = (data.matches || []).filter(m => m.status === 'error').length;
-                status.className = err ? 'alert-box alert-warning' : 'alert-box alert-success';
-                status.textContent = `Done — ${ok} match(es) rescored${err ? `, ${err} error(s)` : ''}. Refreshing…`;
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                status.className = 'alert-box alert-error';
-                status.textContent = data.detail || 'Rescore failed.';
-                btn.disabled = false;
-                btn.textContent = '♻️ Rescore All';
-            }
-        } catch (e) {
-            status.className = 'alert-box alert-error';
-            status.textContent = 'Network error: ' + e.message;
-            btn.disabled = false;
-            btn.textContent = '♻️ Rescore All';
-        }
+  const input = document.getElementById('history-search');
+  const count = document.getElementById('match-count');
+  const none = document.getElementById('history-none');
+  if (input) {
+    const filter = () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      document.querySelectorAll('#history-list > li').forEach(li => {
+        const hit = !q || li.dataset.search.includes(q);
+        li.hidden = !hit;
+        if (hit) shown++;
+      });
+      count.textContent = shown + ' match' + (shown === 1 ? '' : 'es');
+      if (none) none.hidden = shown > 0;
+    };
+    input.addEventListener('input', filter);
+    input.addEventListener('keydown', e => { if (e.key === 'Escape') { input.value = ''; filter(); } });
+  }
+})();
+
+{% if user.is_admin %}
+async function rescoreAll() {
+  const btn = document.getElementById('rescore-all-btn');
+  const status = document.getElementById('rescore-status');
+  if (!confirm('Rescore all {{ league.name }} matches with the current scoring rules and teams?')) return;
+  btn.disabled = true;
+  btn.textContent = 'Rescoring…';
+  status.hidden = false;
+  status.className = 'gx-alert';
+  status.textContent = 'Rescoring all matches…';
+  try {
+    const resp = await fetch('/api/t/{{ league.short_name }}/rescore-all', { method: 'POST' });
+    const data = await resp.json();
+    if (resp.ok) {
+      const ok = (data.matches || []).filter(m => m.status === 'ok').length;
+      const err = (data.matches || []).filter(m => m.status === 'error').length;
+      status.className = err ? 'gx-alert gx-alert--warn' : 'gx-alert gx-alert--ok';
+      status.textContent = `Rescored ${ok} match${ok === 1 ? '' : 'es'}${err ? `, ${err} failed` : ''}. Refreshing…`;
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      status.className = 'gx-alert gx-alert--error';
+      status.textContent = data.detail || 'Rescore failed. Nothing was changed.';
+      btn.disabled = false;
+      btn.textContent = 'Rescore all';
     }
+  } catch (e) {
+    status.className = 'gx-alert gx-alert--error';
+    status.textContent = 'Could not reach the server: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Rescore all';
+  }
+}
+{% endif %}
 </script>
 {% endblock %}
