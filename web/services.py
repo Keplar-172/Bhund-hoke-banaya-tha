@@ -311,3 +311,70 @@ def get_season_form(cfg: LeagueConfig = None, last_n: int = 5,
         "positions": positions,
         "total_matches": n,
     }
+
+
+def get_team_page_data(cfg: LeagueConfig, owner: str) -> Dict[str, Any] | None:
+    """One fantasy team: standing, squad with points, and every match result."""
+    from storage import load_teams
+    team_cfg = load_teams(cfg).get("teams", {}).get(owner)
+    if team_cfg is None:
+        return None
+
+    board = get_leaderboard_data(cfg)
+    me = next((r for r in board if r["team"] == owner), None)
+    lead = board[0]["points"] if board else 0
+    form = get_season_form(cfg)
+    tf = form["teams"].get(owner, {"form": [], "move": 0, "wins": 0})
+
+    # Squad, with season points from the master sheet
+    master_players = load_master_scoresheet(cfg).get("teams", {}).get(owner, {}).get("players", {})
+    short = {}
+    try:
+        for pdata in load_players(cfg).get("players", {}).values():
+            short[pdata.get("name", "")] = pdata.get("ipl_team_short", "")
+    except Exception:
+        pass
+    cap, vc = team_cfg.get("captain", ""), team_cfg.get("vice_captain", "")
+    squad = []
+    for p in team_cfg.get("players", []):
+        name = p.get("name", "")
+        scores = master_players.get(name, {}).get("match_scores", {})
+        played = [v for v in scores.values() if v.get("played")]
+        total = round(sum(v.get("total", 0) or 0 for v in scores.values()), 2)
+        squad.append({
+            "name": name, "role": p.get("role", ""), "country": p.get("country", ""),
+            "team_short": short.get(name, ""), "price": p.get("price", 0),
+            "is_captain": name == cap, "is_vice_captain": name == vc,
+            "points": total, "played": len(played),
+            "avg": round(total / len(played), 1) if played else 0,
+            "best": max((v.get("total", 0) or 0 for v in played), default=0),
+        })
+    squad.sort(key=lambda x: (-x["points"], x["name"]))
+
+    # Match by match (newest first, true match order)
+    matches = []
+    for m in get_match_history_data(cfg):
+        ts = m.get("team_scores", {})
+        if owner not in ts:
+            continue
+        place = _place(ts, owner)
+        matches.append({
+            "match_id": m.get("match_id"), "label": m.get("match_number_label") or "",
+            "description": m.get("description", ""), "date_str": m.get("date_str", ""),
+            "points": round(ts[owner] or 0, 2), "place": place, "win": place == 1,
+            "of": len(ts), "top": round(max(ts.values()), 2) if ts else 0,
+        })
+    best = max(matches, key=lambda x: x["points"], default=None)
+
+    return {
+        "owner": owner,
+        "rank": me["rank"] if me else None,
+        "points": me["points"] if me else 0,
+        "behind": round(lead - me["points"], 2) if me and me["rank"] != 1 else 0,
+        "teams_count": len(board),
+        "wins": tf.get("wins", 0), "move": tf.get("move", 0), "form": tf.get("form", []),
+        "captain": cap, "vice_captain": vc, "budget": team_cfg.get("budget"),
+        "spent": sum(p["price"] or 0 for p in squad),
+        "squad": squad, "matches": matches, "best": best,
+        "top_player": squad[0] if squad and squad[0]["points"] else None,
+    }

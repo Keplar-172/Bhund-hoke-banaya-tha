@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     {% block legacy_css %}{% endblock %}
     {# Bump ?v= whenever gully.css changes so browsers fetch the new file #}
-    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24g">
+    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24i">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="/static/theme-toggle.js"></script>
@@ -32,6 +32,7 @@
                 <a href="{{ league.dashboard_prefix }}/history" {% if page == 'history' %}aria-current="page"{% endif %}>History</a>
                 <a href="{{ league.dashboard_prefix }}/master" {% if page == 'master' %}aria-current="page"{% endif %}>Master sheet</a>
                 <a href="{{ league.dashboard_prefix }}/analytics" {% if page == 'analytics' %}aria-current="page"{% endif %}>Analytics</a>
+                {% if user.teams is defined and user.teams.get(league.id) %}<a href="{{ league.dashboard_prefix }}/team/{{ user.teams[league.id]|urlencode }}" {% if page == 'team' %}aria-current="page"{% endif %}>My team</a>{% endif %}
             </nav>
             {% endif %}
 
@@ -46,10 +47,10 @@
                         {% for t in all_tournaments() %}
                         <a href="{{ t.dashboard_prefix }}" {% if league and t.id == league.id %}aria-current="true"{% endif %}>{{ t.name }} <small>{{ t.status_label }}</small></a>
                         {% endfor %}
-                        <a href="/">All leagues</a>
+                        <a href="/?all=1">All leagues</a>
                         {% if user.is_admin and league %}<a href="{{ league.dashboard_prefix }}/admin">Scoring admin</a>{% endif %}
                         {% if user.is_admin %}<a href="/admin/people">People and join links</a>{% endif %}
-                        {% if user.is_owner %}<a href="/account">My account</a>{% endif %}
+                        {% if user.is_owner %}<a href="/people/{{ user.id }}">My profile</a><a href="/account">My account</a>{% endif %}
                         <a href="/auth/logout">Log out <small>{{ user.username }}</small></a>
                     </div>
                 </details>
@@ -72,7 +73,8 @@
     </footer>
 
     {% if user and league %}
-    <nav class="gx-bottomnav" aria-label="Main">
+    {% set my_team = user.teams.get(league.id) if user.teams is defined else None %}
+    <nav class="gx-bottomnav{% if my_team %} gx-bottomnav--5{% endif %}" aria-label="Main">
         <a href="{{ league.dashboard_prefix }}" {% if page == 'home' %}aria-current="page"{% endif %}>
             <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Leaderboard</a>
         <a href="{{ league.dashboard_prefix }}/history" {% if page == 'history' %}aria-current="page"{% endif %}>
@@ -81,6 +83,10 @@
             <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Master sheet</a>
         <a href="{{ league.dashboard_prefix }}/analytics" {% if page == 'analytics' %}aria-current="page"{% endif %}>
             <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Analytics</a>
+        {% if my_team %}
+        <a href="{{ league.dashboard_prefix }}/team/{{ my_team|urlencode }}" {% if page == 'team' %}aria-current="page"{% endif %}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>My team</a>
+        {% endif %}
     </nav>
     {% endif %}
     <script>

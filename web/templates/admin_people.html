@@ -36,7 +36,7 @@
       <tbody>
       {% for r in g.rows %}
         <tr>
-          <th scope="row" style="font-weight: 600; color: var(--ink); font-size: 15px">{{ r.owner }}</th>
+          <th scope="row" style="font-weight: 600; color: var(--ink); font-size: 15px"><a class="gx-teamlink" href="{{ g.t.dashboard_prefix }}/team/{{ r.owner|urlencode }}">{{ r.owner }}</a>{% if team_name(g.t.id, r.owner) != r.owner %}<br><span class="gx-muted" style="font-weight: 400">{{ team_name(g.t.id, r.owner) }}</span>{% endif %}</th>
           <td>
             {% if r.user %}{{ r.user.name }}<br><span class="gx-muted">{{ r.user.email }}</span>
             {% elif r.link_pending %}<span class="gx-pill">Link sent, not claimed</span>

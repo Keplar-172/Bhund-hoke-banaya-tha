@@ -177,6 +177,8 @@ def update_profile(user_id: int, name: str, phone: str | None, choices: dict) ->
 def delete_user(user_id: int) -> None:
     """Delete the person, their consents and team claims. The teams and their
     points stay in the league; the admin can send a new join link."""
+    import profiles
+    profiles.delete_files_for(user_id)
     with db.session() as s:
         u = s.get(User, user_id)
         if u is not None:

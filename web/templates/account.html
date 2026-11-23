@@ -18,11 +18,79 @@
       <h2 class="gx-h2">My teams</h2>
       <ul style="padding-left: 18px; margin: 12px 0 0">
         {% for tm in teams %}
-        <li style="padding: 4px 0">{% if tm.tournament %}<a href="{{ tm.tournament.dashboard_prefix }}">{{ tm.tournament.name }}</a>{% else %}{{ tm.tournament_id }}{% endif %}: {{ tm.owner_name }}</li>
+        <li style="padding: 4px 0">{% if tm.tournament %}<a href="{{ tm.tournament.dashboard_prefix }}">{{ tm.tournament.name }}</a>{% else %}{{ tm.tournament_id }}{% endif %}: <a href="{{ tm.tournament.dashboard_prefix if tm.tournament else '' }}/team/{{ tm.owner_name|urlencode }}">{{ team_name(tm.tournament_id, tm.owner_name) }}</a></li>
         {% else %}
         <li>No teams yet.</li>
         {% endfor %}
       </ul>
+    </section>
+
+    <section class="gx-card" id="profile">
+      <h2 class="gx-h2">My profile</h2>
+      <p class="gx-muted" style="margin: 4px 0 0">Everything here is optional and visible to people in your leagues. <a href="/people/{{ me.user_id }}">See my profile</a>.</p>
+      {% if error %}<div class="gx-alert gx-alert--error" role="alert" style="margin: 12px 0 0">{{ error }}</div>{% endif %}
+
+      <div class="gx-owner" style="margin-top: var(--s4); flex-wrap: wrap">
+        {% import "_gully.html" as gx %}
+        {{ gx.avatar(me, "lg") }}
+        <form method="post" action="/account/photo" enctype="multipart/form-data" class="gx-actions" style="align-items: center">
+          <label class="gx-btn gx-btn--sm" style="cursor: pointer">{{ 'Change photo' if me.avatar_kind == 'photo' else 'Upload a photo' }}
+            <input type="file" name="photo" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0" onchange="this.form.submit()">
+          </label>
+          {% if me.avatar.kind == 'photo' %}<button type="submit" formaction="/account/photo/remove" class="gx-btn gx-btn--sm" formnovalidate>Remove photo</button>{% endif %}
+        </form>
+      </div>
+      <p class="gx-muted" style="margin: 8px 0 0; font-size: 13px">Photos are cropped square and location data is removed.</p>
+
+      <form method="post" action="/account/profile" class="gx-stack" style="gap: 12px; margin-top: var(--s4)">
+        <fieldset style="border: 0; padding: 0; margin: 0">
+          <legend style="font-size: 13px; color: var(--ink-soft); padding: 0">Show as</legend>
+          <div class="gx-actions" style="margin-top: 6px">
+            {% if me.avatar_kind == 'photo' or me.avatar.kind == 'photo' %}
+            <label class="gx-check" style="min-height: 0"><input type="radio" name="avatar_kind" value="photo" {% if me.avatar.kind == 'photo' %}checked{% endif %}><span>My photo</span></label>
+            {% endif %}
+            <label class="gx-check" style="min-height: 0"><input type="radio" name="avatar_kind" value="character" {% if me.avatar.kind == 'character' %}checked{% endif %}><span>A character</span></label>
+            <label class="gx-check" style="min-height: 0"><input type="radio" name="avatar_kind" value="initials" {% if me.avatar.kind == 'initials' %}checked{% endif %}><span>My initials</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="gx-picker" aria-label="Character">
+          {% for key, ch in characters.items() %}
+          <label title="{{ key|capitalize }}"><input type="radio" name="avatar_char" value="{{ key }}" {% if me.avatar_char == key %}checked{% endif %} onchange="this.form.avatar_kind.value='character'"><span aria-label="{{ key }}">{{ ch }}</span></label>
+          {% endfor %}
+        </fieldset>
+        <fieldset class="gx-picker" aria-label="Background colour" style="grid-template-columns: repeat(auto-fill, minmax(40px, 1fr))">
+          {% for key, hex in colors.items() %}
+          <label title="{{ key|capitalize }}"><input type="radio" name="avatar_color" value="{{ key }}" {% if me.avatar_color == key %}checked{% endif %}><span style="background: {{ hex }}; height: 40px" aria-label="{{ key }}"></span></label>
+          {% endfor %}
+        </fieldset>
+
+        <label class="gx-field">Nickname (shown instead of your name)
+          <input class="gx-input" name="nickname" maxlength="40" value="{{ me.nickname or '' }}" placeholder="e.g. Mandy the Machine">
+        </label>
+        <label class="gx-field">Tagline
+          <input class="gx-input" name="tagline" maxlength="120" value="{{ me.tagline or '' }}" placeholder="e.g. Catches win matches">
+        </label>
+        <label class="gx-field">In gully cricket I'm the…
+          <select class="gx-input" name="plays_as">
+            <option value="">Choose…</option>
+            {% for r in plays_as %}<option {% if me.plays_as == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="gx-field">Favourite team
+          <input class="gx-input" name="fav_team" maxlength="40" list="fav-teams" value="{{ me.fav_team or '' }}">
+          <datalist id="fav-teams">{% for t in fav_teams %}<option value="{{ t }}">{% endfor %}</datalist>
+        </label>
+        <label class="gx-field">Favourite player
+          <input class="gx-input" name="fav_player" maxlength="60" value="{{ me.fav_player or '' }}">
+        </label>
+        <label class="gx-field">City
+          <input class="gx-input" name="city" maxlength="60" value="{{ me.city or '' }}">
+        </label>
+        <label class="gx-field">About me
+          <textarea class="gx-input" name="bio" maxlength="400" rows="3" style="min-height: 84px">{{ me.bio or '' }}</textarea>
+        </label>
+        <div><button type="submit" class="gx-btn gx-btn--ink">Save profile</button></div>
+      </form>
     </section>
 
     <section class="gx-card">

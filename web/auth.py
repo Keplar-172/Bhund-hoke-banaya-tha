@@ -14,6 +14,7 @@ class User:
         self.id = user_id
         self.is_admin = role == "admin" and user_id is None
         self.is_owner = role == "owner" and user_id is not None
+        self.teams: dict = {}          # {tournament_id: owner_name} for owners
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -49,7 +50,9 @@ def get_current_user(request: Request) -> Optional[User]:
         if profile is None:            # account deleted
             request.session.clear()
             return None
-        return User(username=profile["name"], role="owner", user_id=user_id)
+        u = User(username=profile["name"], role="owner", user_id=user_id)
+        u.teams = {t["tournament_id"]: t["owner_name"] for t in profile["teams"]}
+        return u
     username = request.session.get("username")
     role = request.session.get("role")
     if not username or role == "owner":

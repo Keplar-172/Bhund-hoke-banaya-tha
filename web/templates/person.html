@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "_gully.html" as gx %}
+
+{% block title %}{{ person.display }} · Gully XI{% endblock %}
+
+{% block content %}
+{% if saved and is_me %}<div class="gx-alert gx-alert--ok" role="status">Profile saved. This is how others in the league see you.</div>{% endif %}
+
+<section class="gx-card">
+  <div class="gx-owner" style="flex-wrap: wrap">
+    {{ gx.avatar(person, "xl") }}
+    <div class="gx-owner__text">
+      <h1 class="gx-h1 gx-owner__name">{{ person.display }}</h1>
+      {% if person.nickname %}<p class="gx-owner__sub">{{ person.name }}</p>{% endif %}
+      {% if person.tagline %}<p class="gx-owner__tag">“{{ person.tagline }}”</p>{% endif %}
+      {% if is_me %}<p style="margin: 12px 0 0"><a class="gx-btn gx-btn--sm" href="/account#profile">Edit profile</a></p>{% endif %}
+    </div>
+  </div>
+
+  {% if person.bio %}<p style="margin: var(--s4) 0 0; white-space: pre-line; max-width: 60ch">{{ person.bio }}</p>{% endif %}
+
+  {% set facts = [('Plays gully cricket as', person.plays_as), ('Favourite team', person.fav_team), ('Favourite player', person.fav_player), ('City', person.city)] %}
+  {% if facts|selectattr(1)|list %}
+  <dl class="gx-facts">
+    {% for label, value in facts if value %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}
+  </dl>
+  {% elif is_me %}
+  <p class="gx-muted" style="margin: var(--s4) 0 0">Nothing here yet. <a href="/account#profile">Add a nickname, your favourite team and more</a>.</p>
+  {% endif %}
+</section>
+
+<section class="gx-card" style="margin-top: var(--s4)">
+  <h2 class="gx-h2">Teams</h2>
+  <ul style="list-style: none; margin: 8px 0 0; padding: 0">
+    {% for tm in teams %}
+    <li style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line)">
+      <span><a href="{{ tm.t.dashboard_prefix }}/team/{{ tm.owner|urlencode }}">{{ team_name(tm.t.id, tm.owner) }}</a><br><span class="gx-muted" style="font-size: 13px">{{ tm.t.name }}</span></span>
+      <span>{% if tm.rank %}{{ gx.ordinal(tm.rank) }} of {{ tm.of }}, {{ gx.pts(tm.points) }} pts{% else %}<span class="gx-muted">{{ tm.t.status_label }}</span>{% endif %}</span>
+    </li>
+    {% else %}
+    <li class="gx-muted">No teams yet.</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

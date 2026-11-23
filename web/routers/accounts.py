@@ -1,11 +1,13 @@
 """Owner accounts: join links, account page, privacy, admin People page."""
 import os
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 import accounts
+import profiles
 import tournaments
 from storage import load_teams
 from web.auth import User, get_current_user, login_owner, require_auth
@@ -13,6 +15,9 @@ from web.auth import User, get_current_user, login_owner, require_auth
 router = APIRouter()
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "templates"))
 templates.env.globals["all_tournaments"] = tournaments.all_tournaments
+import team_names as _tn
+templates.env.globals["team_name"] = _tn.display
+templates.env.globals["team_names"] = _tn.names
 
 
 def _admin(user: User = Depends(require_auth)) -> User:
@@ -75,7 +80,9 @@ async def join_submit(token: str, request: Request,
                      "form": {"name": name, "email": email, "phone": phone,
                               "service_emails": bool(service_emails), "news": bool(news)}})
     login_owner(request, uid)
-    return RedirectResponse(_landing(inv["tournament_id"]) + "?welcome=1", status_code=303)
+    t = tournaments.get(inv["tournament_id"])
+    dest = f"{t.dashboard_prefix}/team/{quote(inv['owner_name'])}?welcome=1" if t else "/"
+    return RedirectResponse(dest, status_code=303)
 
 
 # ── Owner's own account ──────────────────────────────────────────────────────
@@ -88,7 +95,10 @@ async def account_page(request: Request, user: User = Depends(require_auth), sav
     teams = [{**tm, "tournament": tournaments.get(tm["tournament_id"])} for tm in profile["teams"]]
     return templates.TemplateResponse(request=request, name="account.html", context={
         "user": user, "profile": profile, "teams": teams, "purposes": accounts.PURPOSES,
-        "saved": saved, "page": "account"})
+        "saved": saved, "page": "account", "me": profiles.get(user.id),
+        "characters": profiles.CHARACTERS, "colors": profiles.COLORS,
+        "plays_as": profiles.PLAYS_AS, "fav_teams": profiles.FAV_TEAMS,
+        "error": request.query_params.get("error")})
 
 
 @router.post("/account")
@@ -100,6 +110,70 @@ async def account_save(request: Request, user: User = Depends(require_auth),
     accounts.update_profile(user.id, name, phone,
                             {"service_emails": bool(service_emails), "news": bool(news)})
     return RedirectResponse("/account?saved=1", status_code=303)
+
+
+@router.post("/account/profile")
+async def profile_save(request: Request, user: User = Depends(require_auth)):
+    if not user.is_owner:
+        raise HTTPException(status_code=403)
+    form = await request.form()
+    profiles.update(user.id, {k: str(v) for k, v in form.items() if isinstance(v, str)})
+    return RedirectResponse(f"/people/{user.id}?saved=1", status_code=303)
+
+
+@router.post("/account/photo")
+async def photo_upload(user: User = Depends(require_auth), photo: UploadFile = File(...)):
+    if not user.is_owner:
+        raise HTTPException(status_code=403)
+    data = await photo.read(profiles.MAX_UPLOAD + 1)
+    try:
+        profiles.save_photo(user.id, data)
+    except ValueError as exc:
+        return RedirectResponse(f"/account?error={quote(str(exc))}#profile", status_code=303)
+    return RedirectResponse("/account?saved=1#profile", status_code=303)
+
+
+@router.post("/account/photo/remove")
+async def photo_remove(user: User = Depends(require_auth)):
+    if not user.is_owner:
+        raise HTTPException(status_code=403)
+    profiles.remove_photo(user.id)
+    return RedirectResponse("/account?saved=1#profile", status_code=303)
+
+
+@router.get("/media/avatars/{name}")
+async def avatar_file(name: str, user: User = Depends(require_auth)):
+    if not profiles.valid_photo_name(name):
+        raise HTTPException(status_code=404)
+    path = os.path.join(profiles.avatar_dir(), name)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404)
+    # file names change on every upload, so they can be cached for long
+    return FileResponse(path, media_type="image/jpeg",
+                        headers={"Cache-Control": "private, max-age=31536000, immutable"})
+
+
+@router.get("/people/{user_id}", response_class=HTMLResponse)
+async def person_page(user_id: int, request: Request, user: User = Depends(require_auth),
+                      saved: int = 0):
+    from storage import load_scores
+    person = profiles.get(user_id)
+    if person is None:
+        raise HTTPException(status_code=404, detail="No such person")
+    teams = []
+    for tm in person["teams"]:
+        t = tournaments.get(tm["tournament_id"])
+        if not t:
+            continue
+        scores = load_scores(t)
+        ranked = sorted(scores.values(), reverse=True)
+        mine = scores.get(tm["owner_name"])
+        teams.append({"t": t, "owner": tm["owner_name"], "points": mine,
+                      "rank": (ranked.index(mine) + 1) if mine is not None else None,
+                      "of": len(scores)})
+    return templates.TemplateResponse(request=request, name="person.html", context={
+        "user": user, "person": person, "teams": teams, "saved": saved,
+        "is_me": user.is_owner and user.id == user_id, "page": "person"})
 
 
 @router.post("/account/delete")

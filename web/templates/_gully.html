@@ -84,3 +84,20 @@
 {%- elif m < 0 %}<span class="gx-move gx-move--down" aria-label="down {{ -m }} place{{ '' if m == -1 else 's' }}">↓{{ -m }}</span>
 {%- endif -%}
 {%- endmacro %}
+
+{# Team name with the owner underneath when the team has its own name #}
+{% macro team(tid, owner) -%}
+{%- set n = team_name(tid, owner) -%}
+<span class="gx-tn"><span class="gx-tn__name">{{ n }}</span>{% if n != owner %}<span class="gx-tn__owner">{{ owner }}</span>{% endif %}</span>
+{%- endmacro %}
+
+{# Person avatar: photo, character (emoji on colour) or initials. size: sm | (md) | lg | xl #}
+{% macro avatar(person, size="", label=True) -%}
+{%- set a = person.avatar -%}
+{%- set cls = "gx-avatar" ~ (" gx-avatar--" ~ size if size else "") -%}
+{%- if a.kind == "photo" -%}
+<span class="{{ cls }}"><img src="{{ a.src }}" alt="{{ person.display if label else '' }}" loading="lazy"></span>
+{%- else -%}
+<span class="{{ cls }}{% if a.kind == 'character' %} gx-avatar--char{% endif %}{% if a.dark_text %} gx-avatar--dark{% endif %}" style="background: {{ a.bg }}" {% if label %}role="img" aria-label="{{ person.display }}"{% else %}aria-hidden="true"{% endif %}>{{ a.text }}</span>
+{%- endif -%}
+{%- endmacro %}

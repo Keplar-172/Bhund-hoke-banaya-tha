@@ -106,6 +106,9 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates_dir = os.path.join(os.path.dirname(__file__), "web", "templates")
 templates = Jinja2Templates(directory=templates_dir)
 templates.env.globals["all_tournaments"] = tournaments.all_tournaments
+import team_names as _tn
+templates.env.globals["team_name"] = _tn.display
+templates.env.globals["team_names"] = _tn.names
 
 # ══════════════════════════════════════════════════════════════
 # ROUTERS
@@ -152,6 +155,14 @@ async def root(request: Request):
     user = get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth/login", status_code=302)
+
+    # Owners land on their own league: a live one first, else the most relevant
+    # (all_tournaments() is sorted live > auction > upcoming > completed).
+    # /?all=1 always shows the all-leagues page.
+    if user.is_owner and user.teams and not request.query_params.get("all"):
+        for t in tournaments.all_tournaments():
+            if t.id in user.teams:
+                return RedirectResponse(url=t.dashboard_prefix, status_code=302)
 
     groups = []
     for label, items in tournaments.grouped():

@@ -75,7 +75,7 @@
       {% set place = 1 + ranked|selectattr('total', 'gt', t.total)|list|length %}
       <li class="{% if place == 1 %}gx-bars__win{% endif %}">
         <span class="gx-bars__pos">{{ place }}</span>
-        <a href="#team-{{ loop.index }}" style="color: inherit">{{ t.owner }}</a>
+        <a href="#team-{{ loop.index }}" style="color: inherit">{{ gx.team(league.id, t.owner) }}</a>
         <span class="gx-bars__track" aria-hidden="true"><span class="gx-bars__fill" style="width: {{ ((t.total if t.total > 0 else 0) / top * 100)|round(1) }}%"></span></span>
         <span class="gx-r">{{ gx.pts(t.total) }}</span>
       </li>
@@ -92,7 +92,7 @@
     <header class="gx-teamcard__head">
       {% set place = 1 + detail.teams|selectattr('total', 'gt', team.total)|list|length %}
       <span class="gx-formbox{% if place == 1 %} gx-formbox--win{% endif %}" aria-label="{{ gx.ordinal(place) }} in this match">{{ place }}</span>
-      <h2 class="gx-teamcard__name" id="team-h-{{ loop.index }}">{{ team.owner }}</h2>
+      <h2 class="gx-teamcard__name" id="team-h-{{ loop.index }}">{{ gx.team(league.id, team.owner) }}</h2>
       <span class="gx-num">{{ gx.pts(team.total) }}</span>
     </header>
     {% if played %}

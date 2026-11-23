@@ -33,7 +33,7 @@
   {% set scale = top if top > 0 else 1 %}
   {% set lbl = match.match_number_label or '' %}
   {% set stage = {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final', 'Final': 'Final'}.get(lbl) or (('Match ' ~ lbl[1:]) if lbl[:1] == 'M' and lbl[1:].isdigit() else ('Match ' ~ match.match_id)) %}
-  <li class="gx-card gx-match" data-search="{{ (stage ~ ' ' ~ lbl ~ ' ' ~ match.description ~ ' ' ~ (match.date_str or '') ~ ' ' ~ match.match_id ~ ' ' ~ (ranked|map(attribute='0')|join(' ')))|lower }}">
+  <li class="gx-card gx-match" data-search="{{ (stage ~ ' ' ~ lbl ~ ' ' ~ match.description ~ ' ' ~ (match.date_str or '') ~ ' ' ~ match.match_id ~ ' ' ~ (ranked|map(attribute='0')|join(' ')) ~ ' ' ~ (team_names(league.id).values()|join(' ')))|lower }}">
     <div class="gx-match__top">
       <h2 class="gx-match__label">{{ stage }}</h2>
       <span class="gx-match__fixture">{{ match.description }}</span>
@@ -45,7 +45,7 @@
       {% set place = 1 + ranked|selectattr('1', 'gt', score)|list|length %}
       <li class="{% if place == 1 %}gx-bars__win{% endif %}">
         <span class="gx-bars__pos">{{ place }}</span>
-        <span>{{ team }}</span>
+        <span>{{ gx.team(league.id, team) }}</span>
         <span class="gx-bars__track" aria-hidden="true"><span class="gx-bars__fill" style="width: {{ ((score if score > 0 else 0) / scale * 100)|round(1) }}%"></span></span>
         <span class="gx-r">{{ gx.pts(score) }}</span>
       </li>

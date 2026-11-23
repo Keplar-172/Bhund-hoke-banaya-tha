@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% import "_gully.html" as gx %}
+
+{% block title %}{{ team_name(league.id, team.owner) }} · {{ league.name }} · Gully XI{% endblock %}
+
+{% block content %}
+{% if welcome and is_me %}
+<div class="gx-alert gx-alert--ok" role="status">
+  Welcome to Gully XI, {{ user.username }}! This is your team page. <a href="/account#profile">Add a photo or pick a character</a> so the league knows it's you.
+</div>
+{% endif %}
+
+<div class="gx-pagehead">
+  <div class="gx-owner">
+    {% if person %}<a href="/people/{{ person.user_id }}" aria-label="{{ person.display }}'s profile">{{ gx.avatar(person, "lg", label=False) }}</a>{% endif %}
+    <div class="gx-owner__text">
+      {% set tnm = team_name(league.id, team.owner) %}
+      <h1 class="gx-h1 gx-owner__name">{{ tnm }}</h1>
+      <p class="gx-owner__sub">
+        {% if person %}Owner <a href="/people/{{ person.user_id }}">{{ person.display }}</a>{% if person.display != team.owner %} ({{ team.owner }}){% endif %}{% elif tnm != team.owner %}Owner {{ team.owner }}{% endif %}{% if person or tnm != team.owner %}, {% endif %}{{ league.name }}
+      </p>
+      {% if person and person.tagline %}<p class="gx-owner__tag">“{{ person.tagline }}”</p>{% endif %}
+    </div>
+  </div>
+  {% set can_rename = user.is_admin or (is_me and owner_can_rename) %}
+  {% if is_me or user.is_admin %}
+  <div class="gx-actions">
+    {% if can_rename %}<button type="button" class="gx-btn gx-btn--sm" onclick="const f=document.getElementById('rename');f.hidden=!f.hidden;if(!f.hidden)f.querySelector('input').focus()">{{ 'Name your team' if tnm == team.owner else 'Change team name' }}</button>{% endif %}
+    {% if is_me %}<a class="gx-btn gx-btn--sm" href="/account#profile">Edit my profile</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if renamed == 2 %}<div class="gx-alert gx-alert--ok" role="status">{{ team.owner }} can now choose the team name once more.</div>
+{% elif renamed %}<div class="gx-alert gx-alert--ok" role="status">Team name saved. It now shows on the leaderboard, history and every match.</div>{% endif %}
+{% if is_me and not user.is_admin and not owner_can_rename and not renamed %}<p class="gx-muted" style="margin: 0 0 var(--s4); font-size: 14px">Want a different team name? Ask the admin to change it.</p>{% endif %}
+{% if rename_error %}<div class="gx-alert gx-alert--error" role="alert">{{ rename_error }}</div>{% endif %}
+{% if can_rename %}
+<form id="rename" class="gx-card" method="post" action="{{ league.dashboard_prefix }}/team/{{ team.owner|urlencode }}/name" {% if not rename_error %}hidden{% endif %} style="margin-bottom: var(--s4)">
+  <label class="gx-field">Team name for {{ league.name }} (2 to 30 characters; leave empty to go back to "{{ team.owner }}")
+    <input class="gx-input" name="name" maxlength="30" value="{{ tnm if tnm != team.owner else '' }}" placeholder="e.g. Amazon Warriors" autocomplete="off">
+  </label>
+  <p class="gx-muted" style="margin: 8px 0 12px; font-size: 13px">Shown everywhere in this league, with {{ team.owner }} underneath. Points and history don't change.
+    {% if not user.is_admin %}<strong>You can only do this once.</strong> After that, ask the admin to change it.{% endif %}</p>
+  <button type="submit" class="gx-btn gx-btn--ink" {% if not user.is_admin %}onclick="return confirm('Save this team name? You can only set it once; after that the admin has to change it.')"{% endif %}>Save name</button>
+  {% if user.is_admin %}
+  <p class="gx-muted" style="margin: 12px 0 0; font-size: 13px">{% if owner_can_rename %}The owner can still choose a name once.{% else %}The owner has used their one change.
+    <button type="submit" name="allow_owner" value="1" class="gx-btn gx-btn--sm" style="margin-left: 6px" formnovalidate>Let them choose again</button>{% endif %}</p>
+  {% endif %}
+</form>
+{% endif %}
+
+<dl class="gx-stats">
+  <div><dt>Position</dt><dd>{% if team.rank %}{{ gx.ordinal(team.rank) }} <small>of {{ team.teams_count }}</small>{% else %}–{% endif %}</dd></div>
+  <div><dt>Points</dt><dd>{{ gx.pts(team.points) }}</dd></div>
+  <div><dt>{{ 'Ahead' if team.rank == 1 else 'Behind leader' }}</dt><dd>{% if team.rank == 1 %}Top{% else %}{{ gx.pts(team.behind) }}{% endif %}</dd></div>
+  <div><dt>Match wins</dt><dd>{{ team.wins }}</dd></div>
+  {% if team.best %}<div><dt>Best match</dt><dd>{{ gx.pts(team.best.points) }} <small>{{ team.best.label or team.best.description }}</small></dd></div>{% endif %}
+</dl>
+
+{% if team.form %}
+<p style="margin: var(--s4) 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span class="gx-muted">Form, last {{ team.form|length }} matches</span> {{ gx.form_boxes(team.form) }}</p>
+{% endif %}
+
+<div class="gx-split" style="margin-top: var(--s5)">
+  <section class="gx-split__main gx-card" aria-labelledby="squad-h">
+    <h2 class="gx-h2" id="squad-h">Squad</h2>
+    <p class="gx-muted" style="margin: 4px 0 0">{{ team.squad|length }} players{% if team.spent %}, bought for {{ gx.pts(team.spent) }}{% if team.budget %} of {{ gx.pts(team.budget) }}{% endif %}{% endif %}. Most points first.</p>
+    <div class="gx-scroll">
+    <table class="gx-table" style="margin-top: 8px">
+      <thead><tr><th scope="col">Player</th><th scope="col">Role</th><th scope="col" class="gx-r">Played</th><th scope="col" class="gx-r">Avg</th><th scope="col" class="gx-r">Points</th></tr></thead>
+      <tbody>
+      {% for p in team.squad %}
+        <tr>
+          <th scope="row" style="font-weight: 600; color: var(--ink); font-size: 15px">{{ p.name }}
+            {% if p.is_captain %}<span class="gx-cap" title="Captain">C</span>{% elif p.is_vice_captain %}<span class="gx-vc" title="Vice-captain">VC</span>{% endif %}
+            {% if p.team_short %}<br><span class="gx-muted" style="font-weight: 400">{{ p.team_short }}{% if p.price %}, {{ gx.pts(p.price) }}{% endif %}</span>{% elif p.price %}<br><span class="gx-muted" style="font-weight: 400">{{ gx.pts(p.price) }}</span>{% endif %}
+          </th>
+          <td><span class="gx-role gx-role--{{ p.role|lower|replace('-', '')|replace(' ', '') }}">{{ {'Batsman': 'Batter', 'Bowler': 'Bowler', 'Allrounder': 'All-rounder', 'Wicketkeeper': 'Keeper'}.get(p.role, p.role) }}</span></td>
+          <td class="gx-r">{{ p.played }}</td>
+          <td class="gx-r">{{ p.avg if p.played else '–' }}</td>
+          <td class="gx-r" style="font-weight: 600">{{ gx.pts(p.points) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="gx-split__side gx-card" aria-labelledby="matches-h">
+    <h2 class="gx-h2" id="matches-h">Match by match</h2>
+    {% if team.matches %}
+    <p class="gx-muted" style="margin: 4px 0 0">Newest first. Gold is a match win.</p>
+    <ol style="list-style: none; margin: 8px 0 0; padding: 0">
+      {% for m in team.matches %}
+      <li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line)">
+        <span class="gx-formbox{% if m.win %} gx-formbox--win{% endif %}" aria-label="{{ gx.ordinal(m.place) }} of {{ m.of }}">{{ m.place }}</span>
+        <a class="gx-teamlink" href="{{ league.dashboard_prefix }}/match/{{ m.match_id }}" style="flex: 1; min-width: 0">
+          <span style="display: block; font-weight: 600">{{ {'Q1': 'Qualifier 1', 'Q2': 'Qualifier 2', 'Elim': 'Eliminator', 'SF1': 'Semi-final 1', 'SF2': 'Semi-final 2', 'SF': 'Semi-final', 'Final': 'Final'}.get(m.label) or (('Match ' ~ m.label[1:]) if m.label[:1] == 'M' else m.description) }}</span>
+          <span class="gx-muted" style="font-size: 13px">{{ m.description }}{% if m.date_str %}, {{ m.date_str }}{% endif %}</span>
+        </a>
+        <span class="gx-num" style="font-size: 18px">{{ gx.pts(m.points) }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="gx-muted">No matches scored yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

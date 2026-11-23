@@ -25,10 +25,10 @@
   {% for team in master.teams %}
   {% set sid = 'squad-' ~ loop.index %}
   {% set players = team.players.items()|list|sort(attribute='1.cumulative.total', reverse=True) %}
-  <li class="gx-master__team" data-team="{{ team.owner|lower }}" data-players="{% for n, _ in players %}{{ n|lower }}|{% endfor %}">
+  <li class="gx-master__team" data-team="{{ team.owner|lower }} {{ team_name(league.id, team.owner)|lower }}" data-players="{% for n, _ in players %}{{ n|lower }}|{% endfor %}">
     <button type="button" class="gx-master__toggle" aria-expanded="false" aria-controls="{{ sid }}">
       <span class="gx-rank{% if team.rank == 1 %} gx-rank--first{% elif team.rank <= 3 %} gx-rank--podium{% endif %}">{{ team.rank }}</span>
-      <span><span class="gx-master__name">{{ team.owner }}</span><span class="gx-master__sub">{{ players|length }} players</span></span>
+      {% set tnm = team_name(league.id, team.owner) %}<span><span class="gx-master__name">{{ tnm }}</span><span class="gx-master__sub">{% if tnm != team.owner %}{{ team.owner }}, {% endif %}{{ players|length }} players</span></span>
       <span class="gx-master__sub gx-master__sub--wide">{{ players|length }} players</span>
       <span class="gx-num">{{ gx.pts(team.total) }}</span>
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
@@ -37,7 +37,7 @@
       <div class="gx-squad__head" aria-hidden="true">
         <span>Player</span><span class="gx-r">Played</span><span class="gx-squad__extra">Batting</span><span class="gx-squad__extra">Bowling</span><span class="gx-r">Points</span>
       </div>
-      <ul style="list-style: none; margin: 0; padding: 0" aria-label="{{ team.owner }}'s squad">
+      <ul style="list-style: none; margin: 0; padding: 0" aria-label="{{ team_name(league.id, team.owner) }} squad">
         {% for name, p in players %}
         {% set c = p.cumulative or {} %}
         <li class="gx-squad__row{% if not c.matches_played %} gx-squad__row--idle{% endif %}" data-player="{{ name|lower }}">

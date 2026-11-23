@@ -7,7 +7,7 @@
   <div class="gx-card">
     <h1 class="gx-h1" style="font-size: 32px">{{ 'Page not found' if status_code == 404 else 'Something went wrong' }}</h1>
     <p class="gx-lede">{{ error or message or 'The server could not finish this request.' }}</p>
-    <p style="margin: var(--s4) 0 0"><a href="/" class="gx-btn gx-btn--ink">Go to all leagues</a></p>
+    <p style="margin: var(--s4) 0 0"><a href="/?all=1" class="gx-btn gx-btn--ink">Go to all leagues</a></p>
   </div>
 </div>
 {% endblock %}

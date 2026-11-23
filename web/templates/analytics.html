@@ -48,7 +48,7 @@
     <ol class="gx-hbars">
       {% for t in a.team_trends|sort(attribute='avg_per_match', reverse=True) %}
       <li>
-        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ t.team }}</span><span class="gx-hbars__meta">{{ gx.pts(t.first_half_avg) }} then {{ gx.pts(t.second_half_avg) }} {{ trend(t) }}</span></span>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ team_name(league.id, t.team) }}</span><span class="gx-hbars__meta">{{ gx.pts(t.first_half_avg) }} then {{ gx.pts(t.second_half_avg) }} {{ trend(t) }}</span></span>
         <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (t.avg_per_match / tmax * 100)|round(1) }}%"></span></span>
         <span class="gx-hbars__value">{{ gx.pts(t.avg_per_match) }}</span>
       </li>
@@ -64,7 +64,7 @@
     <ol class="gx-hbars">
       {% for d in dist|sort(attribute='podium_finishes', reverse=True) %}
       <li>
-        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ d.team }}</span><span class="gx-hbars__meta">{{ d.wins }} win{{ '' if d.wins == 1 else 's' }}, {{ d.runner_ups }} second</span></span>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ team_name(league.id, d.team) }}</span><span class="gx-hbars__meta">{{ d.wins }} win{{ '' if d.wins == 1 else 's' }}, {{ d.runner_ups }} second</span></span>
         <span class="gx-hbars__track" aria-hidden="true">
           <span class="gx-hbars__fill gx-hbars__fill--gold" style="width: {{ (d.wins / pmax * 100)|round(1) }}%"></span><span class="gx-hbars__fill" style="width: {{ (d.runner_ups / pmax * 100)|round(1) }}%"></span>
         </span>
@@ -85,7 +85,7 @@
     <ol class="gx-hbars gx-hbars--ranked">
       {% for p in top %}
       <li>
-        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ p.owner }}, {{ p.matches }} matches, {{ gx.pts(p.avg_points) }} a match</span></span>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ team_name(league.id, p.owner) }}, {{ p.matches }} matches, {{ gx.pts(p.avg_points) }} a match</span></span>
         <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (p.total_points / max1 * 100)|round(1) }}%"></span></span>
         <span class="gx-hbars__value">{{ gx.pts(p.total_points) }}</span>
       </li>
@@ -101,7 +101,7 @@
     <ol class="gx-hbars gx-hbars--ranked">
       {% for p in vp %}
       <li>
-        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ p.owner }}, {{ p.matches }} matches, {{ gx.pts(p.total_points) }} in all</span></span>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ loop.index }}. {{ p.name }}</span><span class="gx-hbars__meta">{{ team_name(league.id, p.owner) }}, {{ p.matches }} matches, {{ gx.pts(p.total_points) }} in all</span></span>
         <span class="gx-hbars__track" aria-hidden="true"><span class="gx-hbars__fill" style="width: {{ (p.points_per_game / max2 * 100)|round(1) }}%"></span></span>
         <span class="gx-hbars__value">{{ gx.pts(p.points_per_game) }}</span>
       </li>
@@ -120,7 +120,7 @@
     <ol class="gx-hbars">
       {% for c in caps %}
       <li>
-        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ c.team }}</span><span class="gx-hbars__meta gx-hbars__people"><span><span class="gx-dot gx-dot--cap" aria-hidden="true"></span><span class="gx-sr">Captain </span>{{ c.captain }} {{ gx.pts(c.captain_points) }}</span><span><span class="gx-dot gx-dot--vc" aria-hidden="true"></span><span class="gx-sr">Vice-captain </span>{{ c.vice_captain }} {{ gx.pts(c.vc_points) }}</span></span></span>
+        <span class="gx-hbars__label"><span class="gx-hbars__name">{{ team_name(league.id, c.team) }}</span><span class="gx-hbars__meta gx-hbars__people"><span><span class="gx-dot gx-dot--cap" aria-hidden="true"></span><span class="gx-sr">Captain </span>{{ c.captain }} {{ gx.pts(c.captain_points) }}</span><span><span class="gx-dot gx-dot--vc" aria-hidden="true"></span><span class="gx-sr">Vice-captain </span>{{ c.vice_captain }} {{ gx.pts(c.vc_points) }}</span></span></span>
         <span class="gx-hbars__track" aria-hidden="true">
           <span class="gx-hbars__fill gx-hbars__fill--cap" style="width: {{ (c.captain_points / max3 * 100)|round(1) }}%"></span><span class="gx-hbars__fill gx-hbars__fill--vc" style="width: {{ (c.vc_points / max3 * 100)|round(1) }}%"></span>
         </span>

@@ -62,7 +62,8 @@
       <div class="gx-board__row{% if entry.rank == 1 %} gx-board__row--first{% endif %}" role="row">
         <span role="cell" class="gx-rank{% if entry.rank == 1 %} gx-rank--first{% elif entry.rank <= 3 %} gx-rank--podium{% endif %}">{{ entry.rank }}</span>
         <span role="cell" class="gx-board__who">
-          <span class="gx-board__name">{{ entry.team }} {{ gx.move(tf.move or 0) }}</span>
+          {% set who = people.get(entry.team) if people is defined else None %}
+          <span class="gx-board__name">{% if who %}{{ gx.avatar(who, "sm", label=False) }} {% endif %}<a href="{{ league.dashboard_prefix }}/team/{{ entry.team|urlencode }}">{{ gx.team(league.id, entry.team) }}</a> {{ gx.move(tf.move or 0) }}</span>
           {% if tf.form %}{{ gx.form_boxes(tf.form) }}{% endif %}
         </span>
         {% for f in tf.form or [] %}{{ gx.form_cell(f) }}{% endfor %}
@@ -96,6 +97,8 @@
   Chart.register(ChartDataLabels);
   const pos = {{ form.positions | tojson }};
   const order = {{ leaderboard | map(attribute='team') | list | tojson }};
+  const tn = {{ team_names(league.id) | tojson }};
+  const short = (t) => { const n = tn[t] || t; return n.length > 14 ? n.slice(0, 13) + '…' : n; };
   const highlight = ['#D7EA3B', '#FFFFFF', '#FFB199', '#9FE3FF'];
   const muted = 'rgba(255,255,255,0.28)';
   const nTeams = order.length;
@@ -103,7 +106,7 @@
     const hi = i < 4;
     const colour = hi ? highlight[i] : muted;
     return {
-      label: team,
+      label: tn[team] || team,
       data: pos.teams[team] || [],
       borderColor: colour,
       backgroundColor: colour,
@@ -117,7 +120,7 @@
         align: 'right', anchor: 'center', offset: 8,
         color: hi ? '#FFFFFF' : '#CFE8E4',
         font: { family: 'Rubik', size: 13, weight: hi ? 600 : 400 },
-        formatter: () => team,
+        formatter: () => short(team),
       },
     };
   });

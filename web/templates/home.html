@@ -14,10 +14,11 @@
     <div class="gx-panel">
       {{ gx.stumps() }}
       <div class="gx-panel__kicker">{{ t.name }} {{ 'champion' if done else 'leader' }}</div>
-      <h1 class="gx-panel__name">{{ board[0].team }}</h1>
+      <h1 class="gx-panel__name">{{ team_name(t.id, board[0].team) }}</h1>
+      {% if team_name(t.id, board[0].team) != board[0].team %}<div class="gx-panel__kicker" style="margin-top: 6px">{{ board[0].team }}</div>{% endif %}
       <div class="gx-sticker">{{ gx.pts(board[0].points) }}</div>
       <p class="gx-panel__note">
-        {% if board|length > 1 %}{{ gx.pts(featured.lead_margin) }} clear of {{ board[1].team }} after {{ featured.stats.total_matches }} matches.{% endif %}
+        {% if board|length > 1 %}{{ gx.pts(featured.lead_margin) }} clear of {{ team_name(t.id, board[1].team) }} after {{ featured.stats.total_matches }} matches.{% endif %}
         {% set m = featured.form.teams.get(board[0].team, {}).get('move', 0) %}
         {% if m > 0 %}Took first place in the last {{ featured.form.labels|length }} matches.{% endif %}
       </p>
@@ -34,7 +35,7 @@
           {% for r in lm.top %}
           <li>
             <span class="gx-formbox{% if r.place == 1 %} gx-formbox--win{% endif %}">{{ r.place }}</span>
-            <span style="font-weight: {{ 700 if r.place == 1 else 500 }}">{{ r.team }}</span>
+            <span style="font-weight: {{ 700 if r.place == 1 else 500 }}">{{ gx.team(t.id, r.team) }}</span>
             <span class="gx-num" style="font-size: 16px">{{ gx.pts(r.points) }}</span>
           </li>
           {% endfor %}
@@ -48,7 +49,7 @@
         {% for e in board[1:3] %}
         <div class="gx-podium__item">
           <div class="gx-podium__place">{{ gx.ordinal(e.rank) }}</div>
-          <div class="gx-podium__team">{{ e.team }}</div>
+          <div class="gx-podium__team">{{ gx.team(t.id, e.team) }}</div>
           <div class="gx-podium__pts">{{ gx.pts(e.points) }}</div>
         </div>
         {% endfor %}
@@ -83,7 +84,7 @@
         </span>
         <span class="gx-league__meta">
           {% if item.stats.total_matches %}
-            {{ item.stats.total_teams }} teams, {{ item.stats.total_matches }} matches. {{ 'Won by' if t.status == 'completed' else 'Led by' }} {{ item.stats.top_scorer.team }}.
+            {{ item.stats.total_teams }} teams, {{ item.stats.total_matches }} matches. {{ 'Won by' if t.status == 'completed' else 'Led by' }} {{ team_name(t.id, item.stats.top_scorer.team) }}.
           {% elif t.start_date %}
             {{ t.status_label }}. {{ gx.nice_date(t.start_date) }} to {{ gx.nice_date(t.end_date) if t.end_date else 'TBC' }}.
           {% else %}
