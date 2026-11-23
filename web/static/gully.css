@@ -28,6 +28,8 @@
   --chalk-soft: #C2CBC6;
   --nav-bg: #1B2A2F;
   --nav-text: #DDE3DA;
+  --nav-shadow: 0 6px 20px rgba(27,42,47,.18);
+  --nav-edge: transparent;
   --role-bat: #D6E9F2;
   --role-bowl: #F5D9CF;
   --role-ar: #E4EDC4;
@@ -56,15 +58,17 @@
   --gold: #E8AE3A;
   --slate: #1E2A2B;
   --slate-edge: #3C5654;
-  --nav-bg: #22393A;
-  --nav-text: #C9D6D2;
+  --nav-bg: #157A7A;
+  --nav-text: #EAF6F3;
+  --nav-shadow: 0 8px 28px rgba(0,0,0,.55);
+  --nav-edge: rgba(255,255,255,.14);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --wall: #10201F; --paper: #182C2B; --paper-2: #1D3332; --ink: #EEF1E8; --ink-soft: #A9BAB6;
     --line: #3C5654; --rule: #2F4644; --rule-soft: #2A3F3E; --shutter-text: #5CC8BC; --brick: #FF8C73;
-    --gold: #E8AE3A; --slate: #1E2A2B; --slate-edge: #3C5654; --nav-bg: #22393A; --nav-text: #C9D6D2;
+    --gold: #E8AE3A; --slate: #1E2A2B; --slate-edge: #3C5654; --nav-bg: #157A7A; --nav-text: #EAF6F3; --nav-shadow: 0 8px 28px rgba(0,0,0,.55); --nav-edge: rgba(255,255,255,.14);
   }
 }
 
@@ -166,6 +170,7 @@ img, svg { max-width: 100%; }
 .gx-bottomnav {
   position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20;
   background: var(--nav-bg); border-radius: 18px; padding: 6px;
+  box-shadow: var(--nav-shadow); outline: 1px solid var(--nav-edge); outline-offset: -1px;
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .gx-bottomnav a {
@@ -502,3 +507,12 @@ img, svg { max-width: 100%; }
 .gx-dl__what { font-size: 13px; color: var(--ink-soft); }
 .gx-dl__note { font-size: 12px; color: var(--ink-soft); padding: 8px 12px 6px; border-top: 1px solid var(--rule-soft); margin-top: 4px; }
 @media (max-width: 899px) { .gx-dl__menu { left: 0; right: auto; } }
+
+/* Phone: fade the page out behind the bottom bar so scrolling rows don't clash with it */
+@media (max-width: 899px) {
+  body:has(.gx-bottomnav)::after {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; z-index: 19; pointer-events: none;
+    height: calc(var(--bottom-nav-h) + 28px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--wall) 55%);
+  }
+}
