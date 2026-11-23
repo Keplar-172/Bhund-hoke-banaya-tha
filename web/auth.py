@@ -7,11 +7,13 @@ from config import USERS_DB
 
 
 class User:
-    """Simple user model."""
-    def __init__(self, username: str, role: str = "user"):
+    """Logged-in person. role: admin | user (shared viewer) | owner (own account)."""
+    def __init__(self, username: str, role: str = "user", user_id: int | None = None):
         self.username = username
         self.role = role
-        self.is_admin = role == "admin"
+        self.id = user_id
+        self.is_admin = role == "admin" and user_id is None
+        self.is_owner = role == "owner" and user_id is not None
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -40,11 +42,27 @@ def authenticate_user(username: str, password: str) -> Optional[User]:
 
 def get_current_user(request: Request) -> Optional[User]:
     """Get the current authenticated user from session."""
+    user_id = request.session.get("user_id")
+    if user_id:
+        import accounts
+        profile = accounts.get_profile(user_id)
+        if profile is None:            # account deleted
+            request.session.clear()
+            return None
+        return User(username=profile["name"], role="owner", user_id=user_id)
     username = request.session.get("username")
     role = request.session.get("role")
-    if not username:
+    if not username or role == "owner":
         return None
     return User(username=username, role=role)
+
+
+def login_owner(request: Request, user_id: int) -> None:
+    """Start an owner session (join link / re-login link)."""
+    request.session.clear()
+    request.session["user_id"] = user_id
+    request.session["username"] = f"user-{user_id}"   # never a USERS_DB name
+    request.session["role"] = "owner"
 
 
 def require_auth(request: Request) -> User:

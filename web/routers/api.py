@@ -36,6 +36,8 @@ def _verify_auto_score_caller(request: Request, x_api_key: str | None = Header(d
 
     # Fall back to session-based admin check
     username = request.session.get("username") if hasattr(request, "session") else None
+    if request.session.get("user_id"):     # owner accounts are never admins
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     if not username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -272,6 +274,15 @@ async def export_data(
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        # accounts database (consistent copy even while the app is writing)
+        import db as _db
+        if _db.sqlite_path() and os.path.exists(_db.sqlite_path()):
+            import sqlite3, tempfile
+            with tempfile.TemporaryDirectory() as tmp:
+                snap = os.path.join(tmp, "gullyxi.db")
+                src = sqlite3.connect(_db.sqlite_path()); dst = sqlite3.connect(snap)
+                src.backup(dst); src.close(); dst.close()
+                zf.write(snap, "data/gullyxi.db")
         for root, _dirs, files in os.walk(TOURNAMENTS_DIR):
             for fname in files:
                 path = os.path.join(root, fname)

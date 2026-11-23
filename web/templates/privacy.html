@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy · Gully XI{% endblock %}
+
+{% block content %}
+<div class="gx-card gx-prose">
+  <h1 class="gx-h1" style="font-size: 32px">Privacy notice</h1>
+  <p class="gx-muted">Version {{ version }}</p>
+
+  <p>Gully XI is a private fantasy cricket site run by the league admin for friends who play in its leagues.</p>
+
+  <h2 class="gx-h2">What we keep</h2>
+  <ul>
+    <li>Your name, email address, and phone number if you give it.</li>
+    <li>Which team you own in each league.</li>
+    <li>Your email choices, with the date you made each one.</li>
+    <li>When you last visited.</li>
+  </ul>
+
+  <h2 class="gx-h2">Why</h2>
+  <ul>
+    <li><strong>To run your account:</strong> log you in and link you to your team. This is needed to use the site.</li>
+    <li><strong>{{ purposes.service_emails }}:</strong> only if you tick that box.</li>
+    <li><strong>{{ purposes.news }}:</strong> only if you tick that box, e.g. when a new league or tournament starts.</li>
+  </ul>
+  <p>We don't sell or share your details with anyone. The site is hosted on Railway (servers outside India); emails, once we send them, go through an email delivery service.</p>
+
+  <h2 class="gx-h2">Your choices</h2>
+  <ul>
+    <li>Change your email choices at any time in <a href="/account">My account</a>.</li>
+    <li>Download everything we hold about you from My account.</li>
+    <li>Delete your account from My account. Your details are removed; your team's points stay in the league history.</li>
+  </ul>
+  <p>Questions or complaints: ask the league admin.</p>
+</div>
+{% endblock %}

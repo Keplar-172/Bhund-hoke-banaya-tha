@@ -582,3 +582,16 @@ img, svg { max-width: 100%; }
 .gx-key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
 .gx-key--gold { background: var(--gold); }
 .gx-key--teal { background: var(--shutter); }
+
+/* ── Accounts: consent checkboxes, people table ── */
+.gx-check { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: var(--ink); min-height: 44px; padding: 6px 0; cursor: pointer; }
+.gx-check input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: var(--ink); }
+.gx-check small { display: block; color: var(--ink-soft); font-size: 13px; }
+.gx-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.gx-table th, .gx-table td { text-align: left; padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+.gx-table th { font-size: 13px; font-weight: 500; color: var(--ink-soft); border-top: 0; }
+.gx-table td .gx-muted { font-size: 13px; }
+.gx-pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--line); }
+.gx-pill--ok { background: var(--ball); color: var(--on-ball); border-color: var(--ball); }
+.gx-prose { max-width: 66ch; line-height: 1.6; }
+.gx-prose h2 { margin-top: var(--s5); }

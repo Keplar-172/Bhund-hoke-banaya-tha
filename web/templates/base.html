@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     {% block legacy_css %}{% endblock %}
     {# Bump ?v= whenever gully.css changes so browsers fetch the new file #}
-    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24f">
+    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24g">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="/static/theme-toggle.js"></script>
@@ -48,6 +48,8 @@
                         {% endfor %}
                         <a href="/">All leagues</a>
                         {% if user.is_admin and league %}<a href="{{ league.dashboard_prefix }}/admin">Scoring admin</a>{% endif %}
+                        {% if user.is_admin %}<a href="/admin/people">People and join links</a>{% endif %}
+                        {% if user.is_owner %}<a href="/account">My account</a>{% endif %}
                         <a href="/auth/logout">Log out <small>{{ user.username }}</small></a>
                     </div>
                 </details>

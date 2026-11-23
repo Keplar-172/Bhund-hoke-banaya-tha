@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}My account · Gully XI{% endblock %}
+
+{% block content %}
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">My account</h1>
+    <p class="gx-lede">{{ profile.email }}</p>
+  </div>
+</div>
+
+{% if saved %}<div class="gx-alert gx-alert--ok" role="status">Saved.</div>{% endif %}
+
+<div class="gx-split">
+  <div class="gx-split__main gx-stack">
+    <section class="gx-card">
+      <h2 class="gx-h2">My teams</h2>
+      <ul style="padding-left: 18px; margin: 12px 0 0">
+        {% for tm in teams %}
+        <li style="padding: 4px 0">{% if tm.tournament %}<a href="{{ tm.tournament.dashboard_prefix }}">{{ tm.tournament.name }}</a>{% else %}{{ tm.tournament_id }}{% endif %}: {{ tm.owner_name }}</li>
+        {% else %}
+        <li>No teams yet.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="gx-card">
+      <h2 class="gx-h2">Details and emails</h2>
+      <form method="post" action="/account" class="gx-stack" style="gap: 12px; margin-top: 12px">
+        <label class="gx-field">Name
+          <input class="gx-input" name="name" maxlength="80" value="{{ profile.name }}" required>
+        </label>
+        <label class="gx-field">Phone (optional)
+          <input class="gx-input" type="tel" name="phone" maxlength="32" value="{{ profile.phone or '' }}">
+        </label>
+        <div>
+          {% for key, label in purposes.items() %}
+          <label class="gx-check"><input type="checkbox" name="{{ key }}" {% if profile.consents.get(key) %}checked{% endif %}><span>{{ label }}</span></label>
+          {% endfor %}
+        </div>
+        <p class="gx-muted" style="margin: 0; font-size: 13px">To change your email, ask the admin.</p>
+        <div><button type="submit" class="gx-btn gx-btn--ink">Save</button></div>
+      </form>
+    </section>
+  </div>
+
+  <aside class="gx-split__side gx-stack">
+    <section class="gx-card">
+      <h2 class="gx-h2">Your data</h2>
+      <p class="gx-muted">See <a href="/privacy">what we keep and why</a>, or download everything we hold about you.</p>
+      <a class="gx-btn gx-btn--sm" href="/account/data.json">Download my data</a>
+    </section>
+    <section class="gx-card">
+      <h2 class="gx-h2">Delete my account</h2>
+      <p class="gx-muted">Removes your name, email, phone and choices. Your team and its points stay in the league.</p>
+      <form method="post" action="/account/delete" onsubmit="return confirm('Delete your Gully XI account? This cannot be undone.')">
+        <label class="gx-field">Type DELETE to confirm
+          <input class="gx-input" name="confirm" autocomplete="off" required pattern="[Dd][Ee][Ll][Ee][Tt][Ee]">
+        </label>
+        <button type="submit" class="gx-btn gx-btn--sm" style="margin-top: 10px">Delete my account</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

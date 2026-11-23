@@ -44,7 +44,8 @@ async def login(
             status_code=400
         )
     
-    # Set session
+    # Set session (clear any owner session on this device first)
+    request.session.clear()
     request.session["username"] = user.username
     request.session["role"] = user.role
     

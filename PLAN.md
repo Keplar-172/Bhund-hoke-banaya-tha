@@ -14,6 +14,12 @@ Effort: S = under 30 min, M = about 1–2 h, L = half a day or more, XL = 2 days
 
 ---
 
+## H. Accounts, leagues, social (agreed 24 Nov)
+Full proposal: user accounts separate from teams; tournament vs league split (more leagues at no API cost); emails collected with consent (DPDP Act); league-private social feed built from match data plus WhatsApp share cards; Railway is fine for this.
+Decisions: SQLite on the volume for now (DATABASE_URL switches to Postgres later); email log-in links later; no custom domain yet (emails are collected but not sent until there is one; adding a domain later takes about 30 minutes and needs no code change); second IPL league timing not decided.
+- **H1. Owner accounts + join links:** ✅ Built 24 Nov. /admin/people (create, copy or WhatsApp a link; log-in link for a new phone; release; CSV export), /join/<token>, /account (edit, download, delete), /privacy. Database at data/gullyxi.db, included in /api/export-data.
+- H2. My team pages. H3. Tournament/league split. H4. Feed + share cards. H5. Email sending (needs a domain).
+
 ## E. Data fetching on the free tier (A1)
 
 **Diagnosis:** the cost comes from the number of calls. Each run makes list calls for both leagues, 5 runs a day, so about 300 calls a month before any scorecard. Each new match adds 2 more (`hscard` and `comm` for Man of the Match).

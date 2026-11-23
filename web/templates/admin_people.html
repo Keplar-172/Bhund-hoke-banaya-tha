@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}People · Gully XI{% endblock %}
+
+{% block content %}
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">People</h1>
+    <p class="gx-lede">Send each owner their join link. They claim their team once, then stay logged in on their phone.</p>
+  </div>
+  <div class="gx-actions">
+    <a class="gx-btn gx-btn--sm" href="/admin/people/emails.csv">All users (CSV)</a>
+    <a class="gx-btn gx-btn--sm" href="/admin/people/emails.csv?news_only=1">News opt-ins (CSV)</a>
+  </div>
+</div>
+
+<div id="link-box" class="gx-alert gx-alert--ok" role="status" hidden>
+  <p style="margin: 0 0 8px" id="link-title"></p>
+  <input id="link-url" class="gx-input" readonly style="width: 100%; font-size: 14px">
+  <div class="gx-actions" style="margin-top: 10px">
+    <button type="button" class="gx-btn gx-btn--sm gx-btn--ink" id="copy-link">Copy link</button>
+    <a class="gx-btn gx-btn--sm" id="wa-link" target="_blank" rel="noopener">Send on WhatsApp</a>
+  </div>
+  <p class="gx-muted" style="margin: 8px 0 0; font-size: 13px">Shown once. Making a new link for the same team cancels this one.</p>
+</div>
+<div id="people-status" class="gx-alert" role="status" hidden></div>
+
+<div class="gx-stack">
+{% for g in groups %}
+  <section class="gx-card">
+    <h2 class="gx-h2">{{ g.t.name }} <span class="gx-pill">{{ g.t.status_label }}</span></h2>
+    {% if g.rows %}
+    <div class="gx-scroll">
+    <table class="gx-table" style="margin-top: 12px">
+      <thead><tr><th scope="col">Team</th><th scope="col">Claimed by</th><th scope="col"><span class="gx-sr">Actions</span></th></tr></thead>
+      <tbody>
+      {% for r in g.rows %}
+        <tr>
+          <th scope="row" style="font-weight: 600; color: var(--ink); font-size: 15px">{{ r.owner }}</th>
+          <td>
+            {% if r.user %}{{ r.user.name }}<br><span class="gx-muted">{{ r.user.email }}</span>
+            {% elif r.link_pending %}<span class="gx-pill">Link sent, not claimed</span>
+            {% else %}<span class="gx-muted">Not invited</span>{% endif %}
+          </td>
+          <td style="text-align: right; white-space: nowrap">
+            {% if r.user %}
+              <button type="button" class="gx-btn gx-btn--sm" data-invite data-tid="{{ g.t.id }}" data-owner="{{ r.owner }}">Log-in link</button>
+              <button type="button" class="gx-btn gx-btn--sm" data-release data-tid="{{ g.t.id }}" data-owner="{{ r.owner }}">Release</button>
+            {% else %}
+              <button type="button" class="gx-btn gx-btn--sm gx-btn--ink" data-invite data-tid="{{ g.t.id }}" data-owner="{{ r.owner }}">{{ 'New link' if r.link_pending else 'Create link' }}</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="gx-muted">No teams loaded yet. Links can be made once the teams are in.</p>
+    {% endif %}
+  </section>
+{% endfor %}
+
+  <section class="gx-card">
+    <h2 class="gx-h2">Accounts ({{ users|length }})</h2>
+    {% if users %}
+    <div class="gx-scroll">
+    <table class="gx-table" style="margin-top: 12px">
+      <thead><tr><th scope="col">Name</th><th scope="col">Teams</th><th scope="col">Emails</th><th scope="col">Last seen</th><th scope="col"><span class="gx-sr">Actions</span></th></tr></thead>
+      <tbody>
+      {% for u in users %}
+        <tr>
+          <td>{{ u.name }}<br><span class="gx-muted">{{ u.email }}{% if u.phone %}, {{ u.phone }}{% endif %}</span></td>
+          <td>{{ u.teams|join(', ') or '—' }}</td>
+          <td>{% if u.service_emails %}<span class="gx-pill gx-pill--ok">Service</span>{% endif %} {% if u.news %}<span class="gx-pill gx-pill--ok">News</span>{% endif %}</td>
+          <td class="gx-muted">{{ u.last_seen_at.strftime('%d %b') if u.last_seen_at else '—' }}</td>
+          <td style="text-align: right"><button type="button" class="gx-btn gx-btn--sm" data-delete-user="{{ u.id }}" data-name="{{ u.name }}">Delete</button></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="gx-muted">No one has claimed a team yet.</p>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+(function () {
+  const status = document.getElementById('people-status');
+  const box = document.getElementById('link-box');
+  const show = (cls, msg) => { status.hidden = false; status.className = 'gx-alert ' + cls; status.textContent = msg; };
+  const post = async (url, data) => {
+    const r = await fetch(url, { method: 'POST', body: new URLSearchParams(data) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+    return d;
+  };
+
+  document.querySelectorAll('[data-invite]').forEach(b => b.addEventListener('click', async () => {
+    try {
+      const d = await post('/admin/people/invite', { tid: b.dataset.tid, owner: b.dataset.owner });
+      const url = location.origin + d.path;
+      const msg = d.relogin
+        ? `Your Gully XI log-in link (${d.tournament}). Open it on your phone and tap Log in: ${url}`
+        : `Hi ${d.owner}! Here's your Gully XI link to claim your ${d.tournament} team. Open it on your phone: ${url}`;
+      document.getElementById('link-title').textContent = (d.relogin ? 'Log-in link for ' : 'Join link for ') + d.owner + ', ' + d.tournament;
+      document.getElementById('link-url').value = url;
+      document.getElementById('wa-link').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+      box.hidden = false; status.hidden = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) { show('gx-alert--error', e.message); }
+  }));
+
+  document.getElementById('copy-link').addEventListener('click', async () => {
+    const input = document.getElementById('link-url');
+    try { await navigator.clipboard.writeText(input.value); } catch (e) { input.select(); document.execCommand('copy'); }
+    document.getElementById('copy-link').textContent = 'Copied';
+  });
+
+  document.querySelectorAll('[data-release]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(`Release ${b.dataset.owner}'s team? The person keeps their account but loses this team; you can send a new join link.`)) return;
+    try { await post('/admin/people/release', { tid: b.dataset.tid, owner: b.dataset.owner }); location.reload(); }
+    catch (e) { show('gx-alert--error', e.message); }
+  }));
+
+  document.querySelectorAll('[data-delete-user]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(`Delete ${b.dataset.name}'s account and email? Their teams stay in the league.`)) return;
+    try { await post('/admin/people/delete-user', { user_id: b.dataset.deleteUser }); location.reload(); }
+    catch (e) { show('gx-alert--error', e.message); }
+  }));
+})();
+</script>
+{% endblock %}

@@ -120,6 +120,14 @@ for _t in tournaments.all_tournaments():
 app.include_router(downloads.router, prefix="/downloads", tags=["downloads"])
 app.include_router(api_router.router, prefix="/api", tags=["api"])
 app.include_router(public_router.router, prefix="/api/public", tags=["public"])
+# Owner accounts: /join/<token>, /account, /privacy, /admin/people
+from web.routers import accounts as accounts_router
+app.include_router(accounts_router.router, tags=["accounts"])
+
+# People database (SQLite on the data volume unless DATABASE_URL is set)
+import db as _db
+_db.init_db()
+logger.info(f"Accounts database ready ({'sqlite' if _db.IS_SQLITE else 'postgres'})")
 
 logger.info("Routers registered successfully")
 
@@ -140,8 +148,9 @@ async def legacy_url_redirect(request: Request, call_next):
 @app.get("/")
 async def root(request: Request):
     """Home page – league selector if logged in, else redirect to login."""
-    username = request.session.get("username")
-    if not username:
+    from web.auth import get_current_user
+    user = get_current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=302)
 
     groups = []
@@ -159,7 +168,7 @@ async def root(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="home.html",
-        context={"user": {"username": username}, "groups": groups,
+        context={"user": user, "groups": groups,
                  "featured": _featured_tournament(groups),
                  "upcoming": _next_tournament(groups)},
     )

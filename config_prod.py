@@ -62,7 +62,7 @@ FORCE_HTTPS = os.environ.get("FORCE_HTTPS", "false").lower() == "true"
 SESSION_COOKIE_SECURE = ENVIRONMENT == "production"  # HTTPS only
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
 SESSION_COOKIE_SAMESITE = "lax"  # CSRF protection
-SESSION_MAX_AGE = 3600 * 24 * 7  # 7 days
+SESSION_MAX_AGE = 3600 * 24 * 60  # 60 days since last visit (owners stay logged in on their phone)
 
 # ══════════════════════════════════════════════════════════════
 # PRODUCTION OPTIMIZATIONS

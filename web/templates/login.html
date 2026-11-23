@@ -8,6 +8,9 @@
     <h1 class="gx-h1" style="font-size: 32px">Log in</h1>
     <p class="gx-lede">Gully XI fantasy cricket for our league.</p>
 
+    {% if request.query_params.get('deleted') %}
+    <div class="gx-alert gx-alert--ok" role="status" style="margin: var(--s4) 0 0">Your account has been deleted.</div>
+    {% endif %}
     {% if error %}
     <div class="gx-alert gx-alert--error" role="alert" style="margin: var(--s4) 0 0">{{ error }}</div>
     {% endif %}
@@ -21,6 +24,7 @@
       </label>
       <button type="submit" class="gx-btn gx-btn--ink">Log in</button>
     </form>
+    <p class="gx-muted" style="margin: var(--s4) 0 0; font-size: 14px">Team owners: open the join link the admin sent you on WhatsApp. No password needed.</p>
   </div>
 </div>
 {% endblock %}

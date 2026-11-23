@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Join · Gully XI{% endblock %}
+
+{% block content %}
+<div class="gx-auth">
+  <div class="gx-card">
+  {% if not inv %}
+    <h1 class="gx-h1" style="font-size: 30px">Link not found</h1>
+    <p class="gx-lede">This join link doesn't exist. Check you copied all of it, or ask the admin for a new one.</p>
+
+  {% elif inv.state != 'open' %}
+    <h1 class="gx-h1" style="font-size: 30px">Link already used</h1>
+    <p class="gx-lede">This link for {{ inv.owner_name }}'s team has {{ 'been replaced by a newer one' if inv.state == 'revoked' else 'already been used' }}. If you're on a new phone, ask the admin for a log-in link.</p>
+
+  {% elif inv.relogin %}
+    <h1 class="gx-h1" style="font-size: 30px">Log in on this phone</h1>
+    <p class="gx-lede">This link logs you back in to your Gully XI account ({{ inv.owner_name }}{% if tournament %}, {{ tournament.name }}{% endif %}). It works once.</p>
+    <form method="post" action="/join/{{ token }}">
+      <button type="submit" class="gx-btn gx-btn--ink">Log in</button>
+    </form>
+
+  {% else %}
+    <h1 class="gx-h1" style="font-size: 30px">Claim your team</h1>
+    <p class="gx-lede"><strong>{{ inv.owner_name }}</strong>{% if tournament %} in {{ tournament.name }}{% endif %}. This link works once, then you stay logged in on this phone.</p>
+
+    {% if error %}<div class="gx-alert gx-alert--error" role="alert" style="margin: var(--s4) 0 0">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/join/{{ token }}">
+      {% if user and user.is_owner %}
+      <p>You're logged in as <strong>{{ user.username }}</strong>. This team will be added to your account.</p>
+      {% else %}
+      <label class="gx-field">Your name
+        <input class="gx-input" name="name" required maxlength="80" autocomplete="name" value="{{ form.name if form else inv.owner_name }}">
+      </label>
+      <label class="gx-field">Email
+        <input class="gx-input" type="email" name="email" required maxlength="254" autocomplete="email" inputmode="email" value="{{ form.email if form else '' }}">
+      </label>
+      <label class="gx-field">Phone (optional)
+        <input class="gx-input" type="tel" name="phone" maxlength="32" autocomplete="tel" value="{{ form.phone if form else '' }}">
+      </label>
+
+      <fieldset style="border: 0; padding: 0; margin: var(--s3) 0 0">
+        <legend class="gx-muted" style="font-size: 13px; padding: 0">Emails (you can change these any time in My account)</legend>
+        <label class="gx-check"><input type="checkbox" name="service_emails" {% if not form or form.service_emails %}checked{% endif %}>
+          <span>{{ purposes.service_emails }}<small>Results of your matches, auction reminders, log-in links.</small></span></label>
+        <label class="gx-check"><input type="checkbox" name="news" {% if form and form.news %}checked{% endif %}>
+          <span>{{ purposes.news }}<small>New leagues and features. A few a year at most.</small></span></label>
+      </fieldset>
+      <label class="gx-check"><input type="checkbox" name="privacy_ok" required>
+        <span>I've read the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>
+      {% endif %}
+      <button type="submit" class="gx-btn gx-btn--ink" style="margin-top: var(--s3)">Claim {{ inv.owner_name }}'s team</button>
+    </form>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}
