@@ -1,0 +1,1527 @@
+{
+  "teams": {
+    "Sanket": {
+      "owner": "Sanket",
+      "budget": 9000,
+      "captain": "Ishan Kishan",
+      "vice_captain": "Shubman Gill",
+      "players": [
+        {
+          "name": "Prabhsimran Singh",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 1325,
+          "cricbuzz_id": "14254"
+        },
+        {
+          "name": "Ishan Kishan",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 1625,
+          "cricbuzz_id": "10276"
+        },
+        {
+          "name": "Quinton de Kock",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 440,
+          "cricbuzz_id": "8520"
+        },
+        {
+          "name": "Lockie Ferguson",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 725,
+          "cricbuzz_id": "10692"
+        },
+        {
+          "name": "Anrich Nortje",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 320,
+          "cricbuzz_id": "11427"
+        },
+        {
+          "name": "Shubman Gill",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1225,
+          "cricbuzz_id": "11808"
+        },
+        {
+          "name": "Mohammed Shami",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 850,
+          "original_name": "Mohammad Shami",
+          "cricbuzz_id": "7909"
+        },
+        {
+          "name": "Bhuvneshwar Kumar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 550,
+          "cricbuzz_id": "1726"
+        },
+        {
+          "name": "Ajinkya Rahane",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 400,
+          "cricbuzz_id": "1447"
+        },
+        {
+          "name": "Xavier Bartlett",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 75,
+          "cricbuzz_id": "11689"
+        },
+        {
+          "name": "Sandeep Sharma",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 440,
+          "cricbuzz_id": "8356"
+        },
+        {
+          "name": "Zeeshan Ansari",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 320,
+          "cricbuzz_id": "10946"
+        },
+        {
+          "name": "Mukesh Choudhary",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 60,
+          "cricbuzz_id": "13184"
+        },
+        {
+          "name": "Vihaan Malhotra",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "1430529"
+        },
+        {
+          "name": "Manimaran Siddharth",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "original_name": "M. Siddharth",
+          "cricbuzz_id": 12930
+        },
+        {
+          "name": "Arshin Kulkarni",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "51378"
+        },
+        {
+          "name": "Yash Thakur",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 60,
+          "cricbuzz_id": "12096"
+        },
+        {
+          "name": "Harpreet Brar",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 260,
+          "cricbuzz_id": "14452"
+        },
+        {
+          "name": "Vignesh Puthur",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 70,
+          "cricbuzz_id": "1447337"
+        },
+        {
+          "name": "Rasikh Salam Dar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 120,
+          "original_name": "Rasikh Dar",
+          "cricbuzz_id": "14274"
+        }
+      ]
+    },
+    "Shyam": {
+      "owner": "Shyam",
+      "budget": 9000,
+      "captain": "Nicholas Pooran",
+      "vice_captain": "Priyansh Arya",
+      "players": [
+        {
+          "name": "Nicholas Pooran",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 1825,
+          "cricbuzz_id": "9406"
+        },
+        {
+          "name": "Dhruv Jurel",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 650,
+          "cricbuzz_id": "14691"
+        },
+        {
+          "name": "Heinrich Klaasen",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 1175,
+          "cricbuzz_id": "10209"
+        },
+        {
+          "name": "Mitchell Marsh",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 1125,
+          "cricbuzz_id": "6250"
+        },
+        {
+          "name": "Glenn Phillips",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 625,
+          "cricbuzz_id": "10693"
+        },
+        {
+          "name": "Rajat Patidar",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 675,
+          "cricbuzz_id": "10636"
+        },
+        {
+          "name": "Prasidh Krishna",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 700,
+          "cricbuzz_id": "10551"
+        },
+        {
+          "name": "T Natarajan",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 380,
+          "cricbuzz_id": "10225"
+        },
+        {
+          "name": "Nitish Rana",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 220,
+          "cricbuzz_id": "9204"
+        },
+        {
+          "name": "Azmatullah Omarzai",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 300,
+          "cricbuzz_id": "13214"
+        },
+        {
+          "name": "Jaydev Unadkat",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 180,
+          "cricbuzz_id": "6327"
+        },
+        {
+          "name": "Sherfane Rutherford",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 160,
+          "cricbuzz_id": "13748"
+        },
+        {
+            "name": "Dilshan Madushanka",
+            "role": "Bowler",
+          "country": "Overseas",
+          "price": 130,
+            "cricbuzz_id": "15067"
+        },
+        {
+          "name": "Nuwan Thushara",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 75,
+          "cricbuzz_id": "18509"
+        },
+        {
+          "name": "Kuldeep Sen",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 75,
+          "cricbuzz_id": "14336"
+        },
+        {
+          "name": "Gurjapneet Singh",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "19807"
+        },
+        {
+          "name": "Mangesh Yadav",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 70,
+          "cricbuzz_id": "1455995"
+        },
+        {
+          "name": "Priyansh Arya",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 440,
+          "cricbuzz_id": "14689"
+        },
+        {
+          "name": "Anukul Roy",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 160,
+          "cricbuzz_id": "12344"
+        }
+      ]
+    },
+    "Priyanka": {
+      "owner": "Priyanka",
+      "budget": 9000,
+      "captain": "Sanju Samson",
+      "vice_captain": "Arshdeep Singh",
+      "players": [
+        {
+          "name": "Sanju Samson",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 1900,
+          "cricbuzz_id": "8271"
+        },
+        {
+          "name": "Tristan Stubbs",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 950,
+          "cricbuzz_id": "19243"
+        },
+        {
+          "name": "Dasun Shanaka",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 700,
+          "cricbuzz_id": "8422"
+        },
+        {
+          "name": "Marcus Stoinis",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 650,
+          "cricbuzz_id": "8989"
+        },
+        {
+          "name": "Will Jacks",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 775,
+          "cricbuzz_id": "12258"
+        },
+        {
+          "name": "Rashid Khan",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 925,
+          "cricbuzz_id": "3669"
+        },
+        {
+          "name": "Mitchell Starc",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 900,
+          "cricbuzz_id": "7710"
+        },
+        {
+          "name": "Mohammed Siraj",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 575,
+          "cricbuzz_id": "10808"
+        },
+        {
+          "name": "Arshdeep Singh",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 875,
+          "cricbuzz_id": "13217"
+        },
+        {
+          "name": "Anuj Rawat",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "13135"
+        },
+        {
+          "name": "Urvil Patel",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 90,
+          "cricbuzz_id": "13476"
+        },
+        {
+          "name": "Vaibhav Arora",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 340,
+          "cricbuzz_id": "15861"
+        },
+        {
+          "name": "Akash Singh",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "14327"
+        },
+        {
+          "name": "Swapnil Singh",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "10238"
+        },
+        {
+          "name": "Nishant Sindhu",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "22576"
+        },
+        {
+          "name": "Anshul Kamboj",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 160,
+          "cricbuzz_id": "14598"
+        }
+      ]
+    },
+    "Mandy": {
+      "owner": "Mandy",
+      "budget": 9000,
+      "captain": "Hardik Pandya",
+      "vice_captain": "Vaibhav Suryavanshi",
+      "players": [
+        {
+          "name": "Cameron Green",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 1425,
+          "cricbuzz_id": "12225"
+        },
+        {
+          "name": "Abishek Porel",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 700,
+          "cricbuzz_id": "24326"
+        },
+        {
+          "name": "MS Dhoni",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 360,
+          "cricbuzz_id": "265"
+        },
+        {
+          "name": "Ravi Bishnoi",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 850,
+          "cricbuzz_id": "14659"
+        },
+        {
+          "name": "Shashank Singh",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 550,
+          "cricbuzz_id": "10919"
+        },
+        {
+          "name": "Axar Patel",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 1100,
+          "cricbuzz_id": "8808"
+        },
+        {
+          "name": "Riyan Parag",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 700,
+          "cricbuzz_id": "12305"
+        },
+        {
+          "name": "Jofra Archer",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 440,
+          "cricbuzz_id": "11540"
+        },
+        {
+          "name": "Hardik Pandya",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 975,
+          "cricbuzz_id": "9647"
+        },
+        {
+          "name": "Mitchell Owen",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 150,
+          "original_name": "Mitchen Owen",
+          "cricbuzz_id": "18568"
+        },
+        {
+          "name": "Donovan Ferreira",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 100,
+          "cricbuzz_id": "14798"
+        },
+        {
+          "name": "Kartik Sharma",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 180,
+          "cricbuzz_id": "49557"
+        },
+        {
+          "name": "Shivam Mavi",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 110,
+          "cricbuzz_id": "12345"
+        },
+        {
+          "name": "Vaibhav Suryavanshi",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 825,
+          "original_name": "Vaibhav Suryavanshi",
+          "cricbuzz_id": "51791"
+        },
+        {
+          "name": "Navdeep Saini",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "9715"
+        },
+        {
+          "name": "Mohd. Arshad Khan",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 70,
+          "original_name": "Mohd. Arshad Khan",
+          "cricbuzz_id": "18637"
+        },
+        {
+          "name": "Ashok Sharma",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "24261"
+        },
+        {
+          "name": "Aniket Verma",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 220,
+          "cricbuzz_id": "1447065"
+        },
+        {
+          "name": "Prince Yadav",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 180,
+          "cricbuzz_id": "15716"
+        }
+      ]
+    },
+    "Aniket": {
+      "owner": "Aniket",
+      "budget": 9000,
+      "captain": "KL Rahul",
+      "vice_captain": "Abhishek Sharma",
+      "players": [
+        {
+          "name": "Ayush Mhatre",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1075,
+          "cricbuzz_id": "1431163"
+        },
+        {
+          "name": "Finn Allen",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 1300,
+          "cricbuzz_id": "11172"
+        },
+        {
+          "name": "KL Rahul",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 1775,
+          "cricbuzz_id": "8733"
+        },
+        {
+          "name": "Josh Hazlewood",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 825,
+          "cricbuzz_id": "6258"
+        },
+        {
+          "name": "Mayank Yadav",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 320,
+          "cricbuzz_id": "34480"
+        },
+        {
+          "name": "Krunal Pandya",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 825,
+          "cricbuzz_id": "11311"
+        },
+        {
+          "name": "Kyle Jamieson",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 200,
+          "cricbuzz_id": "9441"
+        },
+        {
+          "name": "Abhishek Sharma",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 950,
+          "cricbuzz_id": "12086"
+        },
+        {
+          "name": "Yuzvendra Chahal",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 500,
+          "cricbuzz_id": "7910"
+        },
+        {
+          "name": "Shahbaz Ahmed",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 200,
+          "original_name": "Shahbaz Ahamad",
+          "cricbuzz_id": 14606
+        },
+        {
+          "name": "Jamie Overton",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 220,
+          "cricbuzz_id": "8512"
+        },
+        {
+          "name": "Salil Arora",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "15418"
+        },
+        {
+          "name": "Auqib Nabi Dar",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 200,
+          "original_name": "Auqib Nabi",
+          "cricbuzz_id": "14179"
+        },
+        {
+          "name": "Suryansh Shedge",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "14922"
+        },
+        {
+          "name": "Smaran Ravichandran",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "29130"
+        },
+        {
+          "name": "Manav Suthar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "14596"
+        },
+        {
+          "name": "Prashant Veer",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 340,
+          "cricbuzz_id": "51417"
+        },
+        {
+          "name": "Yudhvir Singh Charak",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 50,
+          "cricbuzz_id": "15749"
+        },
+        {
+          "name": "Musheer Khan",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 40,
+          "cricbuzz_id": "27424"
+        },
+        {
+          "name": "Shubham Dubey",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 60,
+          "cricbuzz_id": "19328"
+        }
+      ]
+    },
+    "Varun": {
+      "owner": "Varun",
+      "budget": 9000,
+      "captain": "Ravindra Jadeja",
+      "vice_captain": "Shivam Dube",
+      "players": [
+        {
+          "name": "Ryan Rickelton",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 500,
+          "cricbuzz_id": "13070"
+        },
+        {
+          "name": "Jacob Duffy",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 500,
+          "cricbuzz_id": "8554"
+        },
+        {
+          "name": "Tilak Varma",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1025,
+          "original_name": "N. Tilak Varma",
+          "cricbuzz_id": "14504"
+        },
+        {
+          "name": "Deepak Chahar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 525,
+          "cricbuzz_id": "7836"
+        },
+        {
+          "name": "Matheesha Pathirana",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 575,
+          "cricbuzz_id": "16458"
+        },
+        {
+          "name": "Travis Head",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 1125,
+          "cricbuzz_id": "8497"
+        },
+        {
+          "name": "Shivam Dube",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 1150,
+          "cricbuzz_id": "11195"
+        },
+        {
+          "name": "Aiden Markram",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 825,
+          "cricbuzz_id": "9582"
+        },
+        {
+          "name": "Ravindra Jadeja",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 750,
+          "cricbuzz_id": "587"
+        },
+        {
+          "name": "Ramandeep Singh",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 240,
+          "cricbuzz_id": "12337"
+        },
+        {
+          "name": "Shardul Thakur",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 140,
+          "cricbuzz_id": "8683"
+        },
+        {
+          "name": "Jacob Bethell",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 280,
+          "cricbuzz_id": "19636"
+        },
+        {
+          "name": "Marco Jansen",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 460,
+          "cricbuzz_id": "14565"
+        },
+        {
+          "name": "Vishnu Vinod",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "11893"
+        },
+        {
+          "name": "Prithvi Shaw",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 100,
+          "cricbuzz_id": "12094"
+        },
+        {
+          "name": "Kartik Tyagi",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 80,
+          "cricbuzz_id": "13136"
+        },
+        {
+          "name": "Shreyas Gopal",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "9746"
+        },
+        {
+          "name": "Digvesh Singh Rathi",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 420,
+          "original_name": "Digvesh Singh",
+          "cricbuzz_id": "1448289"
+        },
+        {
+          "name": "Eshan Malinga",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 110,
+          "cricbuzz_id": "46926"
+        },
+        {
+          "name": "Praveen Dubey",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "original_name": "Pravin Dubey",
+          "cricbuzz_id": "10484"
+        }
+      ]
+    },
+    "Swapnil": {
+      "owner": "Swapnil",
+      "budget": 9000,
+      "captain": "Jos Buttler",
+      "vice_captain": "Rishabh Pant",
+      "players": [
+        {
+          "name": "Rishabh Pant",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 1025,
+          "cricbuzz_id": "10744"
+        },
+        {
+          "name": "Jos Buttler",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 1400,
+          "cricbuzz_id": "2258"
+        },
+        {
+          "name": "Rinku Singh",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 625,
+          "cricbuzz_id": "10896"
+        },
+        {
+          "name": "Rachin Ravindra",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 825,
+          "cricbuzz_id": "11177"
+        },
+        {
+          "name": "Kuldeep Yadav",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 1150,
+          "cricbuzz_id": "8292"
+        },
+        {
+          "name": "Mukesh Kumar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 550,
+          "cricbuzz_id": "10754"
+        },
+        {
+          "name": "Harshal Patel",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 575,
+          "cricbuzz_id": "8175"
+        },
+        {
+          "name": "Avesh Khan",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 500,
+          "cricbuzz_id": "9781"
+        },
+        {
+          "name": "Venkatesh Iyer",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 625,
+          "cricbuzz_id": "10917"
+        },
+        {
+          "name": "Matt Henry",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 340,
+          "cricbuzz_id": "9067"
+        },
+        {
+          "name": "Shimron Hetmyer",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 460,
+          "cricbuzz_id": "9789"
+        },
+        {
+          "name": "Nandre Burger",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 170,
+          "cricbuzz_id": "13630"
+        },
+        {
+          "name": "Rahul Tripathi",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 90,
+          "cricbuzz_id": "9012"
+        },
+        {
+          "name": "Pathum Nissanka",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 100,
+          "cricbuzz_id": "13682"
+        },
+        {
+          "name": "Jayant Yadav",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 75,
+          "cricbuzz_id": "8182"
+        },
+        {
+          "name": "Mayank Markande",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 200,
+          "cricbuzz_id": "12627"
+        },
+        {
+          "name": "Karun Nair",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 180,
+          "cricbuzz_id": "8257"
+        },
+        {
+          "name": "Cooper Connolly",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 50,
+          "cricbuzz_id": "15927"
+        }
+      ]
+    },
+    "Harshul": {
+      "owner": "Harshul",
+      "budget": 9000,
+      "captain": "Virat Kohli",
+      "vice_captain": "Noor Ahmad",
+      "players": [
+        {
+          "name": "Virat Kohli",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 2200,
+          "cricbuzz_id": "1413"
+        },
+        {
+          "name": "Philip Salt",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 1150,
+          "original_name": "Phil Salt",
+          "cricbuzz_id": "10479"
+        },
+        {
+          "name": "Adam Milne",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 480,
+          "cricbuzz_id": "7625"
+        },
+        {
+          "name": "Vicky Ostwal",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 525,
+          "cricbuzz_id": "22616"
+        },
+        {
+          "name": "Noor Ahmad",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 900,
+          "cricbuzz_id": "15452"
+        },
+        {
+          "name": "Rahul Tewatia",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 380,
+          "cricbuzz_id": "9693"
+        },
+        {
+          "name": "David Miller",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 480,
+          "cricbuzz_id": "6349"
+        },
+        {
+          "name": "Akeal Hosein",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 200,
+          "cricbuzz_id": "8435"
+        },
+        {
+          "name": "Mitchell Santner",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 380,
+          "cricbuzz_id": "10100"
+        },
+        {
+          "name": "Ayush Badoni",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 400,
+          "cricbuzz_id": "13907"
+        },
+        {
+          "name": "Romario Shepherd",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 300,
+          "cricbuzz_id": "13646"
+        },
+        {
+          "name": "Harnoor Pannu",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 100,
+          "original_name": "Harnoor Singh",
+          "cricbuzz_id": "22561"
+        },
+        {
+          "name": "Rahul Chahar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 200,
+          "cricbuzz_id": "12087"
+        },
+        {
+          "name": "Dewald Brevis",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 625,
+          "cricbuzz_id": "20538"
+        },
+        {
+          "name": "Ishant Sharma",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 90,
+          "cricbuzz_id": "702"
+        },
+        {
+          "name": "Harsh Dubey",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "14695"
+        },
+        {
+          "name": "Ashutosh Sharma",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 200,
+          "cricbuzz_id": "13497"
+        },
+        {
+          "name": "Angkrish Raghuvanshi",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 360,
+          "cricbuzz_id": "22566"
+        }
+      ]
+    },
+    "Anuj": {
+      "owner": "Anuj",
+      "budget": 9000,
+      "captain": "Ruturaj Gaikwad",
+      "vice_captain": "Yashasvi Jaiswal",
+      "players": [
+        {
+          "name": "Trent Boult",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 1650,
+          "cricbuzz_id": "8117"
+        },
+        {
+          "name": "Blessing Muzarabani",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 1175,
+          "cricbuzz_id": "13316"
+        },
+        {
+          "name": "Khaleel Ahmed",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 825,
+          "cricbuzz_id": "10952"
+        },
+        {
+          "name": "Vipraj Nigam",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 675,
+          "cricbuzz_id": "1431811"
+        },
+        {
+          "name": "Josh Inglis",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 525,
+          "cricbuzz_id": "10637"
+        },
+        {
+          "name": "Yashasvi Jaiswal",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1250,
+          "cricbuzz_id": "13940"
+        },
+        {
+          "name": "M Shahrukh Khan",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 280,
+          "original_name": "Shahrukh Khan",
+          "cricbuzz_id": "10226"
+        },
+        {
+          "name": "Ruturaj Gaikwad",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1050,
+          "cricbuzz_id": "11813"
+        },
+        {
+          "name": "Wanindu Hasaranga",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 400,
+          "cricbuzz_id": "10926"
+        },
+        {
+          "name": "Tushar Deshpande",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 150,
+          "cricbuzz_id": "11307"
+        },
+        {
+          "name": "Umran Malik",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 110,
+          "cricbuzz_id": "19027"
+        },
+        {
+          "name": "Kamindu Mendis",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 75,
+          "cricbuzz_id": "10940"
+        },
+        {
+          "name": "Ashwani Kumar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 200,
+          "cricbuzz_id": "11684"
+        },
+        {
+          "name": "Vijaykumar Vyshak",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 90,
+          "original_name": "Vyshak Vijaykumar",
+          "cricbuzz_id": "10486"
+        },
+        {
+          "name": "Abdul Samad",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 200,
+          "cricbuzz_id": "14628"
+        },
+        {
+          "name": "Naman Dhir",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 340,
+          "cricbuzz_id": "36139"
+        }
+      ]
+    },
+    "Sachit": {
+      "owner": "Sachit",
+      "budget": 9000,
+      "captain": "Sai Sudharsan",
+      "vice_captain": "Sunil Narine",
+      "players": [
+        {
+          "name": "Rohit Sharma",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1350,
+          "cricbuzz_id": "576"
+        },
+        {
+          "name": "Suryakumar Yadav",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1375,
+          "original_name": "Surya Kumar Yadav",
+          "cricbuzz_id": 7915
+        },
+        {
+          "name": "Jitesh Sharma",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 525,
+          "cricbuzz_id": "10214"
+        },
+        {
+          "name": "Pat Cummins",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 775,
+          "cricbuzz_id": "8095"
+        },
+        {
+          "name": "Liam Livingstone",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 500,
+          "cricbuzz_id": "10045"
+        },
+        {
+          "name": "Sunil Narine",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 1175,
+          "cricbuzz_id": "2276"
+        },
+        {
+          "name": "Washington Sundar",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 500,
+          "cricbuzz_id": "10945"
+        },
+        {
+          "name": "Sai Sudharsan",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 850,
+          "cricbuzz_id": "13866"
+        },
+        {
+          "name": "Rovman Powell",
+          "role": "Batsman",
+          "country": "Overseas",
+          "price": 300,
+          "cricbuzz_id": "11445"
+        },
+        {
+          "name": "Kumar Kushagra",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "15779"
+        },
+        {
+          "name": "Aryan Juyal",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "13388"
+        },
+        {
+          "name": "Robin Minz",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 60,
+          "cricbuzz_id": "36454"
+        },
+        {
+          "name": "Luke Wood",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 75,
+          "cricbuzz_id": "9821"
+        },
+        {
+          "name": "AM Ghazanfar",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 130,
+          "original_name": "Allah Ghazanfar",
+          "cricbuzz_id": "36501"
+        },
+        {
+          "name": "Ravisrinivasan Sai Kishore",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 700,
+          "original_name": "R. Sai Kishore",
+          "cricbuzz_id": 11595
+        },
+        {
+          "name": "Raj Bawa",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "original_name": "Raj Angad Bawa",
+          "cricbuzz_id": "22601"
+        },
+        {
+          "name": "Suyash Sharma",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 500,
+          "cricbuzz_id": "36487"
+        },
+        {
+          "name": "Aman Khan",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "13079"
+        },
+        {
+          "name": "Pyla Avinash",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 30,
+          "cricbuzz_id": "32525"
+        },
+        {
+          "name": "Arjun Sachin Tendulkar",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 30,
+          "original_name": "Arjun Tendulkar",
+          "cricbuzz_id": 13747
+        }
+      ]
+    },
+    "Yash": {
+      "owner": "Yash",
+      "budget": 9000,
+      "captain": "Shreyas Iyer",
+      "vice_captain": "Jasprit Bumrah",
+      "players": [
+        {
+          "name": "Jasprit Bumrah",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 1875,
+          "cricbuzz_id": "9311"
+        },
+        {
+          "name": "Tim Seifert",
+          "role": "Wicketkeeper",
+          "country": "Overseas",
+          "price": 460,
+          "cricbuzz_id": "9443"
+        },
+        {
+          "name": "Shreyas Iyer",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 1425,
+          "cricbuzz_id": "9428"
+        },
+        {
+          "name": "Jason Holder",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 500,
+          "cricbuzz_id": "8313"
+        },
+        {
+          "name": "Nitish Kumar Reddy",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 440,
+          "cricbuzz_id": "14701"
+        },
+        {
+          "name": "Lungi Ngidi",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 675,
+          "cricbuzz_id": "9603"
+        },
+        {
+          "name": "Tim David",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 460,
+          "cricbuzz_id": "13169"
+        },
+        {
+          "name": "Kagiso Rabada",
+          "role": "Bowler",
+          "country": "Overseas",
+          "price": 525,
+          "cricbuzz_id": "9585"
+        },
+        {
+          "name": "Varun Chakaravarthy",
+          "role": "Bowler",
+          "country": "Indian",
+          "price": 900,
+          "cricbuzz_id": "12926"
+        },
+        {
+          "name": "Devdutt Padikkal",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 500,
+          "cricbuzz_id": "13088"
+        },
+        {
+          "name": "Corbin Bosch",
+          "role": "Allrounder",
+          "country": "Overseas",
+          "price": 190,
+          "cricbuzz_id": "9576"
+        },
+        {
+          "name": "Tejasvi Singh",
+          "role": "Wicketkeeper",
+          "country": "Indian",
+          "price": 60,
+          "original_name": "Tejasvi Singh",
+          "cricbuzz_id": "1429684"
+        },
+        {
+          "name": "Manish Pandey",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 120,
+          "cricbuzz_id": "1836"
+        },
+        {
+          "name": "Sarfaraz Khan",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 240,
+          "cricbuzz_id": "9429"
+        },
+        {
+          "name": "Nehal Wadhera",
+          "role": "Batsman",
+          "country": "Indian",
+          "price": 400,
+          "cricbuzz_id": "13915"
+        },
+        {
+          "name": "Sameer Rizvi",
+          "role": "Allrounder",
+          "country": "Indian",
+          "price": 220,
+          "cricbuzz_id": "14700"
+        }
+      ]
+    }
+  }
+}

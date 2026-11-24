@@ -55,7 +55,7 @@ class Tournament:
     series_id: Optional[int] = None  # Cricbuzz series id; found automatically if unset
     start_date: str = ""
     end_date: str = ""
-    config_source: str = "git"   # "git": teams/players re-synced from repo on deploy
+    config_source: str = "git"   # "git": teams/players re-synced from repo on deploy; "site": seeded once, then owned by the site (trades, captains)
     sort_order: int = 0
 
     # ── Derived paths (kept as attributes so existing code works unchanged) ──

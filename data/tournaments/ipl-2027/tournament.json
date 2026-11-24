@@ -1,0 +1,12 @@
+{
+  "competition": "ipl",
+  "season": "2027",
+  "name": "IPL Fantasy League 2027",
+  "emoji": "🏏",
+  "status": "upcoming",
+  "scoring_preset": "ipl",
+  "series_keywords": ["INDIAN PREMIER LEAGUE", "IPL"],
+  "series_year": "2027",
+  "series_exclude": ["WOMEN"],
+  "config_source": "site"
+}
