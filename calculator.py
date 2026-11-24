@@ -131,7 +131,8 @@ def _remap_agg(agg: dict, canonical: dict, merge_fn) -> dict:
 # ── Per-Player Scoring ───────────────────────────────────────────────────────
 
 def calculate_match_scores(scorecard_data: dict,
-                           cfg: LeagueConfig = None) -> dict:
+                           cfg: LeagueConfig = None,
+                           teams_data: dict | None = None) -> dict:
     """
     Given raw Cricbuzz scorecard data, compute fantasy points for every
     player across all 11 fantasy teams.
@@ -152,7 +153,8 @@ def calculate_match_scores(scorecard_data: dict,
             ...
         }
     """
-    teams_data = load_teams(cfg)
+    # teams_data: the squads in force for this match (see squads.py); default current
+    teams_data = teams_data if teams_data is not None else load_teams(cfg)
     rules = get_scoring_rules(cfg)
     id_lookup, name_lookup = _build_roster_lookup(teams_data)
 

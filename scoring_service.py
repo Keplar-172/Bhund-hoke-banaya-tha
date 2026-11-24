@@ -7,6 +7,7 @@
     score_uploaded(match_id, t, data)  score a hand-uploaded scorecard (no API)
 """
 import match_schedule as sched_mod
+import squads
 from calculator import calculate_match_scores
 from cricbuzz_api import get_match_mom, get_scorecard
 from storage import (
@@ -30,7 +31,7 @@ def _describe(scorecard_data: dict, match_id: int) -> str:
 
 
 def score_match(match_id: int, t, scorecard_data: dict | None = None,
-                fetch_mom: bool = True) -> dict:
+                fetch_mom: bool = True, squad_version: int | None = None) -> dict:
     """Score one match for tournament t. Returns {owner: match_result}.
 
     Uses the cached scorecard when present (no API call); otherwise fetches it.
@@ -50,7 +51,13 @@ def score_match(match_id: int, t, scorecard_data: dict | None = None,
 
     cache_scorecard(match_id, scorecard_data, t)
 
-    match_results = calculate_match_scores(scorecard_data, t)
+    # Squads as they were for this match (trades don't move past points)
+    teams_data, version = squads.teams_for_match(t, match_id)
+    if squad_version:
+        v = next((x for x in squads.load_history(t) if x["version"] == squad_version), None)
+        if v:
+            teams_data, version = {"teams": v["teams"]}, squad_version
+    match_results = calculate_match_scores(scorecard_data, t, teams_data=teams_data)
     desc = _describe(scorecard_data, match_id)
 
     scores = load_scores(t)
@@ -60,9 +67,9 @@ def score_match(match_id: int, t, scorecard_data: dict | None = None,
         team_scores[owner] = data["total"]
 
     save_scores(scores, t)
-    record_match(match_id, desc, team_scores, t)
+    record_match(match_id, desc, team_scores, t, squad_version=version)
     append_to_scoring_sheet(match_id, desc, match_results, scores, t)
-    update_master_scoresheet(match_id, desc, match_results, scores, t)
+    update_master_scoresheet(match_id, desc, match_results, scores, t, teams_data=teams_data)
     return match_results
 
 
@@ -80,9 +87,12 @@ def rescore_match(match_id: int, t) -> dict:
     """Undo a processed match and score it again with current rules/teams."""
     if not is_match_processed(match_id, t):
         raise ValueError(f"Match {match_id} not processed in {t.id}")
+    # Keep the squad version the match was scored with (needed when there is
+    # no schedule start time to pick it by); decided before the history entry goes.
+    v = squads.version_for_match(t, match_id)
     _unscore(match_id, t)
     # From cache; MoM lookups are left to auto_score's retry, so rescores are free.
-    return score_match(match_id, t, fetch_mom=False)
+    return score_match(match_id, t, fetch_mom=False, squad_version=v["version"] if v else None)
 
 
 def rescore_all(t) -> list:

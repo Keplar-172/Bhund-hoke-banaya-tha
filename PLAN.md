@@ -20,6 +20,13 @@ Decisions: SQLite on the volume for now (DATABASE_URL switches to Postgres later
 - **H1. Owner accounts + join links:** ✅ Built 24 Nov. /admin/people (create, copy or WhatsApp a link; log-in link for a new phone; release; CSV export), /join/<token>, /account (edit, download, delete), /privacy. Database at data/gullyxi.db, included in /api/export-data.
 - H2. My team pages. H3. Tournament/league split. H4. Feed + share cards. H5. Email sending (needs a domain).
 
+## I. Trading window and market (agreed 24 Nov)
+Decisions: trades go through instantly, and the admin can reverse within 24 hours. Money is in lakhs and shown in crores. Player prices count against purses, and the admin tops up purses for 2027 (amount to be decided). Trading is between owners only for now; retention and a free pool come later. No limits apart from purses staying at zero or above.
+- **I1. Squad history:** ✅ built (squads.py). A match is scored with the squads in force when it started, so a rescore never moves earlier points. Deploys don't overwrite squads once they've been changed on the site.
+- **I2. Market stages:** ✅ built. Off, scheduled, live, paused or closed, per tournament (market.json); owners see nothing while it's off.
+- **I3. Trading window:** ✅ built. Offers, counter-offers, accept, decline and withdraw; purse checks; auto-cancel of clashing offers; inbox badge and banner; WhatsApp nudge; trade log; admin reverse; captain/vice-captain fallback; no trades during matches; purse top-up.
+- Next: create the IPL 2027 tournament (2026 squads carried over), let owners pick their own C/VC, retention/free pool once decided, then the live auction (F).
+
 ## E. Data fetching on the free tier (A1)
 
 **Diagnosis:** the cost comes from the number of calls. Each run makes list calls for both leagues, 5 runs a day, so about 300 calls a month before any scorecard. Each new match adds 2 more (`hscard` and `comm` for Man of the Match).

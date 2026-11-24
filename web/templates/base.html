@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     {% block legacy_css %}{% endblock %}
     {# Bump ?v= whenever gully.css changes so browsers fetch the new file #}
-    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24i">
+    <link rel="stylesheet" href="/static/gully.css?v=2026-11-24j">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="/static/theme-toggle.js"></script>
@@ -32,6 +32,7 @@
                 <a href="{{ league.dashboard_prefix }}/history" {% if page == 'history' %}aria-current="page"{% endif %}>History</a>
                 <a href="{{ league.dashboard_prefix }}/master" {% if page == 'master' %}aria-current="page"{% endif %}>Master sheet</a>
                 <a href="{{ league.dashboard_prefix }}/analytics" {% if page == 'analytics' %}aria-current="page"{% endif %}>Analytics</a>
+                {% if market_visible(league) or user.is_admin %}<a href="{{ league.dashboard_prefix }}/market" {% if page == 'market' %}aria-current="page"{% endif %}>Market{% set np = market_pending(league, user.teams.get(league.id) if user.teams is defined else None) %}{% if np %}<span class="gx-badge" aria-label="{{ np }} offers for you">{{ np }}</span>{% endif %}</a>{% endif %}
                 {% if user.teams is defined and user.teams.get(league.id) %}<a href="{{ league.dashboard_prefix }}/team/{{ user.teams[league.id]|urlencode }}" {% if page == 'team' %}aria-current="page"{% endif %}>My team</a>{% endif %}
             </nav>
             {% endif %}
@@ -47,6 +48,7 @@
                         {% for t in all_tournaments() %}
                         <a href="{{ t.dashboard_prefix }}" {% if league and t.id == league.id %}aria-current="true"{% endif %}>{{ t.name }} <small>{{ t.status_label }}</small></a>
                         {% endfor %}
+                        {% if league and (market_visible(league) or user.is_admin) %}<a href="{{ league.dashboard_prefix }}/market">Market (trading)</a>{% endif %}
                         <a href="/?all=1">All leagues</a>
                         {% if user.is_admin and league %}<a href="{{ league.dashboard_prefix }}/admin">Scoring admin</a>{% endif %}
                         {% if user.is_admin %}<a href="/admin/people">People and join links</a>{% endif %}
@@ -65,6 +67,12 @@
     </header>
 
     <main class="gx-main">
+        {% if user and league and page != 'market' and market_stage(league) in ('scheduled', 'live') %}
+        {% set np = market_pending(league, user.teams.get(league.id) if user.teams is defined else None) %}
+        <a class="gx-marketbar" href="{{ league.dashboard_prefix }}/market">
+            <span>{{ 'Trading window is open' if market_stage(league) == 'live' else 'Trading window opens soon' }}{% if np %}: {{ np }} offer{{ '' if np == 1 else 's' }} for you{% endif %}</span><span aria-hidden="true">Go to the market</span>
+        </a>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 

@@ -105,10 +105,8 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Templates
 templates_dir = os.path.join(os.path.dirname(__file__), "web", "templates")
 templates = Jinja2Templates(directory=templates_dir)
-templates.env.globals["all_tournaments"] = tournaments.all_tournaments
-import team_names as _tn
-templates.env.globals["team_name"] = _tn.display
-templates.env.globals["team_names"] = _tn.names
+from web.template_globals import register as _register_globals
+_register_globals(templates)
 
 # ══════════════════════════════════════════════════════════════
 # ROUTERS

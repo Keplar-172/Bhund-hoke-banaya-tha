@@ -6,8 +6,10 @@
               on the volume first. Safe to run on every start (no-op afterwards).
 2. seed()     Copy tournament files from the image's seed copy into the volume:
               - tournament.json            always (settings are managed in git)
-              - teams_data / players_data  always if config_source == "git",
-                                           otherwise only when missing
+              - teams_data / players_data  always if config_source == "git"
+                                           and the squads were never changed on the
+                                           site (no squad_history.json); otherwise
+                                           only when missing
               - everything else            only when missing or empty
                                            (live scores are never overwritten)
 
@@ -111,6 +113,11 @@ def seed(data: str, seed_dir: str) -> None:
 
         with open(os.path.join(src, "tournament.json")) as f:
             from_git = json.load(f).get("config_source", "git") == "git"
+        # Once squads have changed on the site (trades, admin edits), the site
+        # owns them: never overwrite them from git again.
+        if from_git and os.path.exists(os.path.join(dst, "squad_history.json")):
+            from_git = False
+            log(f"{tid}: squads changed on the site (squad_history.json); not overwriting from git")
 
         copied = []
         for name in sorted(os.listdir(src)):

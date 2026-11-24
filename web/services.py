@@ -178,7 +178,9 @@ def get_match_detail_data(match_id: int,
     if not scorecard_data:
         raise FileNotFoundError(f"No data for match {match_id}")
 
-    match_results = calculate_match_scores(scorecard_data, cfg)
+    import squads
+    teams_data, _v = squads.teams_for_match(cfg, match_id)   # squads as they were then
+    match_results = calculate_match_scores(scorecard_data, cfg, teams_data=teams_data)
 
     desc = f"Match {match_id}"
     header = scorecard_data.get("matchHeader", {})

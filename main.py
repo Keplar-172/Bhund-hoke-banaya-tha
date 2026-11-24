@@ -89,63 +89,16 @@ def cmd_matches():
 
 
 def cmd_score(match_id: int):
-    if is_match_processed(match_id):
+    """Score one match for the selected tournament (same path as the website)."""
+    from scoring_service import score_match, _describe
+    t = tournaments.default()
+    if is_match_processed(match_id, t):
         print(f"\nMatch {match_id} has already been processed. Skipping.\n")
         return
-
-    # Try cached scorecard first, fetch from API only if not cached
-    scorecard_data = get_cached_scorecard(match_id)
-    if scorecard_data:
-        print(f"\nUsing cached scorecard for match {match_id}.")
-    else:
-        print(f"\nFetching scorecard for match {match_id} from API...")
-        scorecard_data = get_scorecard(match_id)
-        print("Scorecard fetched.")
-
-    # Fetch Man of the Match if not already in scorecard
-    if not scorecard_data.get("man_of_the_match"):
-        print("Fetching Man of the Match...")
-        mom = get_match_mom(match_id)
-        if mom:
-            scorecard_data["man_of_the_match"] = mom
-            print(f"  MoM: {mom}")
-        else:
-            print("  MoM: not available from API")
-
-    # Cache the scorecard (with MoM data merged)
-    cache_scorecard(match_id, scorecard_data)
-    print("Scorecard cached locally.")
-
-    print("Calculating fantasy scores...")
-    match_results = calculate_match_scores(scorecard_data)
-
-    # Build description
-    desc = f"Match {match_id}"
-    header = scorecard_data.get("matchHeader", {})
-    if header:
-        t1 = header.get("team1", {}).get("shortName", "")
-        t2 = header.get("team2", {}).get("shortName", "")
-        status = header.get("status", "")
-        if t1 and t2:
-            desc = f"{t1} vs {t2} – {status}"
-
+    print(f"\nScoring match {match_id} ({t.name})...")
+    match_results = score_match(match_id, t)
+    desc = _describe(get_cached_scorecard(match_id, t) or {}, match_id)
     show_match_detail(match_results, desc)
-
-    # Update cumulative scores
-    scores = load_scores()
-    team_scores_for_record = {}
-    for owner, data in match_results.items():
-        scores[owner] = round(scores.get(owner, 0) + data["total"], 2)
-        team_scores_for_record[owner] = data["total"]
-
-    save_scores(scores)
-    record_match(match_id, desc, team_scores_for_record)
-
-    # Save detailed scoring sheet (player-level breakdown + cumulative)
-    append_to_scoring_sheet(match_id, desc, match_results, scores)
-
-    # Update master scoresheet
-    update_master_scoresheet(match_id, desc, match_results, scores)
 
     print(f"✓ Match {match_id} scores saved.\n")
     show_leaderboard()
@@ -177,7 +130,9 @@ def _load_match_results(match_id: int) -> tuple[dict, str]:
         scorecard_data = get_scorecard(match_id)
         cache_scorecard(match_id, scorecard_data)
 
-    match_results = calculate_match_scores(scorecard_data)
+    import squads
+    teams_data, _v = squads.teams_for_match(tournaments.default(), match_id)
+    match_results = calculate_match_scores(scorecard_data, teams_data=teams_data)
 
     desc = f"Match {match_id}"
     header = scorecard_data.get("matchHeader", {})

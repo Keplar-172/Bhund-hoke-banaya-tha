@@ -86,14 +86,17 @@ def is_match_processed(match_id: int, cfg: LeagueConfig = None) -> bool:
 
 
 def record_match(match_id: int, description: str, team_scores: dict,
-                 cfg: LeagueConfig = None):
+                 cfg: LeagueConfig = None, squad_version: int | None = None):
     """Append a match entry to history."""
     history = load_match_history(cfg)
-    history.append({
+    entry = {
         "match_id": match_id,
         "description": description,
         "team_scores": team_scores,
-    })
+    }
+    if squad_version:
+        entry["squad_version"] = squad_version   # squads used (see squads.py)
+    history.append(entry)
     save_match_history(history, cfg)
 
 
@@ -179,10 +182,10 @@ def save_master_scoresheet(master: dict, cfg: LeagueConfig = None):
 
 def update_master_scoresheet(match_id: int, description: str,
                               match_results: dict, cumulative_scores: dict,
-                              cfg: LeagueConfig = None):
+                              cfg: LeagueConfig = None, teams_data: dict | None = None):
     """Update master scoresheet with a new match's results."""
     master = load_master_scoresheet(cfg)
-    teams_data = load_teams(cfg)
+    teams_data = teams_data if teams_data is not None else load_teams(cfg)
 
     existing_ids = {m["match_id"] for m in master["match_list"]}
     if match_id not in existing_ids:

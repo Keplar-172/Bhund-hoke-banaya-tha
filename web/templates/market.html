@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% import "_gully.html" as gx %}
+
+{% block title %}Trading window · {{ league.name }} · Gully XI{% endblock %}
+
+{% macro side(names, cash_lakhs) -%}
+{%- if names %}{{ names|join(', ') }}{% endif %}{% if names and cash_lakhs > 0 %} + {% endif %}{% if cash_lakhs > 0 %}₹{{ crores(cash_lakhs) }}{% endif %}{% if not names and cash_lakhs <= 0 %}nothing{% endif -%}
+{%- endmacro %}
+
+{% macro offer_card(o, actions=True) -%}
+<article class="gx-card gx-offer" id="offer-{{ o.id }}">
+  <p class="gx-muted" style="margin: 0; font-size: 13px">Offer #{{ o.id }}{% if o.parent_id %}, counter to #{{ o.parent_id }}{% endif %} · <time data-t="{{ o.created_at.isoformat() }}">{{ o.created_at.strftime('%d %b %H:%M') }}</time>{% if o.status == 'open' %} · expires <time data-t="{{ o.expires_at.isoformat() }}">{{ o.expires_at.strftime('%d %b %H:%M') }}</time>{% endif %}</p>
+  <div class="gx-offer__sides">
+    <div><span class="gx-muted">{{ team_name(league.id, o.from) }} gives</span><strong>{{ side(o.give, o.cash) }}</strong></div>
+    <div><span class="gx-muted">{{ team_name(league.id, o.to) }} gives</span><strong>{{ side(o.take, -o.cash) }}</strong></div>
+  </div>
+  {% if o.message %}<p style="margin: 8px 0 0">“{{ o.message }}”</p>{% endif %}
+  {% if o.status != 'open' %}<p style="margin: 8px 0 0"><span class="gx-pill{% if o.status == 'accepted' %} gx-pill--ok{% endif %}">{{ o.status|capitalize }}</span>{% if o.note %} <span class="gx-muted" style="font-size: 13px">{{ o.note }}</span>{% endif %}</p>{% endif %}
+  {% if actions %}{{ caller() if caller is defined }}{% endif %}
+</article>
+{%- endmacro %}
+
+{% block content %}
+<div class="gx-pagehead">
+  <div>
+    <h1 class="gx-h1">Trading window</h1>
+    <p class="gx-lede">{{ league.name }} · <span class="gx-pill{% if m.stage == 'live' %} gx-pill--ok{% endif %}">{{ {'off': 'Hidden', 'scheduled': 'Opens soon', 'live': 'Open', 'paused': 'Paused', 'closed': 'Closed'}[m.stage] }}</span></p>
+  </div>
+</div>
+
+{% if m.note %}<div class="gx-alert" role="note">{{ m.note }}</div>{% endif %}
+{% if m.stage == 'scheduled' %}<div class="gx-alert gx-alert--warn">Trading opens {{ m.opens_at or 'soon' }}. Look through the squads and plan your offers.</div>{% endif %}
+{% if m.stage == 'paused' %}<div class="gx-alert gx-alert--warn">The admin has paused trading. Offers can't be sent or accepted right now.</div>{% endif %}
+{% if m.stage == 'closed' %}<div class="gx-alert">The trading window is closed. Here's what happened.</div>{% endif %}
+{% if m.stage == 'live' and m.closes_at %}<div class="gx-alert">Open until {{ m.closes_at }}.</div>{% endif %}
+{% if m.stage == 'live' and lock %}<div class="gx-alert gx-alert--warn">{{ lock }}</div>{% endif %}
+
+{% if err %}<div class="gx-alert gx-alert--error" role="alert">{{ err }}</div>{% endif %}
+{% if msg %}
+  {% if msg.startswith('sent:') %}
+    {% set sid = msg[5:]|int %}{% set so = outgoing|selectattr('id', 'equalto', sid)|first %}
+    <div class="gx-alert gx-alert--ok" role="status">Offer #{{ sid }} sent{% if so %} to {{ team_name(league.id, so.to) }}{% endif %}. Give them a nudge:
+      {% if so %}<a class="gx-btn gx-btn--sm" style="margin-left: 8px" target="_blank" rel="noopener" data-wa="{{ team_name(league.id, so.from) }} sent you a trade offer on Gully XI: {{ side(so.give, so.cash) }} for {{ side(so.take, -so.cash) }}. Answer here: ">Share on WhatsApp</a>{% endif %}
+    </div>
+  {% else %}
+    <div class="gx-alert gx-alert--ok" role="status">{{ msg }}</div>
+  {% endif %}
+{% endif %}
+
+{% if user.is_admin %}
+<details class="gx-card" {% if m.stage == 'off' %}open{% endif %} style="margin-bottom: var(--s4)">
+  <summary style="font-weight: 600; cursor: pointer">Admin: market settings <span class="gx-muted" style="font-weight: 400">({{ stage_labels[m.stage] }})</span></summary>
+  <form method="post" action="{{ league.dashboard_prefix }}/market/settings" class="gx-stack" style="gap: 12px; margin-top: 12px">
+    <fieldset style="border: 0; padding: 0; margin: 0">
+      <legend style="font-size: 13px; color: var(--ink-soft); padding: 0">Stage (owners see nothing while it's Off)</legend>
+      <div class="gx-actions" style="margin-top: 6px">
+        {% for st in stages %}<label class="gx-check" style="min-height: 0"><input type="radio" name="stage" value="{{ st }}" {% if m.stage == st %}checked{% endif %}><span>{{ stage_labels[st] }}</span></label>{% endfor %}
+      </div>
+    </fieldset>
+    <label class="gx-field">Opens (shown to owners) <input class="gx-input" name="opens_at" value="{{ m.opens_at }}" placeholder="e.g. 1 Dec, 8 PM"></label>
+    <label class="gx-field">Closes (shown to owners) <input class="gx-input" name="closes_at" value="{{ m.closes_at }}" placeholder="e.g. 15 Dec, midnight"></label>
+    <label class="gx-field">Note for owners <input class="gx-input" name="note" value="{{ m.note }}" maxlength="300"></label>
+    <div class="gx-actions">
+      <label class="gx-field">Offers expire after (hours) <input class="gx-input" type="number" min="1" name="offer_expiry_hours" value="{{ m.rules.offer_expiry_hours }}" style="width: 120px"></label>
+      <label class="gx-field">Admin can reverse within (hours) <input class="gx-input" type="number" min="1" name="reversal_hours" value="{{ m.rules.reversal_hours }}" style="width: 120px"></label>
+    </div>
+    <label class="gx-field">Top up every team's purse by (crores, optional, applied once when you save)
+      <input class="gx-input" name="top_up" inputmode="decimal" placeholder="e.g. 10" style="width: 160px" onchange="if(this.value && !confirm('Add ' + this.value + ' cr to every team\'s purse when you save?')) this.value=''">
+    </label>
+    {% if m.top_ups %}<p class="gx-muted" style="margin: 0; font-size: 13px">Top-ups so far: {% for u in m.top_ups %}₹{{ crores(u.lakhs) }}{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+    <label class="gx-check"><input type="checkbox" name="cvc_locked" {% if m.cvc_locked %}checked{% endif %}><span>Lock captain and vice-captain changes for owners<small>They're also locked automatically once the tournament is live.</small></span></label>
+    <label class="gx-check"><input type="checkbox" name="block_during_matches" {% if m.rules.block_during_matches %}checked{% endif %}><span>No trades while a match is on or waiting to be scored</span></label>
+    <div><button class="gx-btn gx-btn--ink" type="submit">Save</button></div>
+  </form>
+  {% if open_all %}
+  <h3 style="font-size: 15px; margin: var(--s4) 0 8px">Open offers in the league ({{ open_all|length }})</h3>
+  {% for o in open_all %}{{ offer_card(o, actions=False) }}{% endfor %}
+  {% endif %}
+</details>
+{% endif %}
+
+{% if mine %}
+  {% if incoming %}
+  <section aria-labelledby="in-h" style="margin-bottom: var(--s5)">
+    <h2 class="gx-h2" id="in-h">Offers for you ({{ incoming|length }})</h2>
+    <div class="gx-stack" style="gap: 12px; margin-top: 12px">
+    {% for o in incoming %}
+      {% call offer_card(o) %}
+      {% if m.stage == 'live' and not lock %}
+      <div class="gx-actions" style="margin-top: 12px">
+        <form method="post" action="{{ league.dashboard_prefix }}/market/offer/{{ o.id }}/accept" onsubmit="return confirm('Accept this trade? It happens straight away.')"><button class="gx-btn gx-btn--sm gx-btn--ink">Accept</button></form>
+        <a class="gx-btn gx-btn--sm" href="{{ league.dashboard_prefix }}/market?counter={{ o.id }}#new-offer">Counter</a>
+        <form method="post" action="{{ league.dashboard_prefix }}/market/offer/{{ o.id }}/decline"><button class="gx-btn gx-btn--sm">Decline</button></form>
+      </div>
+      {% endif %}
+      {% endcall %}
+    {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if outgoing %}
+  <section aria-labelledby="out-h" style="margin-bottom: var(--s5)">
+    <h2 class="gx-h2" id="out-h">Your offers waiting for an answer</h2>
+    <div class="gx-stack" style="gap: 12px; margin-top: 12px">
+    {% for o in outgoing %}
+      {% call offer_card(o) %}
+      <div class="gx-actions" style="margin-top: 12px">
+        <a class="gx-btn gx-btn--sm" target="_blank" rel="noopener" data-wa="{{ team_name(league.id, o.from) }} sent you a trade offer on Gully XI: {{ side(o.give, o.cash) }} for {{ side(o.take, -o.cash) }}. Answer here: ">Nudge on WhatsApp</a>
+        <form method="post" action="{{ league.dashboard_prefix }}/market/offer/{{ o.id }}/withdraw"><button class="gx-btn gx-btn--sm">Withdraw</button></form>
+      </div>
+      {% endcall %}
+    {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if m.stage == 'live' and not lock %}
+  <section class="gx-card" id="new-offer" aria-labelledby="new-h" style="margin-bottom: var(--s5)">
+    <h2 class="gx-h2" id="new-h">{{ 'Counter-offer' if prefill and prefill.counter_of else 'Make an offer' }}</h2>
+    <form method="post" action="{{ league.dashboard_prefix }}/market/offer" id="offer-form" class="gx-stack" style="gap: 14px; margin-top: 12px">
+      <input type="hidden" name="counter_of" value="{{ prefill.counter_of if prefill else 0 }}">
+      <label class="gx-field">Trade with
+        <select class="gx-input" name="to" id="to-team" required {% if prefill and prefill.counter_of %}disabled{% endif %}>
+          <option value="">Choose a team…</option>
+          {% for o in squads if o != mine %}<option value="{{ o }}" {% if prefill and prefill.to == o %}selected{% endif %}>{{ team_name(league.id, o) }}{% if team_name(league.id, o) != o %} ({{ o }}){% endif %}</option>{% endfor %}
+        </select>
+        {% if prefill and prefill.counter_of %}<input type="hidden" name="to" value="{{ prefill.to }}">{% endif %}
+      </label>
+
+      <div class="gx-split" style="gap: var(--s4)">
+        <fieldset class="gx-split__main gx-pick">
+          <legend>You give <span class="gx-muted">(purse {{ '₹' ~ crores(squads[mine].purse) if squads[mine].purse is not none else '–' }})</span></legend>
+          {% for p in squads[mine].players %}
+          <label class="gx-check"><input type="checkbox" name="give" value="{{ p.name }}" {% if prefill and p.name in prefill.give %}checked{% endif %}>
+            <span>{{ p.name }}{% if p.name == squads[mine].captain %} <span class="gx-cap">C</span>{% elif p.name == squads[mine].vc %} <span class="gx-vc">VC</span>{% endif %}<small>{{ p.role }}{% if p.price %}, ₹{{ crores(p.price) }}{% endif %}</small></span></label>
+          {% endfor %}
+        </fieldset>
+        <div class="gx-split__side">
+          {% for o, sq in squads.items() if o != mine %}
+          <fieldset class="gx-pick" data-team="{{ o }}" {% if not (prefill and prefill.to == o) %}hidden disabled{% endif %}>
+            <legend>You get from {{ team_name(league.id, o) }} <span class="gx-muted">(purse {{ '₹' ~ crores(sq.purse) if sq.purse is not none else '–' }})</span></legend>
+            {% for p in sq.players %}
+            <label class="gx-check"><input type="checkbox" name="get" value="{{ p.name }}" {% if prefill and prefill.to == o and p.name in prefill.take %}checked{% endif %}>
+              <span>{{ p.name }}{% if p.name == sq.captain %} <span class="gx-cap">C</span>{% elif p.name == sq.vc %} <span class="gx-vc">VC</span>{% endif %}<small>{{ p.role }}{% if p.price %}, ₹{{ crores(p.price) }}{% endif %}</small></span></label>
+            {% endfor %}
+          </fieldset>
+          {% endfor %}
+          <p class="gx-muted" id="pick-hint" {% if prefill %}hidden{% endif %}>Choose a team to see their squad.</p>
+        </div>
+      </div>
+
+      <fieldset style="border: 0; padding: 0; margin: 0">
+        <legend style="font-size: 13px; color: var(--ink-soft); padding: 0">Money (optional, in crores)</legend>
+        <div class="gx-actions" style="margin-top: 6px; align-items: center">
+          <input class="gx-input" name="cash_amount" inputmode="decimal" placeholder="e.g. 20" style="width: 120px" value="{{ (prefill.cash|abs / 100) if prefill and prefill.cash else '' }}">
+          <label class="gx-check" style="min-height: 0"><input type="radio" name="cash_dir" value="pay" {% if not prefill or prefill.cash >= 0 %}checked{% endif %}><span>I pay them</span></label>
+          <label class="gx-check" style="min-height: 0"><input type="radio" name="cash_dir" value="receive" {% if prefill and prefill.cash < 0 %}checked{% endif %}><span>They pay me</span></label>
+        </div>
+      </fieldset>
+
+      <label class="gx-field">Message (optional)
+        <input class="gx-input" name="message" maxlength="200" placeholder="e.g. Rohit for Axar, I'll add 20 cr">
+      </label>
+
+      <div id="preview" class="gx-alert" role="status" hidden></div>
+      <div><button type="submit" class="gx-btn gx-btn--ink" id="send-offer">Send offer</button></div>
+    </form>
+  </section>
+  {% endif %}
+{% elif not user.is_admin %}
+  <p class="gx-muted">You're browsing as a viewer. Team owners trade from their own login.</p>
+{% endif %}
+
+<section aria-labelledby="log-h" style="margin-bottom: var(--s5)">
+  <h2 class="gx-h2" id="log-h">Trade log</h2>
+  {% if log %}
+  <div class="gx-stack" style="gap: 12px; margin-top: 12px">
+    {% for o in log %}
+      {% call offer_card(o) %}
+      {% if user.is_admin and o.reversible %}
+      <form method="post" action="{{ league.dashboard_prefix }}/market/offer/{{ o.id }}/reverse" class="gx-actions" style="margin-top: 12px" onsubmit="return confirm('Reverse trade #{{ o.id }}? Players and money go back. Points already scored stay where they are.')">
+        <input class="gx-input" name="note" placeholder="Reason (shown in the log)" maxlength="200" style="flex: 1; min-width: 180px">
+        <button class="gx-btn gx-btn--sm">Reverse</button>
+      </form>
+      {% endif %}
+      {% endcall %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="gx-muted">No trades yet.</p>
+  {% endif %}
+</section>
+
+{% if my_past %}
+<details class="gx-card">
+  <summary style="cursor: pointer; font-weight: 600">Your earlier offers ({{ my_past|length }})</summary>
+  <div class="gx-stack" style="gap: 12px; margin-top: 12px">{% for o in my_past %}{{ offer_card(o, actions=False) }}{% endfor %}</div>
+</details>
+{% endif %}
+
+<script>
+(function () {
+  // times in IST
+  document.querySelectorAll('time[data-t]').forEach(el => {
+    const d = new Date(el.dataset.t);
+    el.textContent = d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  });
+  // WhatsApp share links
+  const marketUrl = location.origin + '{{ league.dashboard_prefix }}/market';
+  document.querySelectorAll('[data-wa]').forEach(a => { a.href = 'https://wa.me/?text=' + encodeURIComponent(a.dataset.wa + marketUrl); });
+
+  const form = document.getElementById('offer-form');
+  if (!form) return;
+  const sel = document.getElementById('to-team');
+  const hint = document.getElementById('pick-hint');
+  const preview = document.getElementById('preview');
+  const showTeam = () => {
+    form.querySelectorAll('fieldset[data-team]').forEach(fs => {
+      const on = fs.dataset.team === sel.value;
+      fs.hidden = !on; fs.disabled = !on;
+    });
+    if (hint) hint.hidden = !!sel.value;
+  };
+  if (!sel.disabled) sel.addEventListener('change', () => { showTeam(); update(); });
+  let timer;
+  const update = () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const fd = new FormData(form);
+      if (!fd.get('to')) { preview.hidden = true; return; }
+      const r = await fetch('{{ league.dashboard_prefix }}/market/preview', { method: 'POST', body: fd });
+      const d = await r.json();
+      preview.hidden = false;
+      if (!d.ok) { preview.className = 'gx-alert gx-alert--warn'; preview.textContent = d.error; return; }
+      preview.className = 'gx-alert';
+      const line = (s) => `${s.owner}: ${s.count_before} → ${s.count_after} players, purse ${s.purse_before_text} → ${s.purse_after_text}`;
+      preview.innerHTML = '';
+      [line(d.a), line(d.b), ...d.notes].forEach(t => { const p = document.createElement('p'); p.style.margin = '2px 0'; p.textContent = t; preview.appendChild(p); });
+    }, 250);
+  };
+  form.addEventListener('change', update);
+  form.addEventListener('input', update);
+  form.addEventListener('submit', (e) => {
+    if (!confirm('Send this offer? If they accept, the trade happens straight away.')) e.preventDefault();
+  });
+  if (sel.value) update();
+})();
+</script>
+{% endblock %}

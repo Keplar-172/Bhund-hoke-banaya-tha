@@ -14,10 +14,8 @@ from web.auth import User, get_current_user, login_owner, require_auth
 
 router = APIRouter()
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "templates"))
-templates.env.globals["all_tournaments"] = tournaments.all_tournaments
-import team_names as _tn
-templates.env.globals["team_name"] = _tn.display
-templates.env.globals["team_names"] = _tn.names
+from web.template_globals import register as _register_globals
+_register_globals(templates)
 
 
 def _admin(user: User = Depends(require_auth)) -> User:

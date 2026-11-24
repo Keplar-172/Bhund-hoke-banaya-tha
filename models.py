@@ -99,3 +99,36 @@ class TeamName(Base):
     # The owner gets one go at naming their team; after that only the admin can change it.
     owner_used: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class TradeOffer(Base):
+    """An offer from one team to another: players each way plus cash.
+    cash > 0: from_owner pays to_owner; cash < 0: to_owner pays from_owner.
+    Money is stored in lakhs (the unit of player prices)."""
+    __tablename__ = "trade_offers"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tournament_id: Mapped[str] = mapped_column(String(64), index=True)
+    from_owner: Mapped[str] = mapped_column(String(80))
+    to_owner: Mapped[str] = mapped_column(String(80))
+    cash: Mapped[int] = mapped_column(Integer, default=0)
+    message: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # open | accepted | declined | withdrawn | expired | cancelled | countered | reversed
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    status_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(40))          # "user:<id>" or "admin"
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("trade_offers.id"), nullable=True)
+    squad_version: Mapped[int | None] = mapped_column(Integer, nullable=True)   # after accept
+    items: Mapped[list["TradeItem"]] = relationship(back_populates="offer", cascade="all, delete-orphan")
+
+
+class TradeItem(Base):
+    """One player in an offer and which side gives him."""
+    __tablename__ = "trade_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    offer_id: Mapped[int] = mapped_column(ForeignKey("trade_offers.id", ondelete="CASCADE"), index=True)
+    player_name: Mapped[str] = mapped_column(String(80))
+    giver: Mapped[str] = mapped_column(String(80))      # owner key who gives this player
+    offer: Mapped[TradeOffer] = relationship(back_populates="items")

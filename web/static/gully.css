@@ -633,3 +633,14 @@ img, svg { max-width: 100%; }
 .gx-tn__owner { font-size: 12px; font-weight: 400; color: var(--ink-soft); }
 .gx-board__row--first .gx-tn__owner, .gx-bars__win .gx-tn__owner, .gx-formbox--win + * .gx-tn__owner { color: inherit; opacity: .75; }
 .gx-panel__name { overflow-wrap: anywhere; }
+
+/* ── Market / trading window ── */
+.gx-offer__sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 20px; margin-top: 10px; }
+.gx-offer__sides span { display: block; font-size: 13px; }
+.gx-offer__sides strong { display: block; font-size: 16px; margin-top: 2px; }
+.gx-pick { border: 2px solid var(--line); border-radius: var(--r-card); padding: 8px 14px 6px; margin: 0; max-height: 420px; overflow: auto; }
+.gx-pick legend { font-weight: 600; padding: 0 6px; }
+.gx-pick .gx-check { min-height: 40px; padding: 4px 0; }
+.gx-marketbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--ball); color: var(--on-ball); border-radius: var(--r-card); padding: 10px 16px; margin-bottom: var(--s4); font-weight: 600; text-decoration: none; }
+.gx-marketbar:hover { color: var(--on-ball); text-decoration: underline; }
+.gx-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #C2452D; color: #fff; font-size: 12px; font-weight: 700; margin-left: 4px; }

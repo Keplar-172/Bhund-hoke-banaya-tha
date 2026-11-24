@@ -31,7 +31,8 @@
   {% endif %}
 </div>
 
-{% if renamed == 2 %}<div class="gx-alert gx-alert--ok" role="status">{{ team.owner }} can now choose the team name once more.</div>
+{% if renamed == 3 %}<div class="gx-alert gx-alert--ok" role="status">Captain and vice-captain saved.</div>
+{% elif renamed == 2 %}<div class="gx-alert gx-alert--ok" role="status">{{ team.owner }} can now choose the team name once more.</div>
 {% elif renamed %}<div class="gx-alert gx-alert--ok" role="status">Team name saved. It now shows on the leaderboard, history and every match.</div>{% endif %}
 {% if is_me and not user.is_admin and not owner_can_rename and not renamed %}<p class="gx-muted" style="margin: 0 0 var(--s4); font-size: 14px">Want a different team name? Ask the admin to change it.</p>{% endif %}
 {% if rename_error %}<div class="gx-alert gx-alert--error" role="alert">{{ rename_error }}</div>{% endif %}
@@ -65,6 +66,22 @@
 <div class="gx-split" style="margin-top: var(--s5)">
   <section class="gx-split__main gx-card" aria-labelledby="squad-h">
     <h2 class="gx-h2" id="squad-h">Squad</h2>
+    {% if is_me or user.is_admin %}
+    {% if user.is_admin or cvc[0] %}
+    <form method="post" action="{{ league.dashboard_prefix }}/team/{{ team.owner|urlencode }}/captains" class="gx-actions" style="margin: 12px 0 4px; align-items: flex-end">
+      <label class="gx-field">Captain (1.5× points)
+        <select class="gx-input" name="captain">{% for p in team.squad|sort(attribute='name') %}<option {% if p.is_captain %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      </label>
+      <label class="gx-field">Vice-captain (1.25×)
+        <select class="gx-input" name="vice_captain">{% for p in team.squad|sort(attribute='name') %}<option {% if p.is_vice_captain %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      </label>
+      <button type="submit" class="gx-btn gx-btn--sm gx-btn--ink">Save captains</button>
+    </form>
+    {% if not user.is_admin %}<p class="gx-muted" style="margin: 0; font-size: 13px">You can change these until the tournament starts or the admin locks them.</p>{% elif not cvc[0] %}<p class="gx-muted" style="margin: 0; font-size: 13px">Owners are locked out ({{ cvc[1] }}). As admin you can still change them.</p>{% endif %}
+    {% else %}
+    <p class="gx-muted" style="margin: 8px 0 0; font-size: 14px">{{ cvc[1] }}</p>
+    {% endif %}
+    {% endif %}
     <p class="gx-muted" style="margin: 4px 0 0">{{ team.squad|length }} players{% if team.spent %}, bought for {{ gx.pts(team.spent) }}{% if team.budget %} of {{ gx.pts(team.budget) }}{% endif %}{% endif %}. Most points first.</p>
     <div class="gx-scroll">
     <table class="gx-table" style="margin-top: 8px">
